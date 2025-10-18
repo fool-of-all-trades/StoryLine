@@ -1,15 +1,15 @@
 <?php
-$userId = $GLOBALS['route_params']['user_id'] ?? null;
+  $id = $GLOBALS['route_params']['user_id'] ?? null;
+  $title = "StoryLine — Użytkownik #".htmlspecialchars((string)$id);
+  include __DIR__."/partials/header.php";
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StoryLine</title>
-</head>
-<body>
-    <h1>Profil użytkownika #<?= htmlspecialchars((string)$userId) ?></h1>
+<h1>Użytkownik #<?= htmlspecialchars((string)$id) ?></h1>
+<ul class="story-list">
+  <li class="story-card"><a class="title" href="/story/1">historia 1</a></li>
+  <li class="story-card"><a class="title" href="/story/7">historia 2</a></li>
+</ul>
+
+    </main>
 </body>
 </html>

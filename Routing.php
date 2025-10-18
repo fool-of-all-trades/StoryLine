@@ -10,19 +10,19 @@ class Routing
         switch ($path) {
             case '':
             case 'dashboard':
-                include 'public/views/dashboard.html';
+                include 'public/views/dashboard.php';
                 return;
 
             case 'login':
-                include 'public/views/login.html';
+                include 'public/views/login.php';
                 return;
 
             case 'register':
-                include 'public/views/register.html';
+                include 'public/views/register.php';
                 return;
 
             case 'admin':
-                include 'public/views/admin.html';
+                include 'public/views/admin.php';
                 return;
 
             case 'stories':

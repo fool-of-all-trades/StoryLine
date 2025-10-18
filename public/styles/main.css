@@ -1,3 +1,49 @@
-h1 {
-  color: rgb(106, 0, 255);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #fbebea;
+  color: #333;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+nav {
+  display: flex;
+  justify-content: flex-start;
+  gap: 5rem;
+  margin-bottom: 20px;
+}
+
+a {
+  text-decoration: none;
+  color: #333;
+}
+
+a:hover {
+  color: #ff3c00;
+}
+
+.story-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+  width: fit-content;
+}
+
+li {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  border: rgb(255, 186, 198) solid 2px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background-color: #fff;
 }
