@@ -4,29 +4,62 @@ class Routing
 {
     public static function run(string $path)
     {
-      $path = trim($path, "/");
+        $path = parse_url($path, PHP_URL_PATH) ?? '/';
+        $path = trim($path, "/");
 
-      switch ($path) {
-        case '':
-        case 'dashboard':
-          include 'public/views/dashboard.html';
-          return;
+        switch ($path) {
+            case '':
+            case 'dashboard':
+                include 'public/views/dashboard.html';
+                return;
 
-        case 'login':
-          include 'public/views/login.html';
-          return;
-      }
+            case 'login':
+                include 'public/views/login.html';
+                return;
 
-      // dynamiczna ścieżka: user/{id}
-      if (preg_match('#^user/(\d+)$#', $path, $match)) {
-        $userId = (int)$match[1];
+            case 'register':
+                include 'public/views/register.html';
+                return;
 
-        $GLOBALS['route_params']['user_id'] = $userId;
-        include 'public/views/user.php';
-        return;
-      }
+            case 'admin':
+                include 'public/views/admin.html';
+                return;
 
-      http_response_code(404);
-      include 'public/views/404.html';
+            case 'stories':
+                // lista zbiorcza albo redirect do /stories/today
+                $_GET['date'] = date('Y-m-d');
+                include 'public/views/stories.php';
+                return;
+
+            case 'stories/today':
+                $_GET['date'] = date('Y-m-d');
+                include 'public/views/stories.php';
+                return;
+        }
+
+        // Dynamiczne: /user/{id}
+        if (preg_match('#^user/(\d+)$#', $path, $m)) {
+            $GLOBALS['route_params']['user_id'] = (int)$m[1];
+            include 'public/views/user.php';
+            return;
+        }
+
+        // Dynamiczne: /story/{id}
+        if (preg_match('#^story/(\d+)$#', $path, $m)) {
+            $GLOBALS['route_params']['story_id'] = (int)$m[1];
+            include 'public/views/story.php';
+            return;
+        }
+
+        // Dynamiczne: /stories/{YYYY-MM-DD}
+        if (preg_match('#^stories/(\d{4}-\d{2}-\d{2})$#', $path, $m)) {
+            $GLOBALS['route_params']['date'] = $m[1];
+            include 'public/views/stories.php';
+            return;
+        }
+
+        // 404
+        http_response_code(404);
+        include 'public/views/404.html';
     }
 }
