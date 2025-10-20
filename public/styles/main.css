@@ -27,7 +27,7 @@ a:hover {
   color: #ff3c00;
 }
 
-.story-card {
+#stories-list li {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 5px;
