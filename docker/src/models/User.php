@@ -27,7 +27,6 @@ final class User
         return [
             'id' => $this->id,
             'username' => $this->username,
-            'password_hash' => $this->passwordHash,
             'role' => $this->role->value,
             'created_at' => $this->createdAt->format('c'),
         ];

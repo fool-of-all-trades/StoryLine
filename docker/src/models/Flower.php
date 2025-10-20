@@ -8,8 +8,8 @@ final class Flower
     public function __construct(
         public int $id,
         public int $storyId,
-        public ?int $userId,                 // null = anonimowy dawca
-        public ?string $deviceToken,         // identyfikator anona (cookie)
+        public ?int $userId,                 // null = anonymous writer
+        public ?string $deviceToken,         // anon identification
         public \DateTimeImmutable $createdAt = new \DateTimeImmutable()
     ) {}
 

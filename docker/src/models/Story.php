@@ -7,9 +7,9 @@ final class Story
 {
     public function __construct(
         public int $id,
-        public int $quoteId,                     // FK do Quote
-        public ?int $userId,                     // null = anonim
-        public ?string $deviceToken,             // identyfikator anona (cookie)
+        public int $quoteId,
+        public ?int $userId,                     // null = anonimuous
+        public ?string $deviceToken,             // anon user identification
         public ?string $ipHash,                  // hash(IP+salt) anty-spam
         public ?string $title,
         public string $content,
@@ -52,14 +52,14 @@ final class Story
         ];
     }
 
-    /** Policzy słowa (unicode) */
+    // Will count words (unicode)
     public static function countWords(string $text): int {
         $text = trim($text);
         if ($text === '') return 0;
         return preg_match_all('/\S+/u', $text, $m) ?: 0;
     }
 
-    /** Czy treść zawiera zdanie 1:1 (po normalizacji spacji) */
+    // Does the story contain the exact quote? 
     public function containsExactSentence(string $sentence, bool $caseSensitive = false): bool {
         $norm = static fn(string $s) => preg_replace('/\s+/u', ' ', trim($s));
         $hay = $norm($this->content);
@@ -68,7 +68,7 @@ final class Story
         return mb_strpos($hay, $needle) !== false;
     }
 
-    /** Krótki podgląd do listy */
+    // Short preview for lists
     public function preview(int $chars = 160): string {
         $plain = preg_replace('/\s+/u', ' ', trim($this->content));
         return mb_strlen($plain) > $chars ? mb_substr($plain, 0, $chars) . '…' : $plain;

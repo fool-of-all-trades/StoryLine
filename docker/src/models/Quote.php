@@ -7,11 +7,11 @@ final class Quote
 {
     public function __construct(
         public int $id,
-        public \DateTimeImmutable $date,     // dzień użycia
-        public string $sentence,             // dokładne zdanie do wplecenia
+        public \DateTimeImmutable $date,
+        public string $sentence,
         public ?string $book = null,
         public ?string $author = null,
-        public ?string $sourceId = null,     // id z API (jeśli jest)
+        public ?string $sourceId = null,     // id from API
         public \DateTimeImmutable $fetchedAt = new \DateTimeImmutable()
     ) {}
 
