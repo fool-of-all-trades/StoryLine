@@ -1,8 +1,11 @@
 <?php
 
-# ten plik to front  controller
+declare(strict_types=1);
 
-require 'Routing.php';
+require __DIR__ . '/docker/src/bootstrap.php';
+require __DIR__ . '/Routing.php';
+
+# ten plik to front controller
 
 $path = trim($_SERVER['REQUEST_URI'], '/');
 $path = parse_url($path, PHP_URL_PATH);
