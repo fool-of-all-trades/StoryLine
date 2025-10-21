@@ -1,12 +1,12 @@
-<?php $title = "StoryLine — Logowanie"; include __DIR__."/partials/header.php"; ?>
+<?php $title = "StoryLine — Login"; include __DIR__."/partials/header.php"; ?>
 
-<h1>Zaloguj się</h1>
+<h1>Login</h1>
 <form method="post" action="/login">
-  <label>Login <input name="username" required></label>
-  <label>Hasło <input type="password" name="password" required></label>
-  <button type="submit" class="btn primary">Wejdź</button>
+  <label>Username <input name="username" required></label>
+  <label>Password <input type="password" name="password" required></label>
+  <button type="submit" class="btn primary">Welcome</button>
 </form>
-<p>Nie masz konta? <a href="/register">Zarejestruj się</a></p>
+<p>No account yet? <a href="/register">Register</a></p>
 
     </main>
   </body>

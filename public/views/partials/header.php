@@ -14,7 +14,7 @@
   <nav class="nav">
     <a href="/" class="logo">StoryLine</a>
     <div class="spacer"></div>
-    <a href="/stories/today">Historie dnia</a>
-    <a href="/login">Zaloguj</a>
+    <a href="/stories/today">Stories</a>
+    <a href="/login">Login</a>
   </nav>
   <main class="container">

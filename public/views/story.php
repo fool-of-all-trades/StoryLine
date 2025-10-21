@@ -8,8 +8,8 @@
   <header>
     <h1>Story #<?= htmlspecialchars((string)$id) ?></h1>
     <div class="meta">
-      <p>Autor: Anonim</p>
-      <p>Cytat: "fjalsdjflsjkdlfkjslakdjflksjdf"</p>
+      <p>Author: Anonim</p>
+      <p>Quote: "fjalsdjflsjkdlfkjslakdjflksjdf"</p>
       <p>2025-03-12</p>
       <p>12 🌸</p>
     </div>

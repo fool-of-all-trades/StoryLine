@@ -1,6 +1,6 @@
 <?php $title = "StoryLine — Admin"; include __DIR__."/partials/header.php"; ?>
 
-<h1>Panel admina</h1>
+<h1>Admin panel</h1>
 
     </main>
   </body>
