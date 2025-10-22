@@ -18,22 +18,22 @@ final class QuoteController
     // GET /api/quote/today - get today's quote
     public static function today(): void
     {
-        $svc = new QuoteService();
-        $q = $svc->getToday();
-        if (!$q) {
+        $quoteService = new QuoteService();
+        $todayQuote = $quoteService->getToday();
+        if (!$todayQuote) {
             self::json(['error'=>'no_quote_today'], 404);
             // don't you think you should perhaps create it? maybe use the ensure endpoint?
         }
-        self::json($q->toArray());
+        self::json($todayQuote->toArray());
     }
 
     // POST /api/quote/ensure -> generate today's quote if it doesn't exist yet
     public static function ensureToday(): void
     {
-        $svc = new QuoteService();
+        $quoteService = new QuoteService();
         try {
-            $q = $svc->getOrEnsureToday();
-            self::json($q->toArray(), 201);
+            $todayQuote = $quoteService->getOrEnsureToday();
+            self::json($todayQuote->toArray(), 201);
         } catch (DomainException $e) {
             self::json(['error'=>$e->getMessage()], 400);
         } catch (\Throwable $e) {
