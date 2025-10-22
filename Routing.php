@@ -1,5 +1,9 @@
 <?php
 
+use App\Controllers\QuotesApiController;
+use App\Controllers\QuoteController;
+
+
 class Routing
 {
     public static function run(string $path)
@@ -12,46 +16,60 @@ class Routing
             case 'dashboard':
                 include 'public/views/dashboard.php';
                 return;
-
-            case 'login':
-                include 'public/views/login.php';
-                return;
-
-            case 'register':
-                include 'public/views/register.php';
-                return;
-
+                
             case 'admin':
                 include 'public/views/admin.php';
                 return;
 
             case 'stories':
-                // lista zbiorcza albo redirect do /stories/today
-                $_GET['date'] = date('Y-m-d');
-                include 'public/views/stories.php';
+                header('Location: /stories/' . date('Y-m-d'));
                 return;
 
             case 'stories/today':
-                $_GET['date'] = date('Y-m-d');
-                include 'public/views/stories.php';
+                header('Location: /stories/' . date('Y-m-d'));
+                return;
+
+
+            case 'api/quotes/random':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+                    QuotesApiController::random(); 
+                    return; 
+                }
+                http_response_code(405); 
+                return;
+
+            case 'api/quote/today':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+                    QuoteController::today(); 
+                    return; 
+                }
+                http_response_code(405); 
+                return;
+
+            case 'api/quote/ensure':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    QuoteController::ensureToday(); 
+                    return; 
+                }
+                http_response_code(405); 
                 return;
         }
 
-        // Dynamiczne: /user/{id}
+        // Dynamic: /user/{id}
         if (preg_match('#^user/(\d+)$#', $path, $m)) {
             $GLOBALS['route_params']['user_id'] = (int)$m[1];
             include 'public/views/user.php';
             return;
         }
 
-        // Dynamiczne: /story/{id}
+        // Dynamic: /story/{id}
         if (preg_match('#^story/(\d+)$#', $path, $m)) {
             $GLOBALS['route_params']['story_id'] = (int)$m[1];
             include 'public/views/story.php';
             return;
         }
 
-        // Dynamiczne: /stories/{YYYY-MM-DD}
+        // Dynamic: /stories/{YYYY-MM-DD}
         if (preg_match('#^stories/(\d{4}-\d{2}-\d{2})$#', $path, $m)) {
             $GLOBALS['route_params']['date'] = $m[1];
             include 'public/views/stories.php';
