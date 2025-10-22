@@ -6,6 +6,8 @@ namespace App\Services;
 use App\Repository\QuoteRepository;
 use App\Models\Quote;
 use DomainException;
+use DateTimeImmutable;
+
 
 final class QuoteService
 {
@@ -17,25 +19,26 @@ final class QuoteService
     // gets the today's quote from the database or, if it doesn't exist, from the local API and saves it.
     public function getOrEnsureToday(): Quote
     {
-        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
 
         // check in db if today's quote exists
-        if ($quote = $this->repo->getByDate($today)) {
+        $quote = $this->repo->getByDate($today);
+        if ($quote != null) {
             return $quote;
         }
 
-        // fetch the quote from local API
-        $data = $this->fetchLocalQuote();
-        if (!$data || empty($data['sentence'])) {
+        // if not in db then fetch the quote from local API
+        $quote = $this->fetchLocalQuote();
+        if (!$quote || empty($quote['sentence'])) {
             throw new DomainException('no_quote_available');
         }
 
         // save the quote to the db
         $this->repo->insertForDate(
             $today,
-            $data['sentence'],
-            $data['book'] ?? null,
-            $data['author'] ?? null
+            $quote['sentence'],
+            $quote['book'] ?? null,
+            $quote['author'] ?? null
         );
 
         // return today's quote
@@ -45,7 +48,7 @@ final class QuoteService
     // returns the today's quote if it exists (without creating)
     public function getToday(): ?Quote
     {
-        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
         return $this->repo->getByDate($today);
     }
 
@@ -59,6 +62,7 @@ final class QuoteService
     private function fetchLocalQuote(): ?array
     {
         $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+        // later add error handling here, for now, just ignore errors
         $raw = @file_get_contents($this->localApiUrl, false, $ctx);
         if ($raw === false) return null;
 

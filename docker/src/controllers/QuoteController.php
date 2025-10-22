@@ -22,7 +22,6 @@ final class QuoteController
         $todayQuote = $quoteService->getToday();
         if (!$todayQuote) {
             self::json(['error'=>'no_quote_today'], 404);
-            // don't you think you should perhaps create it? maybe use the ensure endpoint?
         }
         self::json($todayQuote->toArray());
     }
