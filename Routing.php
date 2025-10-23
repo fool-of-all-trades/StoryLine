@@ -1,5 +1,8 @@
 <?php
 
+use App\Controllers\UserController;
+use App\Controllers\StoryController;
+use App\Controllers\FlowerController;
 use App\Controllers\QuotesApiController;
 use App\Controllers\QuoteController;
 
@@ -22,11 +25,48 @@ class Routing
                 return;
 
             case 'stories':
+                // will redirect to today's stories
                 header('Location: /stories/' . date('Y-m-d'));
                 return;
 
             case 'stories/today':
                 header('Location: /stories/' . date('Y-m-d'));
+                return;
+
+
+            case 'login':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                    include 'public/views/login.php'; 
+                    return;
+                }
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    UserController::login(); 
+                    return; 
+                }
+                http_response_code(405); 
+                echo 'Method Not Allowed'; 
+                return;
+
+            case 'logout':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    UserController::logout(); 
+                    return; 
+                }
+                http_response_code(405); 
+                echo 'Method Not Allowed'; 
+                return;
+
+            case 'register':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                    include 'public/views/register.php'; 
+                    return;
+                }
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    UserController::register(); 
+                    return; 
+                }
+                http_response_code(405); 
+                echo 'Method Not Allowed'; 
                 return;
 
 
