@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\StoryService;
 use DomainException;
+use Throwable;
 
 final class StoryController
 {
@@ -31,7 +32,7 @@ final class StoryController
                 'page'  => max(1, $page),
                 'limit' => $limit,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             self::json(['error' => 'internal_error'], 500);
         }
     }
@@ -87,7 +88,7 @@ final class StoryController
                 default                  => 500,
             };
             self::json(['error'=>$e->getMessage()], $code);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             self::json(['error'=>'internal_error'], 500);
         }
     }
