@@ -68,7 +68,28 @@ class Routing
                 http_response_code(405); 
                 echo 'Method Not Allowed'; 
                 return;
+                
+            # Dynamic: /stories/{YYYY-MM-DD}
+            case 'api/stories':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+                    StoryController::list(); 
+                    return; 
+                }
+                http_response_code(405); 
+                return;
 
+            # Dynamic: /story/{id}
+            case 'api/story':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET')  { 
+                    StoryController::getStoryById(); 
+                    return; 
+                }
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    StoryController::create(); 
+                    return; 
+                }
+                http_response_code(405); 
+                return;
 
             case 'api/quotes/random':
                 if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
