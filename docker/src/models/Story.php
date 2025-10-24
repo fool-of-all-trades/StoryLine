@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Models;
+use DateTimeImmutable;
 
 final class Story
 {
@@ -15,7 +16,7 @@ final class Story
         public string $content,
         public bool $isAnonymous = false,
         public int $wordCount = 0,
-        public \DateTimeImmutable $createdAt = new \DateTimeImmutable()
+        public DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {
         if ($this->wordCount === 0) {
             $this->wordCount = self::countWords($this->content);
@@ -33,7 +34,7 @@ final class Story
             content: (string)$row['content'],
             isAnonymous: (bool)$row['is_anonymous'],
             wordCount: (int)($row['word_count'] ?? 0),
-            createdAt: new \DateTimeImmutable((string)$row['created_at'])
+            createdAt: new DateTimeImmutable((string)$row['created_at'])
         );
     }
 

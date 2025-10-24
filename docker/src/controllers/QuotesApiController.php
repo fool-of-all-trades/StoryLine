@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Controllers;
+use DateTimeImmutable;
 
 final class QuotesApiController
 {
@@ -28,8 +29,8 @@ final class QuotesApiController
         }
 
         // Quote choice is deterministic, based on the date
-        $startDate = new \DateTimeImmutable('2025-01-01');
-        $today = new \DateTimeImmutable('today');
+        $startDate = new DateTimeImmutable('2025-01-01');
+        $today = new DateTimeImmutable('today');
         $diffDays = (int)$startDate->diff($today)->days;
 
         $index = $diffDays % count($data);

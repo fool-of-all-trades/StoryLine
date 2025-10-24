@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\QuoteService;
 use DomainException;
+use Throwable;
 
 final class QuoteController
 {
@@ -35,7 +36,7 @@ final class QuoteController
             self::json($todayQuote->toArray(), 201);
         } catch (DomainException $e) {
             self::json(['error'=>$e->getMessage()], 400);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             self::json(['error'=>'internal_error','message'=>$e->getMessage()], 500);
         }
     }

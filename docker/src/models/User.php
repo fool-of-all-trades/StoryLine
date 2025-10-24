@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use DateTimeImmutable;
+
 final class User
 {
     public function __construct(
@@ -10,7 +12,7 @@ final class User
         public string $username,
         public string $passwordHash,
         public Role $role = Role::User,
-        public \DateTimeImmutable $createdAt = new \DateTimeImmutable()
+        public DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {}
 
     public static function fromArray(array $row): self {
@@ -19,7 +21,7 @@ final class User
             username: (string)$row['username'],
             passwordHash: (string)$row['password_hash'],
             role: Role::fromString((string)($row['role'] ?? 'user')),
-            createdAt: new \DateTimeImmutable((string)$row['created_at'])
+            createdAt: new DateTimeImmutable((string)$row['created_at'])
         );
     }
 

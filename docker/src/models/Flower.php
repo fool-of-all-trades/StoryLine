@@ -2,15 +2,16 @@
 declare(strict_types=1);
 
 namespace App\Models;
+use DateTimeImmutable;
 
 final class Flower
 {
     public function __construct(
         public int $id,
         public int $storyId,
-        public ?int $userId,                 // null = anonymous writer
-        public ?string $deviceToken,         // anon identification
-        public \DateTimeImmutable $createdAt = new \DateTimeImmutable()
+        public ?int $userId, // null = anonymous writer
+        public ?string $deviceToken, // anon identification
+        public DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {}
 
     public static function fromArray(array $row): self {
@@ -19,7 +20,7 @@ final class Flower
             storyId: (int)$row['story_id'],
             userId: isset($row['user_id']) ? (int)$row['user_id'] : null,
             deviceToken: $row['device_token'] ?? null,
-            createdAt: new \DateTimeImmutable((string)$row['created_at'])
+            createdAt: new DateTimeImmutable((string)$row['created_at'])
         );
     }
 

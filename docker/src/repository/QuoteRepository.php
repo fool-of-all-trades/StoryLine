@@ -5,6 +5,7 @@ namespace App\Repository;
 
 use App\Models\Quote;
 use PDO;
+use DateTimeImmutable;
 
 final class QuoteRepository
 {
@@ -22,7 +23,7 @@ final class QuoteRepository
 
     // Get today's quote
     public function getToday(): ?Quote {
-        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
         return $this->getByDate($today);
     }
 
