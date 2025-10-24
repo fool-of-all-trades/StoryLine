@@ -7,6 +7,7 @@ use App\Services\UserService;
 use App\Models\Role;
 use DomainException;
 use Throwable;
+use App\Security\Csrf;
 
 final class UserController
 {
@@ -19,13 +20,15 @@ final class UserController
 
     public static function login(): void
     {
+        Csrf::verify();
+
         $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
 
-        $svc = new UserService();
+        $userService = new UserService();
 
         try {
-            $payload = $svc->login($username, $password);
+            $payload = $userService->login($username, $password);
             session_regenerate_id(true);
             $_SESSION['user'] = $payload;
             self::json(['ok'=>true, 'user'=>$payload], 200);
@@ -38,6 +41,8 @@ final class UserController
 
     public static function logout(): void
     {
+        Csrf::verify();
+
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $p = session_get_cookie_params();
@@ -49,12 +54,14 @@ final class UserController
 
     public static function register(): void
     {
+        Csrf::verify();
+        
         $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
 
-        $svc = new UserService();
+        $userService = new UserService();
         try {
-            $id = $svc->register($username, $password, Role::User);
+            $id = $userService->register($username, $password, Role::User);
             self::json(['id'=>$id], 201);
         } catch (DomainException $e) {
             $code = match($e->getMessage()) {

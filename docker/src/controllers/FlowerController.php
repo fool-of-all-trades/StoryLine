@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Services\FlowerService;
 use DomainException;
 use Throwable;
+use App\Security\Csrf;
 
 final class FlowerController
 {
@@ -18,6 +19,8 @@ final class FlowerController
 
     /** POST /api/story/flower?id=123 – toggle */
     public static function toggle(): void {
+        Csrf::verify();
+        
         $flowerService = new FlowerService();
 
         // for now only logged-in users can flower

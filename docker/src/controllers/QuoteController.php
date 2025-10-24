@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Services\QuoteService;
 use DomainException;
 use Throwable;
+use App\Security\Csrf;
 
 final class QuoteController
 {
@@ -30,6 +31,8 @@ final class QuoteController
     // POST /api/quote/ensure -> generate today's quote if it doesn't exist yet
     public static function ensureToday(): void
     {
+        Csrf::verify();
+
         $quoteService = new QuoteService();
         try {
             $todayQuote = $quoteService->getOrEnsureToday();

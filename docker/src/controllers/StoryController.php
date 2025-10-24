@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Services\StoryService;
 use DomainException;
 use Throwable;
+use App\Security\Csrf;
 
 final class StoryController
 {
@@ -57,6 +58,8 @@ final class StoryController
     /** POST /api/story (title, content, anonymous=on|1) */
     public static function create(): void
     {
+        Csrf::verify();
+        
         $storyService = new StoryService();
 
         $userId    = $_SESSION['user']['id'] ?? null; // null = anonymous
