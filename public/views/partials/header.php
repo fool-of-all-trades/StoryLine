@@ -9,6 +9,10 @@
 
   <script src="/public/scripts/main.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/scripts/main.js') ?>" defer></script>
 
+  <script>
+    window.CSRF_TOKEN = "<?= htmlspecialchars(App\Security\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>";
+  </script>
+
 </head>
 <body>
   <nav class="nav">

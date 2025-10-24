@@ -1,4 +1,8 @@
-<?php $title = "StoryLine — Today"; include __DIR__."/partials/header.php"; ?>
+<?php 
+  $title = "StoryLine — Today"; 
+  include __DIR__."/partials/header.php"; 
+  use App\Security\Csrf;
+?>
 
     <section class="prompt-card">
       <small class="date" data-date></small>
@@ -8,6 +12,7 @@
 
     <section id="write" class="writer">
       <form id="story-form" method="post" action="/api/story">
+        <?= Csrf::inputField() ?>
         <input id="title" name="title" placeholder="Title" maxlength="100" />
         <br>
         <textarea id="content" name="content" rows="12" data-wordlimit="500"></textarea>
