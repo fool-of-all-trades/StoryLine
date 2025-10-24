@@ -8,6 +8,7 @@ use App\Repository\Database;
 use PDO;
 use RuntimeException;
 use Throwable;
+use PDOException;
 
 final class StoryRepository
 {
@@ -26,7 +27,7 @@ final class StoryRepository
     /**
      * Creates the story in a transaction.
      * Limit of 1 story per prompt per (user/device/ip).
-     * Plus (optionally) validation of word_count ≤ 500 (triggers in DB will enforce this anyway).
+     * Plus (optionally) validation of word_count <= 500 (triggers in DB will enforce this anyway).
      */
     public function create(Story $s): int{
         try {
@@ -50,7 +51,7 @@ final class StoryRepository
             Database::commit();
             return $id;
 
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             Database::rollBack();
             // 23505 = unique_violation -> user already submitted today
             if ($e->getCode() === '23505') {
