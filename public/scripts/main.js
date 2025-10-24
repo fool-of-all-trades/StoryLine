@@ -10,6 +10,7 @@
       await fetch("/api/quote/ensure", {
         method: "POST",
         credentials: "include",
+        headers: { "X-CSRF-Token": window.CSRF_TOKEN },
       });
       q = await fetch("/api/quote/today", { credentials: "include" });
     }
@@ -30,6 +31,7 @@
         method: "POST",
         body: fd,
         credentials: "include",
+        headers: { "X-CSRF-Token": window.CSRF_TOKEN },
       });
       const data = await res.json();
       if (res.ok) {
@@ -96,6 +98,7 @@
         {
           method: "POST",
           credentials: "include",
+          headers: { "X-CSRF-Token": window.CSRF_TOKEN },
         }
       );
       const data = await res.json();
