@@ -25,4 +25,9 @@ final class Csrf
             exit;
         }
     }
+
+    public static function regenerate(): void {
+    unset($_SESSION['csrf']);
+    $_SESSION['csrf'] = bin2hex(random_bytes(16));
+}
 }
