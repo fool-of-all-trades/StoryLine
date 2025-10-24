@@ -22,10 +22,10 @@
       [j.source_book, j.source_author].filter(Boolean).join(" — ") || "—";
 
     // 2) Handle story submission
-    const form = qs("#story-form");
-    form?.addEventListener("submit", async (e) => {
+    const storyForm = qs("#story-form");
+    storyForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const fd = new FormData(form);
+      const fd = new FormData(storyForm);
       // validation of whether the quote is included is done in the db for now
       const res = await fetch("/api/story", {
         method: "POST",
@@ -112,6 +112,57 @@
       }
     });
   }
+
+  // --- Autosave + session keep-alive ---
+  const storyTextarea = document.querySelector("#story-textarea");
+  const storyForm = document.querySelector("#story-form");
+  if (!storyTextarea || !storyForm) return; // works only on the dahsboard
+
+  const challengeId = storyTextarea.dataset.challengeId || "unknown";
+  const KEY = `storyline:draft:${challengeId}`;
+
+  // Restore draft from localStorage
+  if (!storyTextarea.value) {
+    const draft = localStorage.getItem(KEY);
+    if (draft) storyTextarea.value = draft;
+  }
+
+  // Debounced autosave
+  let saveTimer = null;
+  storyTextarea.addEventListener("input", () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(KEY, storyTextarea.value);
+      } catch (e) {
+        // storage is full? well that's rough buddy
+        console.warn("Autosave failed:", e);
+      }
+    }, 800);
+  });
+
+  // After the user submits the form, clear the saved draft
+  storyForm.addEventListener("submit", () => {
+    localStorage.removeItem(KEY);
+  });
+
+  // session keep-alive only if the user is actively typing
+  // let lastTyping = Date.now();
+  // storyTextarea.addEventListener("input", () => {
+  //   lastTyping = Date.now();
+  // });
+
+  // setInterval(() => {
+  //   // if the user typed in the last minute, ping the server in 5 minutes to keep the session alive
+  //   if (Date.now() - lastTyping < 60_000) {
+  //     fetch("/auth/ping", {
+  //       method: "POST",
+  //       headers: {
+  //         "X-CSRF-Token": window.CSRF_TOKEN || "",
+  //       },
+  //     }).catch(() => {});
+  //   }
+  // }, 300_000);
 
   // ===== Helper =====
   function escapeHtml(s) {

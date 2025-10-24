@@ -15,7 +15,13 @@
         <?= Csrf::inputField() ?>
         <input id="title" name="title" placeholder="Title" maxlength="100" />
         <br>
-        <textarea id="content" name="content" rows="12" data-wordlimit="500"></textarea>
+        <textarea
+          id="story-textarea"
+          name="content"
+          rows="12"
+          data-wordlimit="500"
+          data-challenge-id="<?= htmlspecialchars(date('Y-m-d'), ENT_QUOTES, 'UTF-8') ?>"
+        ></textarea>
         <br>
         <label><input type="checkbox" name="anonymous" value="1">Anonymous</label>
         <br>
