@@ -91,6 +91,22 @@ class Routing
                 http_response_code(405); 
                 return;
 
+            case 'api/story/flower':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    FlowerController::toggle(); 
+                    return; 
+                }
+                http_response_code(405); 
+                return;
+
+            case 'api/story/flowers':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+                    FlowerController::count(); 
+                    return; 
+                }
+                http_response_code(405); 
+                return;
+
             case 'api/quotes/random':
                 if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
                     QuotesApiController::random(); 
