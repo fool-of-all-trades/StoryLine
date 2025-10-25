@@ -29,5 +29,9 @@
       <a href="/login">Login</a>
     <?php endif; ?>
 
+    <?php if (is_admin()): ?>
+      <a href="/admin">Admin</a>
+    <?php endif; ?>
+
   </nav>
   <main class="container">
