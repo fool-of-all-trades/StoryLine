@@ -1,3 +1,6 @@
+const meta = document.querySelector('meta[name="csrf-token"]');
+window.CSRF_TOKEN = meta ? meta.content : "";
+
 (async () => {
   const qs = (sel, root = document) => root.querySelector(sel);
 
