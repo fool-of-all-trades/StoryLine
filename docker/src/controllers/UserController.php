@@ -18,22 +18,67 @@ final class UserController
         exit;
     }
 
+    private static function requirePostWithCsrf(): void {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405);
+            exit('Method Not Allowed');
+        }
+        Csrf::verify();
+    }
+
     public static function login(): void
     {
-        Csrf::verify();
+        self::requirePostWithCsrf();
 
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
+        // ---- Throttle (rate limiting) ----
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $key = 'login_attempts_' . $ip; // per-IP
+
+        if (!isset($_SESSION[$key])) {
+            $_SESSION[$key] = ['cnt' => 0, 'until' => 0];
+        }
+
+        $now = time();
+
+        // If they try while the time hasn't passed yet -> 429
+        if ($now < $_SESSION[$key]['until']) {
+            header('Retry-After: ' . ($_SESSION[$key]['until'] - $now));
+            self::json(['error' => 'too_many_attempts', 'retry_after' => $_SESSION[$key]['until'] - $now], 429);
+        }
+
+        $username = trim((string)($_POST['username'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
 
         $userService = new UserService();
 
         try {
             $payload = $userService->login($username, $password);
+
+            // SUCCESS: reset throttle + rotate session & CSRF
+            $_SESSION[$key] = ['cnt' => 0, 'until' => 0];
             session_regenerate_id(true);
+            Csrf::regenerate();
+
             $_SESSION['user'] = $payload;
-            self::json(['ok'=>true, 'user'=>$payload], 200);
+            self::json(['ok' => true, 'user' => $payload], 200);
         } catch (DomainException $e) {
-            self::json(['error'=>$e->getMessage()], 401);
+            // FAIL -> increase throttle counter
+            $_SESSION[$key]['cnt']++;
+
+            $MAX_ATTEMPTS = 5;
+            $BASE_LOCK    = 60; // seconds
+
+            // backoff: every MAX_ATTEMPTS doubles the lock time
+            $multiplier   = 1 << (int)floor(($_SESSION[$key]['cnt'] - 1) / $MAX_ATTEMPTS);
+            $lockSeconds  = $BASE_LOCK * $multiplier;
+
+            if ($_SESSION[$key]['cnt'] >= $MAX_ATTEMPTS) {
+                $_SESSION[$key]['cnt'] = 0;
+                $_SESSION[$key]['until'] = $now + $lockSeconds;
+            }
+
+            // we do not say if that user exists! why would we help attackers?
+            self::json(['error' => 'invalid_credentials'], 401);
         } catch (Throwable $e) {
             self::json(['error'=>'internal_error'], 500);
         }
@@ -41,23 +86,29 @@ final class UserController
 
     public static function logout(): void
     {
-        Csrf::verify();
+        self::requirePostWithCsrf();
 
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $p = session_get_cookie_params();
-            setcookie(session_name(), '', time()-42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+            setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
         }
         session_destroy();
-        self::json(['ok'=>true], 200);
+
+        // start a new, empty session + fresh CSRF (immediately without logging in)
+        session_start();
+        Csrf::regenerate();
+
+        http_response_code(204); // No Content
+        exit;
     }
 
     public static function register(): void
     {
-        Csrf::verify();
+        self::requirePostWithCsrf();
         
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $username = trim((string)($_POST['username'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
 
         $userService = new UserService();
         try {

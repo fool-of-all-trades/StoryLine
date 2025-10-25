@@ -98,3 +98,13 @@ function current_user(): ?array {
 function is_admin(): bool {
     return (($_SESSION['user']['role'] ?? 'user') === 'admin');
 }
+
+function require_login(): void {
+  if (!isset($_SESSION['user'])) { http_response_code(401); exit('Unauthorized'); }
+}
+
+function require_role(array $roles): void {
+  require_login();
+  $r = $_SESSION['user']['role'] ?? 'user';
+  if (!in_array($r, $roles, true)) { http_response_code(403); exit('Forbidden'); }
+}
