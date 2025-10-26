@@ -27,7 +27,7 @@ final class Csrf
     }
 
     public static function regenerate(): void {
-    unset($_SESSION['csrf']);
-    $_SESSION['csrf'] = bin2hex(random_bytes(16));
-}
+        unset($_SESSION['csrf']);
+        $_SESSION['csrf'] = bin2hex(random_bytes(16));
+    }
 }

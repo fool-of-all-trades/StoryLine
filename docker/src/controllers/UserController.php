@@ -18,6 +18,12 @@ final class UserController
         exit;
     }
 
+    private static function isSafeRedirect(string $url): bool {
+        return str_starts_with($url, '/')
+            && !str_starts_with($url, '//')
+            && !str_contains($url, "\n");
+    }
+
     private static function requirePostWithCsrf(): void {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             http_response_code(405);
@@ -26,6 +32,20 @@ final class UserController
         Csrf::verify();
     }
 
+    /**
+    *  Handle user login
+    *
+    * Requires a POST request with a valid CSRF token. Applies per-IP throttling
+    * (5 failed attempts -> 60s lock; doubles every additional 5 failures).
+    * On successful authentication, rotates the PHP session ID and regenerates the
+    * CSRF token, stores the authenticated user payload in $_SESSION['user'], and
+    * returns JSON { ok: true, user: {...} } with HTTP 200.
+    *
+    * Error responses:
+    * - 429 Too Many Requests  — { error: "too_many_attempts", retry_after: <seconds> }
+    * - 401 Unauthorized       — { error: "invalid_credentials" } (no user enumeration)
+    * - 500 Internal Server Error — { error: "internal_error" }
+    */
     public static function login(): void
     {
         self::requirePostWithCsrf();
@@ -60,7 +80,14 @@ final class UserController
             Csrf::regenerate();
 
             $_SESSION['user'] = $payload;
-            self::json(['ok' => true, 'user' => $payload], 200);
+            // self::json(['ok' => true, 'user' => $payload], 200);
+
+            $target = (string)($_POST['redirect'] ?? '/dashboard');
+            if (!self::isSafeRedirect($target)) { $target = '/dashboard'; }
+
+            http_response_code(303); // thanks to that refreshing /dashboard won't resend the form
+            header('Location: ' . $target);
+            exit;
         } catch (DomainException $e) {
             // FAIL -> increase throttle counter
             $_SESSION[$key]['cnt']++;
@@ -100,6 +127,11 @@ final class UserController
         Csrf::regenerate();
 
         http_response_code(204); // No Content
+
+        // reload the dashboard page
+        $target = (string)($_POST['redirect'] ?? '/dashboard');
+        if (!self::isSafeRedirect($target)) { $target = '/dashboard'; }
+        header('Location: ' . $target);
         exit;
     }
 
@@ -113,7 +145,13 @@ final class UserController
         $userService = new UserService();
         try {
             $id = $userService->register($username, $password, Role::User);
-            self::json(['id'=>$id], 201);
+            // self::json(['id'=>$id], 201);
+            $target = (string)($_POST['redirect'] ?? '/login');
+            if (!self::isSafeRedirect($target)) { $target = '/login'; }
+
+            http_response_code(303);
+            header('Location: ' . $target);
+            exit;
         } catch (DomainException $e) {
             $code = match($e->getMessage()) {
                 'username_taken' => 409,
