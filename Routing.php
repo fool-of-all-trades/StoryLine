@@ -135,7 +135,7 @@ class Routing
         // Dynamic: /user/{id}
         if (preg_match('#^user/(\d+)$#', $path, $m)) {
             $GLOBALS['route_params']['user_id'] = (int)$m[1];
-            include 'public/views/user.php';
+            UserController::profile(['user_id' => $GLOBALS['route_params']['user_id']]);
             return;
         }
 

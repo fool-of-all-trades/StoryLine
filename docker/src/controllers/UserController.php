@@ -163,4 +163,26 @@ final class UserController
             self::json(['error'=>'internal_error'], 500);
         }
     }
+
+    public static function profile(array $params): void
+    {
+        $id = (int)($params['user_id'] ?? 0);
+        if ($id <= 0) { 
+            http_response_code(404); 
+            echo 'User not found'; 
+            return; 
+        }
+
+        $userService  = new UserService();
+        $user = $userService->findById($id);
+        if (!$user) { 
+            http_response_code(404); 
+            echo 'User not found'; 
+            return; 
+        }
+
+        $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
+        include __DIR__ . '/../../../public/views/user.php';
+    }
+
 }

@@ -5,12 +5,13 @@ namespace App\Services;
 
 use App\Repository\UserRepository;
 use App\Models\Role;
+use App\Models\User;
 use DomainException;
 
 final class UserService
 {
     public function __construct(
-        private UserRepository $users = new UserRepository()
+        private UserRepository $userRepository = new UserRepository()
     ) {}
 
     /**
@@ -24,7 +25,7 @@ final class UserService
             throw new DomainException('bad_credentials');
         }
 
-        $user = $this->users->findByUsername($username);
+        $user = $this->userRepository->findByUsername($username);
         if (!$user || !$user->verifyPassword($password)) {
             throw new DomainException('bad_credentials');
         }
@@ -48,10 +49,15 @@ final class UserService
         }
 
         // unique username check
-        if ($this->users->findByUsername($username)) {
+        if ($this->userRepository->findByUsername($username)) {
             throw new DomainException('username_taken');
         }
 
-        return $this->users->create($username, $password, $role);
+        return $this->userRepository->create($username, $password, $role);
+    }
+
+    public function findById(int $id): ?User
+    {
+        return $this->userRepository->findById($id);
     }
 }

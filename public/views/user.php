@@ -1,15 +1,13 @@
 <?php
-  $id = $GLOBALS['route_params']['user_id'] ?? null;
-  $title = "StoryLine — User Panel".htmlspecialchars((string)$id);
-  include __DIR__."/partials/header.php";
+/** @var \App\Models\User $user */
+$title = "StoryLine — User Panel";
+include __DIR__."/partials/header.php";
 ?>
+    <main>
+        <h1><?= htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8') ?></h1>
 
-<h1>User #<?= htmlspecialchars((string)$id) ?></h1>
-<ul class="story-list">
-  <li class="story-card"><a class="title" href="/story/1">story 1</a></li>
-  <li class="story-card"><a class="title" href="/story/7">story 2</a></li>
-</ul>
-
+        <ul class="story-list" id="user-stories">
+        </ul>
     </main>
-</body>
+  </body>
 </html>

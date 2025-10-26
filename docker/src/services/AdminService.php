@@ -6,7 +6,6 @@ namespace App\Services;
 use App\Repository\StoryRepository;
 use App\Repository\UserRepository;
 use App\Repository\FlowerRepository;
-use PDO;
 
 final class AdminService
 {

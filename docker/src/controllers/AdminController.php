@@ -6,7 +6,7 @@ namespace App\Controllers;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
-use App\Services\StoryService;
+use App\Services\AdminService;
 
 final class AdminController
 {
