@@ -12,7 +12,7 @@ use DateTimeImmutable;
 final class StoryService
 {
     public function __construct(
-        private StoryRepository $stories = new StoryRepository(),
+        private StoryRepository $storyRepository = new StoryRepository(),
         private ?QuoteService $quoteService = null, 
     ) {}
 
@@ -30,12 +30,12 @@ final class StoryService
         $limit  = max(1, min(50, (int)$limit));
         $offset = ($page - 1) * $limit;
 
-        return $this->stories->listByDate($dateYmd, $sort, $limit, $offset);
+        return $this->storyRepository->listByDate($dateYmd, $sort, $limit, $offset);
     }
 
     public function getStoryById(int $id): ?Story
     {
-        return $this->stories->getById($id);
+        return $this->storyRepository->getById($id);
     }
 
     /**
@@ -71,7 +71,7 @@ final class StoryService
 
         // try to add the story in transaction to database
         try {
-            return $this->stories->create($story);
+            return $this->storyRepository->create($story);
         } catch (Throwable $e) {
             $msg = $e->getMessage();
             if (str_contains($msg, 'Quote is not included'))

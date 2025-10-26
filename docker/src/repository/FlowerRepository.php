@@ -50,4 +50,20 @@ final class FlowerRepository
             throw $e;
         }
     }
+
+    // HELPERS FOR ADMIN PANEL
+    public function countTotal(): int {
+        return (int)$this->pdo->query("SELECT COUNT(*) FROM flowers")->fetchColumn();
+    }
+
+    public function timeSeries(int $months=12, string $bucket='month'): array {
+        $bucket = $bucket === 'day' ? 'day' : 'month';
+        $sql = "SELECT date_trunc('$bucket', created_at)::date AS bucket, COUNT(*)::int AS cnt
+                FROM flowers
+                WHERE created_at >= (CURRENT_DATE - INTERVAL :months)
+                GROUP BY 1 ORDER BY 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':months' => $months.' months']);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }

@@ -94,4 +94,45 @@ final class StoryRepository
         $rows = $st->fetchAll();
         return array_map(fn($r) => Story::fromArray($r), $rows);
     }
+
+    // HELPERS FOR ADMINISTRATION PURPOSES
+    public function countTotal(): int {
+        return (int)$this->pdo->query("SELECT COUNT(*) FROM stories")->fetchColumn();
+    }
+
+    public function countOnDate(string $date): int {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM stories WHERE created_at::date = :d");
+        $stmt->execute([':d'=>$date]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function topOfDay(string $date): ?array {
+        $sql = "SELECT s.id, s.title, s.created_at,
+                       u.username,
+                       COUNT(f.id) AS flowers
+                FROM stories s
+                LEFT JOIN users   u ON u.id = s.user_id
+                LEFT JOIN flowers f ON f.story_id = s.id
+                                      AND f.created_at::date = :d
+                WHERE s.created_at::date = :d
+                GROUP BY s.id, u.username, s.title, s.created_at
+                ORDER BY flowers DESC, s.created_at DESC
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':d'=>$date]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /** Returns: [ ['bucket'=>'2025-01-01','cnt'=>12], ... ] */
+    public function timeSeries(int $months=12, string $bucket='month'): array {
+        $bucket = $bucket === 'day' ? 'day' : 'month';
+        $sql = "SELECT date_trunc('$bucket', created_at)::date AS bucket, COUNT(*)::int AS cnt
+                FROM stories
+                WHERE created_at >= (CURRENT_DATE - INTERVAL :months)
+                GROUP BY 1 ORDER BY 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':months' => $months.' months']);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }

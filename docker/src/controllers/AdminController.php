@@ -16,4 +16,6 @@ final class AdminController
         echo json_encode($data, JSON_UNESCAPED_UNICODE);
         exit;
     }
+
+    // require_role(['admin']); // to be implemented
 }
