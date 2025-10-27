@@ -7,8 +7,11 @@
 
   <title><?= $title ?? 'StoryLine' ?></title>
 
-  <link rel="stylesheet" href="/public/styles/main.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/styles/main.css') ?>">
-  <script src="/public/scripts/main.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/scripts/main.js') ?>" defer></script>
+  <!-- <link rel="stylesheet" href="/public/styles/main.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/styles/main.css') ?>">
+  <script src="/public/scripts/main.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/scripts/main.js') ?>" defer></script> -->
+
+  <link rel="stylesheet" href="/styles/main.css">
+  <script defer src="/scripts/main.js"></script>
 
 </head>
 <body>

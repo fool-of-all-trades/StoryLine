@@ -8,3 +8,5 @@ cookies.txt
 /inspo
 /database/init/02_schema_upgrade.sql
 export_to_db_command.txt
+public/styles/test.css
+public/views/test.html

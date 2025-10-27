@@ -6,6 +6,7 @@ use App\Controllers\FlowerController;
 use App\Controllers\QuotesApiController;
 use App\Controllers\QuoteController;
 
+// controllers should be singletons
 
 class Routing
 {
@@ -18,6 +19,10 @@ class Routing
             case '':
             case 'dashboard':
                 include 'public/views/dashboard.php';
+                return;
+
+            case 'test':
+                include 'public/views/test.html';
                 return;
                 
             case 'admin':
