@@ -1,6 +1,14 @@
+:root {
+  --bg: #fadcda;
+  --gold: #f3c7a9;
+  --accent: #ff9148;
+  --font: #3b1912;
+  --dark-gold: #f4c6aa;
+}
+
 a {
   text-decoration: none;
-  color: #333;
+  color: var(--font);
 }
 
 a:hover {
@@ -13,7 +21,7 @@ button {
   padding: 8px 12px;
   border-radius: 4px;
   border-radius: 3rem;
-  background-color: #ff9148;
+  background-color: var(--accent);
 }
 
 * {
@@ -23,13 +31,13 @@ button {
 }
 
 body {
-  background-color: #fadcda;
-  color: #3b1912;
+  background-color: var(--bg);
+  color: var(--font);
   line-height: 1.6;
 }
 
 nav {
-  background-color: #ff9148;
+  background-color: var(--accent);
   height: 70px;
   display: flex;
   justify-content: space-around;
@@ -38,7 +46,7 @@ nav {
 
 section {
   border-radius: 20px;
-  border: 3px solid #f3c7a9;
+  border: 3px solid var(--gold);
   padding: 1rem;
   margin-bottom: 2rem;
 }
@@ -76,7 +84,7 @@ section {
   font-style: italic;
 }
 .section3 {
-  background-color: #f3c7a9;
+  background-color: var(--gold);
   color: white;
   text-align: center;
   display: flex;
@@ -111,7 +119,7 @@ section {
 }
 
 .gold-label {
-  background-color: #f4c6aa;
+  background-color: var(--dark-gold);
   padding: 0.2rem 1.5rem;
   border-radius: 1rem;
   font-size: 1.4rem;
@@ -131,7 +139,7 @@ section {
 }
 
 .number-of-stories {
-  background-color: #ff9148;
+  background-color: var(--accent);
   border-radius: 50%;
   width: 3rem;
   height: 3rem;
@@ -142,13 +150,13 @@ section {
 }
 
 .section5-top input {
-  border: 3px solid #f3c7a9;
+  border: 3px solid var(--gold);
   padding: 0rem 1.2rem;
   height: 3rem;
   font-size: 1.2rem;
   border-radius: 2rem;
   width: 90%;
-  background-color: #fadcda;
+  background-color: var(--bg);
 }
 
 .section5-middle {
@@ -164,7 +172,7 @@ section {
 }
 
 .book-card {
-  background-color: #ff9148;
+  background-color: var(--accent);
   width: 8rem;
   height: 11rem;
   border-radius: 1rem;
@@ -182,7 +190,7 @@ section {
 
 .left-arrow,
 .right-arrow {
-  border: 3px solid #f3c7a9;
+  border: 3px solid var(--gold);
   border-radius: 50%;
   width: 3rem;
   height: 3rem;
@@ -196,7 +204,7 @@ section {
   height: 0px;
   border-style: solid;
   border-width: 0.8rem 1.4rem 0.8rem 0;
-  border-color: transparent #f3c7a9 transparent transparent;
+  border-color: transparent var(--gold) transparent transparent;
   transform: rotate(0deg);
   transform: translateX(-0.2rem);
 }
