@@ -38,6 +38,11 @@ final class StoryService
         return $this->storyRepository->getById($id);
     }
 
+    public function getStoryByPublicId(string $uuid): ?Story
+    {
+        return $this->storyRepository->getStoryByPublicId($uuid);
+    }
+
     /**
      * Add a story for today's prompt.
      * @throws DomainException 'no_prompt_today'|'already_submitted_today'|'quote_missing'|'too_many_words'|'db_error'

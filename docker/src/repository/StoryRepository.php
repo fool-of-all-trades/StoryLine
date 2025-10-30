@@ -24,6 +24,13 @@ final class StoryRepository
         return $row ? Story::fromArray($row) : null;
     }
 
+    public function getStoryByPublicId(string $uuid): ?Story {
+        $st = $this->pdo->prepare('SELECT * FROM stories WHERE public_id = :uuid');
+        $st->execute(['uuid' => $uuid]);
+        $row = $st->fetch();
+        return $row ? Story::fromArray($row) : null;
+    }
+
     /**
      * Creates the story in a transaction.
      * Limit of 1 story per prompt per (user/device/ip).
@@ -77,7 +84,8 @@ final class StoryRepository
                 s.*,
                 COALESCE(f.cnt,0) AS flower_count,
                 u.username AS username,
-                u.public_id AS user_public_id
+                u.public_id AS user_public_id,
+                s.public_id AS story_public_id
             FROM stories s
             JOIN daily_prompt dp
                 ON dp.id = s.prompt_id AND dp."date" = :d

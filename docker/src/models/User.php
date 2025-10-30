@@ -11,9 +11,9 @@ final class User
         public int $id,
         public string $username,
         public string $passwordHash,
+        public string $public_id,
         public Role $role = Role::User,
         public DateTimeImmutable $createdAt = new DateTimeImmutable(),
-        public string $public_id
     ) {}
 
     public static function fromArray(array $row): self {
@@ -21,9 +21,9 @@ final class User
             id: (int)$row['id'],
             username: (string)$row['username'],
             passwordHash: (string)$row['password_hash'],
+            public_id: $row['public_id'] ?? '',
             role: Role::fromString((string)($row['role'] ?? 'user')),
             createdAt: new DateTimeImmutable((string)$row['created_at']),
-            public_id: $row['public_id'] ?? ''
         );
     }
 

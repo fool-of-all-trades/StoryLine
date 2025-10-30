@@ -65,11 +65,11 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     list.innerHTML = "";
 
     (j.items || []).forEach((item) => {
+      console.log(item);
       const li = document.createElement("li");
       li.className = "story";
       li.innerHTML = `
-        <a href="/story/${item.id}" class="title">${
-        // also here story id should also be a uuid, preferably, think it would be better
+        <a href="/story/${item.story_public_id}" class="title">${
         item.title ? escapeHtml(item.title) : "(no title)"
       }</a>
         <div class="meta">

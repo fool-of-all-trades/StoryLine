@@ -55,6 +55,23 @@ final class StoryController
         self::json($story->toArray());
     }
 
+    public static function viewByPublicId(array $params): void {
+        $uuid = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
+            http_response_code(404); echo 'Invalid story ID'; return;
+        }
+
+        $storyService = new StoryService();
+        $story = $storyService->getStoryByPublicId($uuid);
+        if (!$story) {
+            http_response_code(404); echo 'Story not found'; return;
+        }
+
+        $title = htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
+        include __DIR__ . '/../../../public/views/story.php';
+    }
+
+
     /** POST /api/story (title, content, anonymous=on|1) */
     public static function create(): void
     {

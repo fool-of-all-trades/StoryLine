@@ -143,10 +143,9 @@ class Routing
             return;
         }
 
-        // Dynamic: /story/{id}
-        if (preg_match('#^story/(\d+)$#', $path, $m)) {
-            $GLOBALS['route_params']['story_id'] = (int)$m[1];
-            include 'public/views/story.php';
+        // Dynamic: /story/{public_id}
+        if (preg_match('#^story/([0-9a-fA-F-]{36})$#', $path, $m)) {
+            StoryController::viewByPublicId(['public_id' => $m[1]]);
             return;
         }
 
