@@ -20,6 +20,13 @@ final class UserRepository
         return $row ? User::fromArray($row) : null;
     }
 
+    public function findByPublicId(string $uuid): ?User {
+        $st = $this->pdo->prepare('SELECT * FROM users WHERE public_id = :pid');
+        $st->execute([':pid' => $uuid]);
+        $row = $st->fetch();
+        return $row ? User::fromArray($row) : null;
+    }
+
     public function findByUsername(string $username): ?User {
         $st = $this->pdo->prepare('SELECT * FROM users WHERE username = :u');
         $st->execute([':u'=>$username]);

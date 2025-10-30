@@ -103,8 +103,8 @@ section {
 
 .section1-left {
   background-color: rgb(188, 20, 62);
-  width: 15rem;
-  height: 15rem;
+  width: 10rem;
+  height: 10rem;
   border-radius: 50%;
 }
 
@@ -128,7 +128,7 @@ section {
 }
 
 .section3 h3 {
-  font-size: 1.8rem;
+  font-size: 1.3rem;
 }
 
 .section5-top {
@@ -281,5 +281,33 @@ section {
   }
   .section5 {
     grid-area: 1 / 9 / 11 / 20;
+  }
+}
+
+/* large large screen */
+@media screen and (min-width: 1600px) {
+  .section1 {
+    grid-area: 1 / 1 / 5 / 9;
+  }
+  .section2 {
+    grid-area: 5 / 1 / 8 / 9;
+  }
+  .section3 {
+    grid-area: 8 / 1 / 11 / 6;
+  }
+  .section4 {
+    grid-area: 8 / 6 / 11 / 9;
+  }
+  .section5 {
+    grid-area: 1 / 9 / 11 / 20;
+  }
+
+  .section1-left {
+    width: 15rem;
+    height: 15rem;
+  }
+
+  .section3 h3 {
+    font-size: 1.8rem;
   }
 }

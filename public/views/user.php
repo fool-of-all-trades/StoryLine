@@ -46,7 +46,6 @@ include __DIR__."/partials/header.php";
             <div class="book-card"></div>
             <div class="book-card"></div>
             <div class="book-card"></div>
-            <div class="book-card"></div>
           </div>
           <div class="section5-bottom">
             <div class="left-arrow">

@@ -60,4 +60,8 @@ final class UserService
     {
         return $this->userRepository->findById($id);
     }
+
+    public function findByPublicId(string $uuid): ?User {
+        return $this->userRepository->findByPublicId($uuid);
+    }
 }

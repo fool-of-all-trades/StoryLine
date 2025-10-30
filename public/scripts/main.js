@@ -69,12 +69,15 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       li.className = "story";
       li.innerHTML = `
         <a href="/story/${item.id}" class="title">${
+        // also here story id should also be a uuid, preferably, think it would be better
         item.title ? escapeHtml(item.title) : "(no title)"
       }</a>
         <div class="meta">
           ${
-            item.user_id
-              ? `Author: <a href="/user/${item.user_id}">${item.user_id}</a> · `
+            item.id
+              ? `Author: <a href="/user/${item.user_public_id}">${escapeHtml(
+                  item.username ?? "user"
+                )}</a> · `
               : ""
           }
           ${item.word_count ?? 0} words · <span data-count>${

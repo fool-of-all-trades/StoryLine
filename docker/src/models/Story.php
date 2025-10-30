@@ -16,6 +16,8 @@ final class Story
         public string $content,
         public bool $isAnonymous = false,
         public int $wordCount = 0,
+        public ?string $username = null,
+        public ?string $user_public_id = null,
         public DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {
         if ($this->wordCount === 0) {
@@ -34,7 +36,9 @@ final class Story
             content: (string)$row['content'],
             isAnonymous: (bool)$row['is_anonymous'],
             wordCount: (int)($row['word_count'] ?? 0),
-            createdAt: new DateTimeImmutable((string)$row['created_at'])
+            createdAt: new DateTimeImmutable((string)$row['created_at']),
+            username: $row['username'],
+            user_public_id: $row['user_public_id'] ?? null,
         );
     }
 
@@ -50,6 +54,8 @@ final class Story
             'is_anonymous' => $this->isAnonymous,
             'word_count' => $this->wordCount,
             'created_at' => $this->createdAt->format('c'),
+            'username' => $this->username,
+            'user_public_id' => $this->user_public_id,
         ];
     }
 

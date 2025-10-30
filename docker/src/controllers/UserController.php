@@ -185,4 +185,24 @@ final class UserController
         include __DIR__ . '/../../../public/views/user.php';
     }
 
+    public static function profileByPublicId(array $params): void
+    {
+        $pid = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $pid)) {
+            http_response_code(404); 
+            echo 'User not found'; 
+            return;
+        }
+
+        $userService  = new UserService();
+        $user = $userService->findByPublicId($pid);
+        if (!$user) { 
+            http_response_code(404); 
+            echo 'User not found'; 
+            return; 
+        }
+
+        $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
+        include __DIR__ . '/../../../public/views/user.php';
+    }
 }

@@ -73,14 +73,21 @@ final class StoryRepository
         };
 
         $sql = <<<SQL
-            SELECT s.*, COALESCE(f.cnt,0) AS flower_count
+            SELECT
+                s.*,
+                COALESCE(f.cnt,0) AS flower_count,
+                u.username AS username,
+                u.public_id AS user_public_id
             FROM stories s
-            JOIN daily_prompt dp ON dp.id = s.prompt_id AND dp."date" = :d
+            JOIN daily_prompt dp
+                ON dp.id = s.prompt_id AND dp."date" = :d
             LEFT JOIN (
-                SELECT story_id, COUNT(*) AS cnt
+                SELECT story_id, COUNT(*)::int AS cnt
                 FROM flowers
                 GROUP BY story_id
             ) f ON f.story_id = s.id
+            LEFT JOIN users u
+                ON u.id = s.user_id
             ORDER BY $order
             LIMIT :limit OFFSET :offset
         SQL;
@@ -94,6 +101,7 @@ final class StoryRepository
         $rows = $st->fetchAll();
         return array_map(fn($r) => Story::fromArray($r), $rows);
     }
+
 
     // HELPERS FOR ADMINISTRATION PURPOSES
     public function countTotal(): int {

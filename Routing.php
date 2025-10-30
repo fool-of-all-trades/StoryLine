@@ -137,10 +137,9 @@ class Routing
                 return;
         }
 
-        // Dynamic: /user/{id}
-        if (preg_match('#^user/(\d+)$#', $path, $m)) {
-            $GLOBALS['route_params']['user_id'] = (int)$m[1];
-            UserController::profile(['user_id' => $GLOBALS['route_params']['user_id']]);
+        // Dynamic: /user/{public_id}
+        if (preg_match('#^user/([0-9a-fA-F-]{36})$#', $path, $m)) {
+            UserController::profileByPublicId(['public_id' => $m[1]]);
             return;
         }
 
