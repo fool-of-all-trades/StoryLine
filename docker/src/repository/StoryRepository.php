@@ -25,11 +25,33 @@ final class StoryRepository
     }
 
     public function getStoryByPublicId(string $uuid): ?Story {
-        $st = $this->pdo->prepare('SELECT * FROM stories WHERE public_id = :uuid');
-        $st->execute(['uuid' => $uuid]);
+        $sql = <<<SQL
+            SELECT
+                s.*,
+                s.public_id AS story_public_id,
+                COALESCE(f.cnt,0)::int AS flower_count,
+                u.username AS username,
+                u.public_id AS user_public_id,
+                dp."date" AS prompt_date,
+                dp.sentence AS prompt_sentence
+            FROM stories s
+            LEFT JOIN users u ON u.id = s.user_id
+            LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
+            LEFT JOIN (
+                SELECT story_id, COUNT(*) AS cnt
+                FROM flowers
+                GROUP BY story_id
+            ) f ON f.story_id = s.id
+            WHERE s.public_id = :uuid
+            LIMIT 1
+        SQL;
+
+        $st = $this->pdo->prepare($sql);
+        $st->execute([':uuid' => $uuid]);
         $row = $st->fetch();
         return $row ? Story::fromArray($row) : null;
     }
+
 
     /**
      * Creates the story in a transaction.

@@ -19,6 +19,9 @@ final class Story
         public ?string $username = null,
         public ?string $user_public_id = null,
         public ?string $story_public_id = null,
+        public ?int $flower_count = null,
+        public ?string $prompt_date = null,
+        public ?string $prompt_sentence = null,
         public DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {
         if ($this->wordCount === 0) {
@@ -59,6 +62,9 @@ final class Story
             'username' => $this->username,
             'user_public_id' => $this->user_public_id,
             'story_public_id' => $this->story_public_id,
+            'flower_count' => $this->flower_count,
+            'prompt_date' => $this->prompt_date,
+            'prompt_sentence' => $this->prompt_sentence,
         ];
     }
 

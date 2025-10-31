@@ -122,35 +122,61 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   // --- Autosave + session keep-alive ---
   const storyTextarea = document.querySelector("#story-textarea");
   const storyForm = document.querySelector("#story-form");
-  if (!storyTextarea || !storyForm) return; // works only on the dahsboard
 
-  const challengeId = storyTextarea.dataset.challengeId || "unknown";
-  const KEY = `storyline:draft:${challengeId}`;
+  // works only on the dahsboard
+  if (storyTextarea && storyForm) {
+    const challengeId = storyTextarea.dataset.challengeId || "unknown";
+    const KEY = `storyline:draft:${challengeId}`;
 
-  // Restore draft from localStorage
-  if (!storyTextarea.value) {
-    const draft = localStorage.getItem(KEY);
-    if (draft) storyTextarea.value = draft;
+    // Restore draft from localStorage
+    if (!storyTextarea.value) {
+      const draft = localStorage.getItem(KEY);
+      if (draft) storyTextarea.value = draft;
+    }
+
+    // Debounced autosave
+    let saveTimer = null;
+    storyTextarea.addEventListener("input", () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          localStorage.setItem(KEY, storyTextarea.value);
+        } catch (e) {
+          // storage is full? well that's rough buddy
+          console.warn("Autosave failed:", e);
+        }
+      }, 800);
+    });
+
+    // After the user submits the form, clear the saved draft
+    storyForm.addEventListener("submit", () => localStorage.removeItem(KEY));
   }
 
-  // Debounced autosave
-  let saveTimer = null;
-  storyTextarea.addEventListener("input", () => {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      try {
-        localStorage.setItem(KEY, storyTextarea.value);
-      } catch (e) {
-        // storage is full? well that's rough buddy
-        console.warn("Autosave failed:", e);
+  // ===== SINGLE STORY VIEW =====
+  const storyFull = qs("article.story-full");
+  if (storyFull) {
+    storyFull.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-like]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-story"); // numeric PK
+      const res = await fetch(
+        `/api/story/flower?id=${encodeURIComponent(id)}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "X-CSRF-Token": window.CSRF_TOKEN },
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        storyFull.querySelector("[data-count]").textContent = data.count;
+      } else if (data?.error === "unauthorized") {
+        location.href = "/login";
+      } else {
+        alert("Error: " + (data.error || "unknown"));
       }
-    }, 800);
-  });
-
-  // After the user submits the form, clear the saved draft
-  storyForm.addEventListener("submit", () => {
-    localStorage.removeItem(KEY);
-  });
+    });
+  }
 
   // session keep-alive only if the user is actively typing
   // let lastTyping = Date.now();
