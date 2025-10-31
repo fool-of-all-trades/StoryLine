@@ -44,6 +44,9 @@ final class Story
             username: $row['username'] ?? null, // can be anonymous, like da hackers
             user_public_id: $row['user_public_id'] ?? null,
             story_public_id: $row['story_public_id'] ?? null,
+            flower_count: $row['flower_count'] ?? 0, 
+            prompt_date: $row['prompt_date'] ?? null, 
+            prompt_sentence: $row['prompt_sentence'] ?? null, 
         );
     }
 
@@ -62,7 +65,7 @@ final class Story
             'username' => $this->username,
             'user_public_id' => $this->user_public_id,
             'story_public_id' => $this->story_public_id,
-            'flower_count' => $this->flower_count,
+            'flower_count' => (int)($this->flower_count ?? 0),
             'prompt_date' => $this->prompt_date,
             'prompt_sentence' => $this->prompt_sentence,
         ];
