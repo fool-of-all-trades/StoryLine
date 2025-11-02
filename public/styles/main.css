@@ -311,3 +311,51 @@ section {
     font-size: 1.8rem;
   }
 }
+
+/* Stories list pagination/sort */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.list-header .filter a {
+  text-decoration: none;
+  opacity: 0.8;
+}
+.list-header .filter a.active {
+  font-weight: 600;
+  text-decoration: underline;
+  opacity: 1;
+}
+.stories {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  gap: 1rem;
+}
+.stories .story {
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+.stories .story .title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.stories .story .meta {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin: 0.25rem 0 0.5rem;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+}
+.hidden {
+  display: none !important;
+}
