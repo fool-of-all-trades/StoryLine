@@ -16,33 +16,48 @@ final class QuoteService
         private string $localApiUrl = 'http://web/api/quotes/random' // quote api URL
     ) {}
 
-    /**  gets the today's quote from the database or, if it doesn't exist, from the local API and saves it. */
-    public function getOrEnsureToday(): Quote
-    {
-        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+    /**  
+     * Gets the quote for a given date (Y-m-d) from the database or, 
+     * if it doesn't exist, from the local API and saves it. 
+     * */
 
-        // check in db if today's quote exists
-        $existingInDBQuote = $this->repo->getByDate($today);
-        if ($existingInDBQuote !== null) {
-            return $existingInDBQuote;
+    public function getOrEnsureForDate(string $ymd): Quote
+    {
+        // date normalization
+        try {
+            $date = (new DateTimeImmutable($ymd))->format('Y-m-d');
+        } catch (\Exception $e) {
+            // fallback – if date is invalid, use today
+            $date = (new DateTimeImmutable('today'))->format('Y-m-d');
         }
 
-        // if not in db then fetch the quote from local API
+        $existing = $this->repo->getByDate($date);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        // if not in db, fetch from local API
         $quoteFromApi = $this->fetchLocalQuote();
         if (!$quoteFromApi || empty($quoteFromApi['sentence'])) {
             throw new DomainException('no_quote_available');
         }
 
-        // save the quote to the db
+        // save to database
         $this->repo->insertForDate(
-            $today,
+            $date,
             $quoteFromApi['sentence'],
             $quoteFromApi['book'] ?? null,
             $quoteFromApi['author'] ?? null
         );
 
-        // return today's quote
-        return $this->repo->getByDate($today);
+        return $this->repo->getByDate($date);
+    }
+
+    /** gets today's quote from the database or, if it doesn't exist, from the local API and saves it. */
+    public function getOrEnsureToday(): Quote
+    {
+        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+        return $this->getOrEnsureForDate($today);
     }
 
     /** returns the today's quote if it exists (without creating) */ 
