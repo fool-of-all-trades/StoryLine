@@ -10,6 +10,7 @@
   <!-- <link rel="stylesheet" href="/public/styles/main.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/styles/main.css') ?>">
   <script src="/public/scripts/main.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/public/scripts/main.js') ?>" defer></script> -->
 
+  <script defer src="/scripts/chart.js"></script>
   <link rel="stylesheet" href="/styles/main.css">
   <script defer src="/scripts/main.js"></script>
 
@@ -22,7 +23,7 @@
 
     <!-- if logged in, show logout button, if not then show login -->
     <?php if (current_user()): ?>
-      <form method="post" action="/logout" style="display:inline">
+      <form method="post" action="/logout">
         <?= App\Security\Csrf::inputField() ?>
         <button class="linklike">Logout (<?= htmlspecialchars(current_user()['username']) ?>)</button>
       </form>
