@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use DomainException;
-use Throwable;
-use App\Security\Csrf;
 use App\Services\AdminService;
 
 final class AdminController
@@ -17,5 +14,40 @@ final class AdminController
         exit;
     }
 
-    // require_role(['admin']); // to be implemented
+    /** GET /admin */
+    public static function index(): void
+    {
+        if (!is_admin()) {
+            http_response_code(403);
+            echo 'Forbidden';
+            return;
+        }
+
+        $date  = $_GET['date'] ?? 'today';
+
+        $service = new AdminService();
+        $stats   = $service->getDashboardData($date);
+
+        // Zmienna $stats będzie widoczna w widoku admin.php
+        $title = "StoryLine — Admin";
+        include __DIR__ . '/../../../public/views/admin.php';
+    }
+
+    // if I ever decide to make admin panel fetch stats via AJAX
+    // public static function stats(): void
+    // {
+    //     if (!is_admin()) {
+    //         http_response_code(403);
+    //         echo json_encode(['error' => 'forbidden']);
+    //         return;
+    //     }
+
+    //     $date    = $_GET['date'] ?? 'today';
+    //     $service = new AdminService();
+    //     $stats   = $service->getDashboardData($date);
+
+    //     header('Content-Type: application/json; charset=utf-8');
+    //     echo json_encode($stats, JSON_UNESCAPED_UNICODE);
+    // }
+
 }

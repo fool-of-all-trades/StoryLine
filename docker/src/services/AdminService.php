@@ -5,35 +5,75 @@ namespace App\Services;
 
 use App\Repository\StoryRepository;
 use App\Repository\UserRepository;
-use App\Repository\FlowerRepository;
+use App\Services\QuoteService;
+
+use DateTimeImmutable;
+use DomainException;
 
 final class AdminService
 {
     public function __construct(
-        private FlowerRepository $flowerRepository = new FlowerRepository(),
-        private StoryRepository $storyRepository  = new StoryRepository(),
-        private UserRepository $userRepository  = new UserRepository(),
+        private UserRepository  $userRepository  = new UserRepository(),
+        private StoryRepository $storyRepository = new StoryRepository(),
+        private QuoteService $quoteService = new QuoteService(),
     ) {}
 
-    public function metrics(string $date): array {
+    /**
+     * Returns dashboard data
+     * for a given date (default: today).
+     */
+    public function getDashboardData(string $dateInput = 'today'): array
+    {
+        $date = $this->normalizeDate($dateInput);
+        $ymd  = $date->format('Y-m-d');
+
+        // Ensure quote for the date, even if no one has visited the site at the given date
+        $quote = null;
+        try {
+            $quote = $this->quoteService->getOrEnsureForDate($ymd);
+        } catch (DomainException $e) {
+            if ($e->getMessage() === 'no_quote_available') {
+                $quote = null;
+            } else {
+                throw $e;
+            }
+        }
+
+        $storiesForDate = $this->storyRepository->countOnDate($ymd);
+        $storiesTotal   = $this->storyRepository->countTotal();
+        $topStory       = $this->storyRepository->topOfDay($ymd);
+        $usersTotal     = $this->userRepository->countTotal();
+        $storiesSeries  = $this->storyRepository->timeSeries(6, 'day');
+        $usersSeries    = $this->userRepository->timeSeries(12, 'month');
+
         return [
-            'date'           => $date,
-            'stories_today'  => $this->storyRepository->countOnDate($date),
-            'stories_total'  => $this->storyRepository->countTotal(),
-            'users_total'    => $this->userRepository->countTotal(),
-            'flowers_total'  => $this->flowerRepository->countTotal(),
+            'date'           => $ymd,
+            'quote'          => $quote,
+            'topStory'       => $topStory,
+            'storiesForDate' => $storiesForDate,
+            'storiesTotal'   => $storiesTotal,
+            'usersTotal'     => $usersTotal,
+            'storiesSeries'  => $storiesSeries,
+            'usersSeries'    => $usersSeries,
         ];
     }
 
-    public function topStoryOfDay(string $date): ?array {
-        return $this->storyRepository->topOfDay($date);
-    }
 
-    public function timeSeries(string $metric, int $months, string $bucket): array {
-        return match ($metric) {
-            'stories' => $this->storyRepository->timeSeries($months, $bucket),
-            'flowers' => $this->flowerRepository->timeSeries($months, $bucket),
-            default   => $this->userRepository->timeSeries($months, $bucket),
-        };
+    private function normalizeDate(string $input): DateTimeImmutable
+    {
+        $input = trim($input);
+        if ($input === '' || $input === 'today') {
+            return new DateTimeImmutable('today');
+        }
+        if ($input === 'yesterday') {
+            return new DateTimeImmutable('yesterday');
+        }
+
+        try {
+            return new DateTimeImmutable($input);
+        } catch (\Exception $e) {
+            // Fallback, in case of invalid date
+            return new DateTimeImmutable('today');
+        }
     }
 }

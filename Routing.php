@@ -5,6 +5,7 @@ use App\Controllers\StoryController;
 use App\Controllers\FlowerController;
 use App\Controllers\QuotesApiController;
 use App\Controllers\QuoteController;
+use App\Controllers\AdminController;
 
 // controllers should be singletons
 
@@ -26,7 +27,11 @@ class Routing
                 return;
                 
             case 'admin':
-                include 'public/views/admin.php';
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+                    AdminController::index(); 
+                    return; 
+                }
+                http_response_code(405); 
                 return;
 
             case 'stories':
