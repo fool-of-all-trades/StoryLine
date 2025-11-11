@@ -16,7 +16,6 @@ final class StoryRepository
         $this->pdo ??= Database::get(); 
     }
 
-
     public function getById(int $id): ?Story {
         $st = $this->pdo->prepare('SELECT * FROM stories WHERE id = :id');
         $st->execute(['id'=>$id]);
@@ -145,32 +144,54 @@ final class StoryRepository
     }
 
     public function topOfDay(string $date): ?array {
-        $sql = "SELECT s.id, s.title, s.created_at,
-                       u.username,
-                       COUNT(f.id) AS flowers
+        $sql = "SELECT
+                    s.id,
+                    s.public_id AS story_public_id,
+                    s.title,
+                    s.created_at,
+                    u.username,
+                    u.public_id AS user_public_id,
+                    COUNT(f.id) AS flowers
                 FROM stories s
                 LEFT JOIN users   u ON u.id = s.user_id
                 LEFT JOIN flowers f ON f.story_id = s.id
-                                      AND f.created_at::date = :d
+                                    AND f.created_at::date = :d
                 WHERE s.created_at::date = :d
-                GROUP BY s.id, u.username, s.title, s.created_at
+                GROUP BY
+                    s.id,
+                    s.public_id,
+                    s.title,
+                    s.created_at,
+                    u.username,
+                    u.public_id
                 ORDER BY flowers DESC, s.created_at DESC
                 LIMIT 1";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':d'=>$date]);
+        $stmt->execute([':d' => $date]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row ?: null;
     }
 
+
     /** Returns: [ ['bucket'=>'2025-01-01','cnt'=>12], ... ] */
-    public function timeSeries(int $months=12, string $bucket='month'): array {
+    public function timeSeries(int $months = 12, string $bucket = 'month'): array
+    {
         $bucket = $bucket === 'day' ? 'day' : 'month';
+
         $sql = "SELECT date_trunc('$bucket', created_at)::date AS bucket, COUNT(*)::int AS cnt
                 FROM stories
-                WHERE created_at >= (CURRENT_DATE - INTERVAL :months)
-                GROUP BY 1 ORDER BY 1";
+                WHERE created_at >= (CURRENT_DATE - CAST(:interval AS interval))
+                GROUP BY 1
+                ORDER BY 1";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':months' => $months.' months']);
+        $stmt->execute([
+            ':interval' => $months . ' months', // np. "6 months"
+        ]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
+
 }
