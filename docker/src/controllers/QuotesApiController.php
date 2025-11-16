@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 use DateTimeImmutable;
+use Exception;
 
 final class QuotesApiController
 {
@@ -30,9 +31,19 @@ final class QuotesApiController
 
         // Quote choice is deterministic, based on the date
         $startDate = new DateTimeImmutable('2025-01-01');
-        $today = new DateTimeImmutable('today');
-        $diffDays = (int)$startDate->diff($today)->days;
 
+        $dateParam = $_GET['date'] ?? null;
+        if ($dateParam) {
+            try {
+                $targetDate = new DateTimeImmutable($dateParam);
+            } catch (Exception $e) {
+                $targetDate = new DateTimeImmutable('today');
+            }
+        } else {
+            $targetDate = new DateTimeImmutable('today');
+        }
+
+        $diffDays = (int)$startDate->diff($targetDate)->days;
         $index = $diffDays % count($data);
 
         // Get the quote at given index
@@ -49,7 +60,7 @@ final class QuotesApiController
             'author'   => $row['author'] ?? null,
             'book'     => $row['book'] ?? null,
             'index'    => $index,
-            'source'   => 'sequential-local'
+            'source'   => 'date-hash-local'
         ]);
     }
 }
