@@ -66,20 +66,34 @@ window.CSRF_TOKEN = meta ? meta.content : "";
 
     (j.items || []).forEach((item) => {
       console.log(item);
+
       const li = document.createElement("li");
       li.className = "story";
+
+      // --- author rendering ---
+      let authorHtml = "";
+
+      if (item.is_anonymous) {
+        // anon – just plain text, no link to profile
+        authorHtml = `Author: Anonymous · `;
+      } else if (item.user_public_id) {
+        // logged-in user, with link to profile
+        authorHtml = `Author: <a href="/user/${
+          item.user_public_id
+        }">${escapeHtml(item.username ?? "user")}</a> · `;
+      } else if (item.username) {
+        // logged-out user, no link to profile, but we have a nick he provided (gotta implement that)
+        authorHtml = `Author: ${escapeHtml(item.username)} · `;
+      } else {
+        authorHtml = `Author: Anonymous · `; // no author info at all
+      }
+
       li.innerHTML = `
         <a href="/story/${item.story_public_id}" class="title">${
         item.title ? escapeHtml(item.title) : "(no title)"
       }</a>
         <div class="meta">
-          ${
-            item.id
-              ? `Author: <a href="/user/${item.user_public_id}">${escapeHtml(
-                  item.username ?? "user"
-                )}</a> · `
-              : ""
-          }
+          ${authorHtml}
           ${item.word_count ?? 0} words · <span data-count>${
         item.flower_count ?? 0
       }</span> 🌸
@@ -91,6 +105,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
           item.id
         }">🌸 Flower</button>
       `;
+
       list.appendChild(li);
     });
 
