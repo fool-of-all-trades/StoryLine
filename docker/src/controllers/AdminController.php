@@ -26,9 +26,10 @@ final class AdminController
         $date  = $_GET['date'] ?? 'today';
 
         $service = new AdminService();
+
+        // $stats will be visible in admin.php
         $stats   = $service->getDashboardData($date);
 
-        // Zmienna $stats będzie widoczna w widoku admin.php
         $title = "StoryLine — Admin";
         include __DIR__ . '/../../../public/views/admin.php';
     }

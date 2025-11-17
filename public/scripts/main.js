@@ -134,6 +134,102 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     });
   }
 
+  // ===== USER PROFILE PANEL =====
+  const userMain = document.querySelector("main[data-user-public-id]");
+  if (userMain) {
+    const userPid = userMain.dataset.userPublicId;
+    const wordsEl = document.getElementById("user-word-stats");
+    const countEl = document.getElementById("user-stories-count");
+    const listEl = document.getElementById("user-stories-list");
+    const searchInput = document.getElementById("user-stories-search");
+
+    try {
+      const res = await fetch(
+        `/api/user/${encodeURIComponent(userPid)}/profile`,
+        {
+          credentials: "include",
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok) {
+        wordsEl.textContent = "Couldn't load your stats right now.";
+        console.error("Profile error:", payload);
+        return;
+      }
+
+      const { total_words, total_stories, items } = payload.data || {};
+
+      // 1) number of stories and words
+      if (typeof total_stories === "number" && countEl) {
+        countEl.textContent = String(total_stories);
+      }
+
+      if (typeof total_words === "number" && wordsEl) {
+        let label = "words";
+        if (total_words === 1) label = "word";
+        wordsEl.innerHTML =
+          `You've written <strong>${total_words}</strong> ${label} all together!<br/>` +
+          `I'm proud of you.`;
+      }
+
+      // 2) sotries list
+      if (listEl) {
+        const stories = Array.isArray(items) ? items : [];
+        renderStories(listEl, stories);
+
+        // simple search filter by the title/content
+        if (searchInput) {
+          searchInput.addEventListener("input", () => {
+            const q = searchInput.value.toLowerCase().trim();
+            const filtered = stories.filter((s) => {
+              const title = (s.title || "").toLowerCase();
+              const content = (s.content || "").toLowerCase();
+              return !q || title.includes(q) || content.includes(q);
+            });
+            renderStories(listEl, filtered);
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load user profile data", e);
+      if (wordsEl) {
+        wordsEl.textContent = "Couldn't load your stats right now.";
+      }
+    }
+  }
+
+  function renderStories(container, items) {
+    container.innerHTML = "";
+    if (!items.length) {
+      container.innerHTML =
+        "<p>You haven't written any stories yet. Let's fix that!</p>";
+      return;
+    }
+
+    items.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "book-card";
+
+      const title = item.title ? escapeHtml(item.title) : "(no title)";
+      const createdAt = item.created_at
+        ? new Date(item.created_at).toLocaleDateString()
+        : "";
+      const words = item.word_count ?? 0;
+      const flowers = item.flower_count ?? 0;
+
+      card.innerHTML = `
+        <a href="/story/${item.story_public_id}" class="book-card-title">${title}</a>
+        <div class="book-card-meta">
+          <span>${createdAt}</span> ·
+          <span>${words} words</span> ·
+          <span>${flowers} 🌸</span>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
   // --- Autosave + session keep-alive ---
   const storyTextarea = document.querySelector("#story-textarea");
   const storyForm = document.querySelector("#story-form");

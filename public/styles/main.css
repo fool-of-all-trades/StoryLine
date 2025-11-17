@@ -1,3 +1,14 @@
+/* @font-face {
+  font-family: "MyFont";
+  src: url("../static/mfjh.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: "MyFont", system-ui, sans-serif;
+} */
+
 :root {
   --bg: #fadcda;
   --gold: #f3c7a9;

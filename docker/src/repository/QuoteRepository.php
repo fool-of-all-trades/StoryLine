@@ -17,7 +17,7 @@ final class QuoteRepository
     public function getByDate(string $dateYmd): ?Quote {
         $st = $this->pdo->prepare('SELECT * FROM daily_prompt WHERE "date" = :d');
         $st->execute(['d'=>$dateYmd]);
-        $row = $st->fetch();
+        $row = $st->fetch(PDO::FETCH_ASSOC);
         return $row ? Quote::fromArray($row) : null;
     }
 

@@ -131,6 +131,60 @@ final class StoryRepository
         return array_map(fn($r) => Story::fromArray($r), $rows);
     }
 
+    /**
+     * Stories by user – for user profile panel
+     */
+    public function listByUser(int $userId, int $limit = 50, int $offset = 0): array
+    {
+        $sql = <<<SQL
+            SELECT
+                s.*,
+                COALESCE(f.cnt,0)::int AS flower_count,
+                u.username AS username,
+                u.public_id AS user_public_id,
+                s.public_id AS story_public_id
+            FROM stories s
+            LEFT JOIN (
+                SELECT story_id, COUNT(*)::int AS cnt
+                FROM flowers
+                GROUP BY story_id
+            ) f ON f.story_id = s.id
+            LEFT JOIN users u
+                ON u.id = s.user_id
+            WHERE s.user_id = :uid
+            ORDER BY s.created_at DESC
+            LIMIT :limit OFFSET :offset
+        SQL;
+
+        $st = $this->pdo->prepare($sql);
+        $st->bindValue(':uid', $userId, PDO::PARAM_INT);
+        $st->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $st->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $st->execute();
+
+        $rows = $st->fetchAll();
+        return array_map(fn($r) => Story::fromArray($r), $rows);
+    }
+
+    /**
+     * total number of words written by a user
+     */
+    public function totalWordsByUser(int $userId): int
+    {
+        $st = $this->pdo->prepare('SELECT COALESCE(SUM(word_count),0)::int FROM stories WHERE user_id = :uid');
+        $st->execute([':uid' => $userId]);
+        return (int)$st->fetchColumn();
+    }
+
+    /**
+     * total number of stories written by a user
+     */
+    public function totalStoriesByUser(int $userId): int
+    {
+        $st = $this->pdo->prepare('SELECT COUNT(*)::int FROM stories WHERE user_id = :uid');
+        $st->execute([':uid' => $userId]);
+        return (int)$st->fetchColumn();
+    }
 
     // HELPERS FOR ADMINISTRATION PURPOSES
     public function countTotal(): int {

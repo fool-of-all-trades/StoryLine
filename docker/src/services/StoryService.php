@@ -91,4 +91,21 @@ final class StoryService
             throw new DomainException('db_error: '.$msg);
         }
     }
+
+    /**
+     * Returns profile data for a given user.
+     * @return array{items: array, total_stories: int, total_words: int}
+     */
+    public function getProfileDataForUser(int $userId, int $limit = 50, int $offset = 0): array
+    {
+        $totalWords = $this->storyRepository->totalWordsByUser($userId);
+        $totalStories = $this->storyRepository->totalStoriesByUser($userId);
+        $stories = $this->storyRepository->listByUser($userId, $limit, $offset);
+
+        return [
+            'total_words' => $totalWords,
+            'total_stories' => $totalStories,
+            'items' => array_map(fn(Story $s) => $s->toArray(), $stories),
+        ];
+    }
 }

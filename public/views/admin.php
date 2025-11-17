@@ -17,19 +17,19 @@
   }
 
   // helper function
-  function e(string $s): string {
+  function esc(string $s): string {
       return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
   }
 
-  $date            = e($stats['date'] ?? date('Y-m-d'));
+  $date            = esc($stats['date'] ?? date('Y-m-d'));
   $quote           = $stats['quote']    ?? null;
   $top             = $stats['topStory'] ?? null;
   $storiesForDate  = (int)($stats['storiesForDate'] ?? 0);
   $storiesTotal    = (int)($stats['storiesTotal']   ?? 0);
   $usersTotal      = (int)($stats['usersTotal']     ?? 0);
 
-  $storiesSeriesJson = e(json_encode($stats['storiesSeries'] ?? []));
-  $usersSeriesJson   = e(json_encode($stats['usersSeries']   ?? []));
+  $storiesSeriesJson = esc(json_encode($stats['storiesSeries'] ?? []));
+  $usersSeriesJson   = esc(json_encode($stats['usersSeries']   ?? []));
 
   include __DIR__ . "/partials/header.php";
 ?>
@@ -50,13 +50,13 @@
   <article class="card">
     <h2>Quote for this date (<?= $date ?>)</h2>
     <?php if ($quote): ?>
-      <p>"<?= e($quote->sentence ?? '') ?>"</p>
+      <p>"<?= esc($quote->sentence ?? '') ?>"</p>
       <p>
         <?php if (!empty($quote->author)): ?>
-          — <?= e($quote->author) ?>
+          — <?= esc($quote->author) ?>
         <?php endif; ?>
         <?php if (!empty($quote->book)): ?>
-          <em>(<?= e($quote->book) ?>)</em>
+          <em>(<?= esc($quote->book) ?>)</em>
         <?php endif; ?>
       </p>
     <?php else: ?>
@@ -92,21 +92,21 @@
     ?>
     <h3>
       <?php if ($storyPublicId): ?>
-        <a href="/story/<?= e($storyPublicId) ?>">
-          <?= e($storyTitle) ?>
+        <a href="/story/<?= esc($storyPublicId) ?>">
+          <?= esc($storyTitle) ?>
         </a>
       <?php else: ?>
-        <?= e($storyTitle) ?>
+        <?= esc($storyTitle) ?>
       <?php endif; ?>
     </h3>
     <p>
       by
       <?php if ($userPublicId): ?>
-        <a href="/user/<?= e($userPublicId) ?>">
-          <?= e($userName) ?>
+        <a href="/user/<?= esc($userPublicId) ?>">
+          <?= esc($userName) ?>
         </a>
       <?php else: ?>
-        <?= e($userName) ?>
+        <?= esc($userName) ?>
       <?php endif; ?>
       · <?= $flowersCount ?> 🌸
     </p>

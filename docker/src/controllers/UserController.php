@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\UserService;
+use App\Services\StoryService;
 use App\Models\Role;
 use DomainException;
 use Throwable;
@@ -80,7 +81,6 @@ final class UserController
             Csrf::regenerate();
 
             $_SESSION['user'] = $payload;
-            // self::json(['ok' => true, 'user' => $payload], 200);
 
             $target = (string)($_POST['redirect'] ?? '/dashboard');
             if (!self::isSafeRedirect($target)) { $target = '/dashboard'; }
@@ -93,11 +93,11 @@ final class UserController
             $_SESSION[$key]['cnt']++;
 
             $MAX_ATTEMPTS = 5;
-            $BASE_LOCK    = 60; // seconds
+            $BASE_LOCK = 60; // seconds
 
             // backoff: every MAX_ATTEMPTS doubles the lock time
-            $multiplier   = 1 << (int)floor(($_SESSION[$key]['cnt'] - 1) / $MAX_ATTEMPTS);
-            $lockSeconds  = $BASE_LOCK * $multiplier;
+            $multiplier = 1 << (int)floor(($_SESSION[$key]['cnt'] - 1) / $MAX_ATTEMPTS);
+            $lockSeconds = $BASE_LOCK * $multiplier;
 
             if ($_SESSION[$key]['cnt'] >= $MAX_ATTEMPTS) {
                 $_SESSION[$key]['cnt'] = 0;
@@ -107,7 +107,7 @@ final class UserController
             // we do not say if that user exists! why would we help attackers?
             self::json(['error' => 'invalid_credentials'], 401);
         } catch (Throwable $e) {
-            self::json(['error'=>'internal_error'], 500);
+            self::json(['error' => 'internal_error'], 500);
         }
     }
 
@@ -187,15 +187,15 @@ final class UserController
 
     public static function profileByPublicId(array $params): void
     {
-        $pid = (string)($params['public_id'] ?? '');
-        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $pid)) {
+        $publicId = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicId)) {
             http_response_code(404); 
             echo 'User not found'; 
             return;
         }
 
         $userService  = new UserService();
-        $user = $userService->findByPublicId($pid);
+        $user = $userService->findByPublicId($publicId);
         if (!$user) { 
             http_response_code(404); 
             echo 'User not found'; 
@@ -204,5 +204,45 @@ final class UserController
 
         $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
         include __DIR__ . '/../../../public/views/user.php';
+    }
+
+    public static function profileData(array $params): void
+    {
+        $publicId = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicId)) {
+            self::json(['error' => 'not_found'], 404);
+        }
+
+        $userService = new UserService();
+        $user = $userService->findByPublicId($publicId);
+        if (!$user) {
+            self::json(['error' => 'not_found'], 404);
+        }
+
+        $storyService = new StoryService();
+        try {
+            $page  = (int)($_GET['page']  ?? 1);
+            $limit = (int)($_GET['limit'] ?? 10);
+
+            $page  = max(1, $page);
+            $limit = max(1, min(20, $limit));
+
+            $offset = ($page - 1) * $limit;
+
+            $data = $storyService->getProfileDataForUser($user->id, $limit, $offset);
+
+            self::json([
+                'user'   => [
+                    'username'  => $user->username,
+                    'public_id' => $user->public_id,
+                    'created_at'=> $user->createdAt->format('c'),
+                ],
+                'page'  => $page,
+                'limit' => $limit,
+                'data'  => $data,
+            ]);
+        } catch (Throwable $e) {
+            self::json(['error' => 'internal_error'], 500);
+        }
     }
 }
