@@ -67,13 +67,13 @@ final class UserController
             self::json(['error' => 'too_many_attempts', 'retry_after' => $_SESSION[$key]['until'] - $now], 429);
         }
 
-        $username = trim((string)($_POST['username'] ?? ''));
+        $identifier = trim((string)($_POST['identifier'] ?? ($_POST['username'] ?? '')));
         $password = (string)($_POST['password'] ?? '');
 
         $userService = new UserService();
 
         try {
-            $payload = $userService->login($username, $password);
+            $payload = $userService->login($identifier, $password);
 
             // SUCCESS: reset throttle + rotate session & CSRF
             $_SESSION[$key] = ['cnt' => 0, 'until' => 0];

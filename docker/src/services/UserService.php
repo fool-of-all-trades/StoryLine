@@ -18,14 +18,20 @@ final class UserService
      * @return array{id:int,username:string,role:string,created_at:string}
      * @throws DomainException 'bad_credentials'
      */
-    public function login(string $username, string $password): array
+    public function login(string $identifier, string $password): array
     {
-        $username = trim(mb_strtolower($username));
-        if ($username === '' || $password === '') {
+        $identifier = trim(mb_strtolower($identifier));
+        if ($identifier === '' || $password === '') {
             throw new DomainException('bad_credentials');
         }
 
-        $user = $this->userRepository->findByUsername($username);
+        // Does it look like an email (contains '@')?
+        if (str_contains($identifier, '@')) {
+            $user = $this->userRepository->findByEmail($identifier);
+        } else {
+            $user = $this->userRepository->findByUsername($identifier);
+        }
+
         if (!$user || !$user->verifyPassword($password)) {
             throw new DomainException('bad_credentials');
         }

@@ -8,7 +8,7 @@
       <form method="post" action="/login">
         <?= Csrf::inputField() ?>
         <input type="hidden" name="redirect" value="/dashboard">
-        <label>Username <input name="username" required maxlength="30"></label>
+        <label>Username or email <input name="identifier" required maxlength="255"></label>
         <label>Password <input type="password" name="password" required></label>
         <button type="submit" class="btn primary">Welcome</button>
       </form>
