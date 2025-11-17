@@ -35,25 +35,41 @@ final class UserService
     }
 
     /**
-     * @return int new user id
-     * @throws DomainException 'username_taken'|'weak_password'
+     * @return User
+     * @throws DomainException 'invalid_username'|'invalid_email'|'password_mismatch'|'weak_password'|'username_taken'|'email_taken'
      */
-    public function register(string $username, string $password, Role $role = Role::User): int
+    public function register(string $username, string $email, string $password, string $passwordConfirm): User
     {
-        $username = trim(mb_strtolower($username));
-        if ($username === '' || mb_strlen($username) < 3) {
-            throw new DomainException('weak_username');
-        }
-        if (mb_strlen($password) < 6) {
-            throw new DomainException('weak_password');
+        $username = trim($username);
+        $email = trim($email);
+
+        if (!preg_match('/^[A-Za-z0-9_.]{3,30}$/', $username)) {
+            throw new DomainException('Invalid username format');
         }
 
-        // unique username check
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new DomainException('Invalid email address');
+        }
+
+        if ($password !== $passwordConfirm) {
+            throw new DomainException('Passwords do not match');
+        }
+
+        if (strlen($password) < 8) {
+            throw new DomainException('Password must be at least 8 characters long');
+        }
+
         if ($this->userRepository->findByUsername($username)) {
-            throw new DomainException('username_taken');
+            throw new DomainException('Username is already taken');
+        }
+        if ($this->userRepository->findByEmail($email)) {
+            throw new DomainException('Email is already in use');
         }
 
-        return $this->userRepository->create($username, $password, $role);
+        // Password hashing, default for now is bcrypt, but if it changes in the future, then it will update to the stronger one
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+
+        return $this->userRepository->create($username, $email, $hash, Role::User);
     }
 
     public function findById(int $id): ?User

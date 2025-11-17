@@ -139,28 +139,24 @@ final class UserController
     {
         self::requirePostWithCsrf();
         
-        $username = trim((string)($_POST['username'] ?? ''));
-        $password = (string)($_POST['password'] ?? '');
+        $username = $_POST['username'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $passwordConfirm = $_POST['password_confirm'] ?? '';
 
         $userService = new UserService();
-        try {
-            $id = $userService->register($username, $password, Role::User);
-            // self::json(['id'=>$id], 201);
-            $target = (string)($_POST['redirect'] ?? '/login');
-            if (!self::isSafeRedirect($target)) { $target = '/login'; }
 
-            http_response_code(303);
-            header('Location: ' . $target);
+        try {
+            $user = $userService->register($username, $email, $password, $passwordConfirm);
+            header('Location: /login');
             exit;
         } catch (DomainException $e) {
-            $code = match($e->getMessage()) {
-                'username_taken' => 409,
-                'weak_password', 'weak_username' => 400,
-                default => 400,
-            };
-            self::json(['error'=>$e->getMessage()], $code);
-        } catch (Throwable $e) {
-            self::json(['error'=>'internal_error'], 500);
+            $error = $e->getMessage();
+            $old = [
+                'username' => $username,
+                'email' => $email,
+            ];
+            include __DIR__ . '/../../../public/views/register.php';
         }
     }
 

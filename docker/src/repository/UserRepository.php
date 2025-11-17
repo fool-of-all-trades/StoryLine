@@ -34,13 +34,27 @@ final class UserRepository
         return $row ? User::fromArray($row) : null;
     }
 
-    public function create(string $username, string $plainPassword, Role $role = Role::User): int {
-        $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
-        $st = $this->pdo->prepare(
-            'INSERT INTO users (username, password_hash, role) VALUES (:u,:h,:r) RETURNING id'
-        );
-        $st->execute([':u'=>$username, ':h'=>$hash, ':r'=>$role->value]);
-        return (int)$st->fetchColumn();
+    public function findByEmail(string $email): ?User {
+        $st = $this->pdo->prepare("SELECT * FROM users WHERE email = :email");
+        $st->execute([':email' => $email]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        return $row ? User::fromArray($row) : null;
+    }
+
+    public function create(string $username, string $email, string $passwordHash, Role $role = Role::User): User {
+
+        $sql = "INSERT INTO users (username, email, password_hash, role)
+                VALUES (:username, :email, :password_hash, :role)
+                RETURNING *";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':username' => $username,
+            ':email' => $email,
+            ':password_hash' => $passwordHash,
+            ':role' => $role->value,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return User::fromArray($row);
     }
 
     // HELPERS FOR ADMIN PANEL
