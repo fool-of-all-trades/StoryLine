@@ -1,3 +1,26 @@
+<?php
+if (empty($_COOKIE['device_token'])) {
+    try {
+        $token = bin2hex(random_bytes(16)); // 32-char hex
+    } catch (\Throwable $e) {
+        // fallback
+        $token = bin2hex(uniqid('', true));
+    }
+
+    $params = [
+        'expires'  => time() + 60 * 60 * 24 * 365, // ~1 year
+        'path'     => '/',
+        'secure'   => !empty($_SERVER['HTTPS']),
+        'httponly' => false,
+        'samesite' => 'Lax',
+    ];
+
+    setcookie('device_token', $token, $params);
+    // so that a not logged in user can't create more than 1 story per day from the same browser session/device
+    $_COOKIE['device_token'] = $token;
+}
+?>
+
 <!doctype html>
 <html lang="pl">
 <head>
