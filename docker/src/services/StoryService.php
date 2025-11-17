@@ -52,9 +52,32 @@ final class StoryService
         ?string $title,
         string $content,
         bool $anonymous,
+        ?string $guestName = null,
         ?string $deviceToken = null,
         ?string $ipHash = null
     ): int {
+
+        $isAnonymous = (bool)$anonymous;
+
+        // Guest nick logic:
+        // - if user logged in -> ignore guestName, there won't be any
+        // - if guest + anon -> null guestName (complete anon)
+        // - if guest + not anon -> use guestName (trimmed to 60 chars)
+        $finalGuestName = null;
+
+        if ($userId === null) {
+            $rawGuest = trim((string)$guestName);
+
+            if (!$isAnonymous && $rawGuest !== '') {
+                // guest + not anonymous -> use guestName
+                $finalGuestName = mb_substr($rawGuest, 0, 60);
+            }
+            // guest + anonymous -> finalGuestName stays null
+        } else {
+            // logged in user -> ignore guestName
+            $finalGuestName = null;
+        }
+
         // Get or create today's quote prompt
         $this->quoteService ??= new QuoteService();
         $prompt = $this->quoteService->getOrEnsureToday();
@@ -71,7 +94,8 @@ final class StoryService
             ipHash: $ipHash,
             title: $title ?: null,
             content: $content,
-            isAnonymous: !empty($anonymous) && $anonymous !== '0'
+            isAnonymous: !empty($anonymous) && $anonymous !== '0',
+            guestName: $finalGuestName
         );
 
         // try to add the story in transaction to database

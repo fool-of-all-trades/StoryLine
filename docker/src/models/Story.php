@@ -14,6 +14,7 @@ final class Story
         public ?string $ipHash,                  // hash(IP+salt) anty-spam
         public ?string $title,
         public string $content,
+        public ?string $guestName,
         public bool $isAnonymous = false,
         public int $wordCount = 0,
         public ?string $username = null,
@@ -38,6 +39,7 @@ final class Story
             ipHash: $row['ip_hash'] ?? null,
             title: $row['title'] ?? null,
             content: (string)$row['content'],
+            guestName: (string)$row['guest_name'] ?? null,
             isAnonymous: (bool)$row['is_anonymous'],
             wordCount: (int)($row['word_count'] ?? 0),
             createdAt: new DateTimeImmutable((string)$row['created_at']),
@@ -60,6 +62,7 @@ final class Story
             'title' => $this->title,
             'content' => $this->content,
             'is_anonymous' => $this->isAnonymous,
+            'guest_name' => $this->guestName,
             'word_count' => $this->wordCount,
             'created_at' => $this->createdAt->format('c'),
             'username' => $this->username,

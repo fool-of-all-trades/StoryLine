@@ -8,16 +8,23 @@ include __DIR__ . "/partials/header.php";
   <header>
     <h1><?= htmlspecialchars($story->title ?? '(Untitled)') ?></h1>
     <div class="meta">
+
+      <!-- render author username or guest name or anonymous -->
       <p>
         Author:
-        <?php if (!$story->isAnonymous && $story->user_public_id): ?>
+        <?php if ($story->isAnonymous): ?>
+          Anonymous
+        <?php elseif ($story->user_public_id): ?>
           <a href="/user/<?= htmlspecialchars($story->user_public_id) ?>">
             <?= htmlspecialchars($story->username ?? 'user') ?>
           </a>
+        <?php elseif (!empty($story->guestName)): ?>
+          <?= htmlspecialchars($story->guestName) ?>
         <?php else: ?>
           Anonymous
         <?php endif; ?>
       </p>
+
       <?php if (!empty($story->prompt_sentence)): ?>
         <p>Quote: "<?= htmlspecialchars($story->prompt_sentence) ?>"</p>
       <?php endif; ?>

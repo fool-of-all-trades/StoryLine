@@ -15,6 +15,17 @@
         <?= Csrf::inputField() ?>
         <input id="title" name="title" placeholder="Title" maxlength="100" />
         <br>
+        
+        <?php if (!$current_user) : ?>
+          <input
+            id="guest-name"
+            name="guest_name"
+            placeholder="Your name (optional)"
+            maxlength="60"
+          />
+          <br>
+        <?php endif; ?>
+
         <textarea
           id="story-textarea"
           name="content"
@@ -23,7 +34,10 @@
           data-challenge-id="<?= htmlspecialchars(date('Y-m-d'), ENT_QUOTES, 'UTF-8') ?>"
         ></textarea>
         <br>
-        <label><input type="checkbox" name="anonymous" value="1">Anonymous</label>
+        <label>
+          <input type="checkbox" name="anonymous" value="1">
+          Anonymous
+        </label>
         <br>
         <button type="submit" class="btn primary">Share</button>
       </form>

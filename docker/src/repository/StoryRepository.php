@@ -61,14 +61,15 @@ final class StoryRepository
         try {
             Database::begin();
 
-            $sql = 'INSERT INTO stories (prompt_id, user_id, device_token, ip_hash, title, content, is_anonymous)
-                    VALUES (:p,:u,:dt,:ip,:t,:c,:anon)
+            $sql = 'INSERT INTO stories (prompt_id, user_id, device_token, guest_name, ip_hash, title, content, is_anonymous)
+                    VALUES (:p, :u, :dt, :gn, :ip, :t, :c, :anon)
                     RETURNING id';
             $st = $this->pdo->prepare($sql);
             $st->execute([
                 ':p'   => $s->quoteId,
                 ':u'   => $s->userId,
                 ':dt'  => $s->deviceToken,
+                ':gn'  => $s->guestName,
                 ':ip'  => $s->ipHash,
                 ':t'   => $s->title,
                 ':c'   => $s->content,

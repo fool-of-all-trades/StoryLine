@@ -83,6 +83,7 @@ final class StoryController
         $title     = $_POST['title']   ?? null;
         $content   = trim($_POST['content'] ?? '');
         $anonymous = !empty($_POST['anonymous']);
+        $guestName = $_POST['guest_name'] ?? null;
 
         if ($content === '') {
             self::json(['error'=>'empty_content'], 400);
@@ -97,7 +98,8 @@ final class StoryController
         $ipHash = $ip ? hash('sha256', $ip . '|' . $salt) : null;
 
         try {
-            $id = $storyService->addTodayStory($userId, $title, $content, $anonymous, $deviceToken, $ipHash);
+            $id = $storyService->addTodayStory($userId, $title, $content, $anonymous, 
+                                                $guestName, $deviceToken, $ipHash);
             self::json(['id'=>$id], 201);
         } catch (DomainException $e) {
             $code = match ($e->getMessage()) {

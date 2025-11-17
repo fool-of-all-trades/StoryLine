@@ -81,9 +81,9 @@ window.CSRF_TOKEN = meta ? meta.content : "";
         authorHtml = `Author: <a href="/user/${
           item.user_public_id
         }">${escapeHtml(item.username ?? "user")}</a> · `;
-      } else if (item.username) {
-        // logged-out user, no link to profile, but we have a nick he provided (gotta implement that)
-        authorHtml = `Author: ${escapeHtml(item.username)} · `;
+      } else if (item.guest_name) {
+        // logged-out user, no link to profile, but we have a nick he provided
+        authorHtml = `Author: ${escapeHtml(item.guest_name)} · `;
       } else {
         authorHtml = `Author: Anonymous · `; // no author info at all
       }
