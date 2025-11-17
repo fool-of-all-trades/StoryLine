@@ -35,6 +35,7 @@ final class User
             'username' => $this->username,
             'email' => $this->email, 
             'role' => $this->role->value,
+            'public_id' => $this->public_id,
             'created_at' => $this->createdAt->format('c'),
         ];
     }

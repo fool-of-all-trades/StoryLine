@@ -95,6 +95,10 @@ function current_user(): ?array {
     return $_SESSION['user'] ?? null;
 }
 
+function is_logged_in(): bool {
+    return isset($_SESSION['user']) && is_array($_SESSION['user']) && isset($_SESSION['user']['id']);
+}
+
 function is_admin(): bool {
     return (($_SESSION['user']['role'] ?? 'user') === 'admin');
 }
