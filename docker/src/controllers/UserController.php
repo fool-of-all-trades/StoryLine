@@ -279,4 +279,37 @@ final class UserController
             echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
         }
     }
+    public static function updateUsername(): void
+    {
+        Csrf::verify();
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        $currentUser = current_user();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $username = $_POST['username'] ?? '';
+
+        $userService = new UserService();
+
+        try {
+            $userService->changeUsername((int)$currentUser['id'], $username);
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'ok',
+                'username' => $username,
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (DomainException $e) {
+            $code = $e->getMessage();
+            http_response_code(422);
+            echo json_encode(['error' => $code], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
+        }
+    }
 }

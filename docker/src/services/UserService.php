@@ -115,4 +115,28 @@ final class UserService
 
         $this->userRepository->updateFavoriteQuote($userId, $sentence, $book, $author);
     }
+    public function changeUsername(int $userId, ?string $username): void
+    {
+        $username = trim((string)$username);
+
+        if ($username === '') {
+            throw new DomainException('username_required');
+        }
+
+        if (mb_strlen($username) > 40) {
+            throw new DomainException('username_too_long');
+        }
+
+        if (!preg_match('/^[A-Za-z0-9_]+$/u', $username)) {
+            throw new DomainException('username_invalid_chars');
+        }
+
+        if($this->userRepository->findByUsername($username)) {
+            throw new DomainException('username_taken');
+        }
+
+        $username = $username !== '' ? $username : null;
+
+        $this->userRepository->updateUsername($userId, $username);
+    }
 }

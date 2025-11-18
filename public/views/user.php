@@ -10,6 +10,7 @@ $isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id)
         <section class="parent">
           <section class="section1">
             <div class="section1-left"></div>
+
             <div class="section1-right">
               <div class="gold-label">
                 <p><?= htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8') ?></p>
@@ -21,6 +22,19 @@ $isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id)
                 <p>edit</p>
               </div>
             </div>
+            <?php if ($isOwnProfile): ?>
+              <form id="username-form" method="post" action="/api/me/username" class="username-form">
+                <?= \App\Security\Csrf::inputField() ?>
+
+                <label>
+                  Username*
+                  <input type="text" name="username" maxlength="40"></input>
+                </label>
+
+                <button type="submit" class="btn secondary">Change username</button>
+                <p id="username-message" class="form-message"></p>
+              </form>
+            <?php endif; ?>
           </section>
           
           <section class="section2">

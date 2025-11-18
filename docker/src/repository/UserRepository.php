@@ -74,6 +74,15 @@ final class UserRepository
         ]);
     }
 
+    public function updateUsername(int $userId, ?string $username): void
+    {
+        $st = $this->pdo->prepare('UPDATE users SET username = :u WHERE id = :id');
+        $st->execute([
+            ':id' => $userId,
+            ':u'  => $username
+        ]);
+    }
+
     // HELPERS FOR ADMIN PANEL
     public function countTotal(): int {
         return (int)$this->pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
