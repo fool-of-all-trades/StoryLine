@@ -57,6 +57,23 @@ final class UserRepository
         return User::fromArray($row);
     }
 
+    public function updateFavoriteQuote(int $userId, ?string $sentence, ?string $book, ?string $author): void
+    {
+        $sql = 'UPDATE users
+                SET favorite_quote_sentence = :s,
+                    favorite_quote_book     = :b,
+                    favorite_quote_author   = :a
+                WHERE id = :id';
+
+        $st = $this->pdo->prepare($sql);
+        $st->execute([
+            ':id' => $userId,
+            ':s'  => $sentence,
+            ':b'  => $book,
+            ':a'  => $author,
+        ]);
+    }
+
     // HELPERS FOR ADMIN PANEL
     public function countTotal(): int {
         return (int)$this->pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();

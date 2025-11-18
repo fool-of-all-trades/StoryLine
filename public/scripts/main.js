@@ -230,6 +230,54 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     });
   }
 
+  // ===== FAVORITE QUOTE FORM =====
+  const favForm = document.getElementById("favorite-quote-form");
+  if (favForm) {
+    const msgEl = document.getElementById("favorite-quote-message");
+
+    favForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msgEl && (msgEl.textContent = "");
+
+      const formData = new FormData(favForm);
+
+      try {
+        const res = await fetch("/api/me/favorite-quote", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+          headers: {
+            "X-CSRF-Token": window.CSRF_TOKEN || "",
+          },
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          if (msgEl) {
+            msgEl.textContent = "Favorite quote saved ✨";
+            msgEl.classList.remove("error");
+            msgEl.classList.add("success");
+          }
+        } else {
+          const err = data?.error || "unknown_error";
+          if (msgEl) {
+            msgEl.textContent = "Could not save favorite quote: " + err;
+            msgEl.classList.remove("success");
+            msgEl.classList.add("error");
+          }
+        }
+      } catch (err) {
+        console.error("favorite-quote error", err);
+        if (msgEl) {
+          msgEl.textContent = "Unexpected error. Please try again.";
+          msgEl.classList.remove("success");
+          msgEl.classList.add("error");
+        }
+      }
+    });
+  }
+
   // --- Autosave + session keep-alive ---
   const storyTextarea = document.querySelector("#story-textarea");
   const storyForm = document.querySelector("#story-form");

@@ -241,4 +241,42 @@ final class UserController
             self::json(['error' => 'internal_error'], 500);
         }
     }
+
+    public static function updateFavoriteQuote(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $currentUser = current_user();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $sentence = $_POST['favorite_quote_sentence'] ?? '';
+        $book = $_POST['favorite_quote_book'] ?? '';
+        $author = $_POST['favorite_quote_author'] ?? '';
+
+        $userService = new UserService();
+
+        try {
+            $userService->setFavoriteQuote((int)$currentUser['id'], $sentence, $book, $author);
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'ok',
+                'favorite_quote' => [
+                    'sentence' => $sentence,
+                    'book'     => $book,
+                    'author'   => $author,
+                ],
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (DomainException $e) {
+            $code = $e->getMessage();
+            http_response_code(422);
+            echo json_encode(['error' => $code], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
+        }
+    }
 }

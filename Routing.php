@@ -140,6 +140,14 @@ class Routing
                 }
                 http_response_code(405); 
                 return;
+
+            case 'api/me/favorite-quote':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    UserController::updateFavoriteQuote();
+                    return; 
+                }
+                http_response_code(405); 
+                return;
         }
 
         // API: /api/user/{public_id}/profile

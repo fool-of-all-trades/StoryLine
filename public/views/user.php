@@ -2,6 +2,9 @@
 /** @var \App\Models\User $user */
 $title = "StoryLine — User Panel";
 include __DIR__."/partials/header.php";
+
+$sessionUser = current_user();
+$isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id);
 ?>
       <main data-user-public-id="<?= htmlspecialchars($user->public_id, ENT_QUOTES, 'UTF-8') ?>">
         <section class="parent">
@@ -19,9 +22,52 @@ include __DIR__."/partials/header.php";
               </div>
             </div>
           </section>
+          
           <section class="section2">
-            <p>"Favorite book statement - All this happened, more or less."</p>
+            <h3>Favorite quote</h3>
+
+            <?php if ($user->favorite_quote_sentence): ?>
+              <blockquote class="favorite-quote">
+                "<?= htmlspecialchars($user->favorite_quote_sentence, ENT_QUOTES, 'UTF-8') ?>"
+                <?php if ($user->favorite_quote_author): ?>
+                  <br><small>— <?= htmlspecialchars($user->favorite_quote_author, ENT_QUOTES, 'UTF-8') ?></small>
+                <?php endif; ?>
+                <?php if ($user->favorite_quote_book): ?>
+                  <br><small><em><?= htmlspecialchars($user->favorite_quote_book, ENT_QUOTES, 'UTF-8') ?></em></small>
+                <?php endif; ?>
+              </blockquote>
+            <?php else: ?>
+              <p>This user hasn't set a favorite quote yet.</p>
+            <?php endif; ?>
+
+            <?php if ($isOwnProfile): ?>
+              <form id="favorite-quote-form" method="post" action="/api/me/favorite-quote" class="favorite-quote-form">
+                <?= \App\Security\Csrf::inputField() ?>
+
+                <label>
+                  Sentence*
+                  <textarea name="favorite_quote_sentence" rows="3" maxlength="500"><?= htmlspecialchars($user->favorite_quote_sentence ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                </label>
+
+                <label>
+                  Author
+                  <input type="text" name="favorite_quote_author" maxlength="200"
+                        value="<?= htmlspecialchars($user->favorite_quote_author ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </label>
+
+                <label>
+                  Book
+                  <input type="text" name="favorite_quote_book" maxlength="200"
+                        value="<?= htmlspecialchars($user->favorite_quote_book ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </label>
+
+                <button type="submit" class="btn secondary">Save favorite quote</button>
+                <p id="favorite-quote-message" class="form-message"></p>
+              </form>
+            <?php endif; ?>
           </section>
+
+
           <section class="section3">
             <h3 id="user-word-stats">
               You've written X words all together! That's a Y.

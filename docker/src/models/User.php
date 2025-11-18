@@ -15,6 +15,9 @@ final class User
         public string $email,
         public Role $role = Role::User,
         public DateTimeImmutable $createdAt = new DateTimeImmutable(),
+        public ?string $favorite_quote_sentence = null,
+        public ?string $favorite_quote_book = null,
+        public ?string $favorite_quote_author = null,
     ) {}
 
     public static function fromArray(array $row): self {
@@ -26,6 +29,9 @@ final class User
             email: $row['email'] ?? null,
             role: Role::fromString((string)($row['role'] ?? 'user')),
             createdAt: new DateTimeImmutable((string)$row['created_at']),
+            favorite_quote_sentence: $row['favorite_quote_sentence'] ?? null,
+            favorite_quote_book: $row['favorite_quote_book'] ?? null,
+            favorite_quote_author: $row['favorite_quote_author'] ?? null,
         );
     }
 

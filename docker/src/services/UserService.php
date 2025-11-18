@@ -86,4 +86,33 @@ final class UserService
     public function findByPublicId(string $uuid): ?User {
         return $this->userRepository->findByPublicId($uuid);
     }
+
+    public function setFavoriteQuote(int $userId, ?string $sentence, ?string $book, ?string $author): void
+    {
+        $sentence = trim((string)$sentence);
+        $book = trim((string)$book);
+        $author = trim((string)$author);
+
+        if ($sentence === '') {
+            throw new DomainException('favorite_quote_sentence_required');
+        }
+
+        if (mb_strlen($sentence) > 500) {
+            throw new DomainException('favorite_quote_sentence_too_long');
+        }
+
+        if ($book !== '' && mb_strlen($book) > 100) {
+            throw new DomainException('favorite_quote_book_too_long');
+        }
+
+        if ($author !== '' && mb_strlen($author) > 100) {
+            throw new DomainException('favorite_quote_author_too_long');
+        }
+
+        $sentence = $sentence !== '' ? $sentence : null;
+        $book = $book !== '' ? $book : null;
+        $author = $author !== '' ? $author : null;
+
+        $this->userRepository->updateFavoriteQuote($userId, $sentence, $book, $author);
+    }
 }
