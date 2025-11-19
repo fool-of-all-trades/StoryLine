@@ -410,6 +410,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   const registerForm = document.querySelector("#register-form");
   if (registerForm) {
     const regMsg = document.querySelector("#register-message");
+    const passwordChangeMsg = document.querySelector("#password-message");
 
     registerForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -460,6 +461,74 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       }
 
       registerForm.submit();
+    });
+  }
+
+  // ===== PASSWORD CHANGE FORM FRONT VALIDATION =====
+  const passwordChangeForm = document.querySelector("#password-form");
+  if (passwordChangeForm) {
+    const passwordChangeMsg = document.querySelector("#password-message");
+
+    passwordChangeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      passwordChangeMsg && (passwordChangeMsg.textContent = "");
+      passwordChangeMsg &&
+        passwordChangeMsg.classList.remove("error", "success");
+
+      const form = passwordChangeForm;
+      const pass = form.password.value || "";
+
+      if (pass.length < 8) {
+        if (passwordChangeMsg) {
+          passwordChangeMsg.textContent =
+            "Password must be at least 8 characters long.";
+          passwordChangeMsg.classList.add("error");
+        }
+        return;
+      }
+
+      if (
+        !/[a-z]/.test(pass) ||
+        !/[A-Z]/.test(pass) ||
+        !/\d/.test(pass) ||
+        !/[^A-Za-z0-9]/.test(pass)
+      ) {
+        if (passwordChangeMsg) {
+          passwordChangeMsg.textContent =
+            "Password must contain a lowercase, uppercase, digit and special character.";
+          passwordChangeMsg.classList.add("error");
+        }
+        return;
+      }
+
+      passwordChangeForm.submit();
+    });
+  }
+
+  // ===== USERNAME CHANGE FORM FRONT VALIDATION =====
+  const usernameChangeForm = document.querySelector("#username-form");
+  if (usernameChangeForm) {
+    const usernameChangeMsg = document.querySelector("#username-message");
+
+    usernameChangeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      usernameChangeMsg && (usernameChangeMsg.textContent = "");
+      usernameChangeMsg &&
+        usernameChangeMsg.classList.remove("error", "success");
+
+      const form = usernameChangeForm;
+      const username = form.username.value || "";
+
+      if (username.length < 3) {
+        if (usernameChangeMsg) {
+          usernameChangeMsg.textContent =
+            "Username must be at least 3 characters long.";
+          usernameChangeMsg.classList.add("error");
+        }
+        return;
+      }
+
+      usernameChangeForm.submit();
     });
   }
 
