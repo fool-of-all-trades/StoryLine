@@ -40,6 +40,7 @@
         </label>
         <br>
         <button type="submit" class="btn primary">Share</button>
+        <p id="story-message" class="form-message"></p>
       </form>
     </section>
 

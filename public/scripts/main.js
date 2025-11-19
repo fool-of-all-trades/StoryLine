@@ -449,6 +449,55 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     });
   }
 
+  // ===== STORY FORM FRONT VALIDATION =====
+  if (storyForm) {
+    const storyMsg = document.querySelector("#story-message");
+    const storyTextarea = document.querySelector("#story-textarea");
+    const guestNameInput = document.getElementById("guest-name");
+
+    storyForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      storyMsg && (storyMsg.textContent = "");
+      storyMsg && storyMsg.classList.remove("error", "success");
+
+      const content = (storyTextarea?.value || "").trim();
+      const wordLimit = parseInt(storyTextarea?.dataset.wordlimit || "500", 10);
+
+      // content required
+      if (!content) {
+        if (storyMsg) {
+          storyMsg.textContent = "Your story can't be empty.";
+          storyMsg.classList.add("error");
+        }
+        return;
+      }
+
+      // word limit
+      const words = content.split(/\s+/).filter(Boolean);
+      if (words.length > wordLimit) {
+        if (storyMsg) {
+          storyMsg.textContent = `Your story is too long (${words.length}/${wordLimit} words).`;
+          storyMsg.classList.add("error");
+        }
+        return;
+      }
+
+      // optional guest_name
+      if (guestNameInput) {
+        const gn = guestNameInput.value.trim();
+        if (gn.length > 60) {
+          if (storyMsg) {
+            storyMsg.textContent = "Your name is too long (max 60 characters).";
+            storyMsg.classList.add("error");
+          }
+          return;
+        }
+      }
+
+      storyForm.submit();
+    });
+  }
+
   // session keep-alive only if the user is actively typing
   // let lastTyping = Date.now();
   // storyTextarea.addEventListener("input", () => {
