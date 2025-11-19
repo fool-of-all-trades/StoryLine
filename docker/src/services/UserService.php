@@ -72,6 +72,16 @@ final class UserService
             throw new DomainException('Email is already in use');
         }
 
+        // at least one lowercase, one uppercase, one digit, one special character
+        $hasLower = preg_match('/[a-z]/', $password);
+        $hasUpper = preg_match('/[A-Z]/', $password);
+        $hasDigit = preg_match('/\d/', $password);
+        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
+
+        if (!$hasLower || !$hasUpper || !$hasDigit || !$hasSpecial) {
+            throw new DomainException('password_too_weak');
+        }
+
         // Password hashing, default for now is bcrypt, but if it changes in the future, then it will update to the stronger one
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -150,6 +160,16 @@ final class UserService
 
         if (mb_strlen($password) < 8) {
             throw new DomainException('password_too_short');
+        }
+
+        // at least one lowercase, one uppercase, one digit, one special character
+        $hasLower = preg_match('/[a-z]/', $password);
+        $hasUpper = preg_match('/[A-Z]/', $password);
+        $hasDigit = preg_match('/\d/', $password);
+        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
+
+        if (!$hasLower || !$hasUpper || !$hasDigit || !$hasSpecial) {
+            throw new DomainException('password_too_weak');
         }
 
         $hash = password_hash($password, PASSWORD_DEFAULT);

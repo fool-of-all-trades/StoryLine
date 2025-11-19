@@ -437,6 +437,20 @@ window.CSRF_TOKEN = meta ? meta.content : "";
         return;
       }
 
+      if (
+        !/[a-z]/.test(pass) ||
+        !/[A-Z]/.test(pass) ||
+        !/\d/.test(pass) ||
+        !/[^A-Za-z0-9]/.test(pass)
+      ) {
+        if (regMsg) {
+          regMsg.textContent =
+            "Password must contain a lowercase, uppercase, digit and special character.";
+          regMsg.classList.add("error");
+        }
+        return;
+      }
+
       if (pass !== pass2) {
         if (regMsg) {
           regMsg.textContent = "Passwords do not match.";
@@ -453,7 +467,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   if (storyForm) {
     const storyMsg = document.querySelector("#story-message");
     const storyTextarea = document.querySelector("#story-textarea");
-    const guestNameInput = document.getElementById("guest-name");
+    const guestNameInput = document.querySelector("#guest-name");
 
     storyForm.addEventListener("submit", (e) => {
       e.preventDefault();
