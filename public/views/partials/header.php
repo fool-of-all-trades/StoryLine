@@ -37,7 +37,7 @@ if (empty($_COOKIE['device_token'])) {
 </head>
 <body>
   <nav class="nav">
-    <a href="/" class="logo">StoryLine</a>
+    <a href="/dashboard" class="logo">StoryLine</a>
     <div class="spacer"></div>
     <a href="/stories/today">Stories</a>
 

@@ -406,6 +406,49 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     }
   }
 
+  // ===== REGISTER FORM FRONT VALIDATION =====
+  const registerForm = document.getElementById("register-form");
+  if (registerForm) {
+    const regMsg = document.getElementById("register-message");
+
+    registerForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      regMsg && (regMsg.textContent = "");
+      regMsg && regMsg.classList.remove("error", "success");
+
+      const form = registerForm;
+      const username = (form.username.value || "").trim();
+      const pass = form.password.value || "";
+      const pass2 = form.password_confirm.value || "";
+
+      if (username.length < 3) {
+        if (regMsg) {
+          regMsg.textContent = "Username must be at least 3 characters long.";
+          regMsg.classList.add("error");
+        }
+        return;
+      }
+
+      if (pass.length < 8) {
+        if (regMsg) {
+          regMsg.textContent = "Password must be at least 8 characters long.";
+          regMsg.classList.add("error");
+        }
+        return;
+      }
+
+      if (pass !== pass2) {
+        if (regMsg) {
+          regMsg.textContent = "Passwords do not match.";
+          regMsg.classList.add("error");
+        }
+        return;
+      }
+
+      registerForm.submit();
+    });
+  }
+
   // session keep-alive only if the user is actively typing
   // let lastTyping = Date.now();
   // storyTextarea.addEventListener("input", () => {

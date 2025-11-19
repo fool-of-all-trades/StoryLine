@@ -5,7 +5,7 @@
 ?>
 
       <h1>Register</h1>
-      <form method="post" action="/register">
+      <form id="register-form" method="post" action="/register">
         <?= Csrf::inputField() ?>
 
         <?php if (!empty($error)): ?>
@@ -35,6 +35,8 @@
         </label>
         
         <button type="submit" class="btn primary">Welcome</button>
+
+        <p id="register-message" class="form-message"></p>
       </form>
       <p>You already have an account? <a href="/login">Login</a></p>
 
