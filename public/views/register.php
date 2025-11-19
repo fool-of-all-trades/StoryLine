@@ -28,7 +28,7 @@
           Password
           <input type="password" name="password" required>
         </label>
-
+        
         <label>
           Repeat password
           <input type="password" name="password_confirm" required>

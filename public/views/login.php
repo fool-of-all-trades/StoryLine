@@ -9,7 +9,11 @@
         <?= Csrf::inputField() ?>
         <input type="hidden" name="redirect" value="/dashboard">
         <label>Username or email <input name="identifier" required maxlength="255"></label>
-        <label>Password <input type="password" name="password" required></label>
+        <label>Password
+          <input id="passwordInput" type="password" name="password" required></input>
+        </label>
+        <input id="togglePasswordVisibilityCheckbox" type="checkbox">Show
+
         <button type="submit" class="btn primary">Welcome</button>
       </form>
       <p>No account yet? <a href="/register">Register</a></p>

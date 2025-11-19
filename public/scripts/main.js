@@ -138,10 +138,10 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   const userMain = document.querySelector("main[data-user-public-id]");
   if (userMain) {
     const userPid = userMain.dataset.userPublicId;
-    const wordsEl = document.getElementById("user-word-stats");
-    const countEl = document.getElementById("user-stories-count");
-    const listEl = document.getElementById("user-stories-list");
-    const searchInput = document.getElementById("user-stories-search");
+    const wordsEl = document.querySelector("#user-word-stats");
+    const countEl = document.querySelector("#user-stories-count");
+    const listEl = document.querySelector("#user-stories-list");
+    const searchInput = document.querySelector("#user-stories-search");
 
     try {
       const res = await fetch(
@@ -231,9 +231,9 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   }
 
   // ===== FAVORITE QUOTE FORM =====
-  const favForm = document.getElementById("favorite-quote-form");
+  const favForm = document.querySelector("#favorite-quote-form");
   if (favForm) {
-    const msgEl = document.getElementById("favorite-quote-message");
+    const msgEl = document.querySelector("#favorite-quote-message");
 
     favForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -363,7 +363,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     const s = makeDataset(storiesSeries);
     const u = makeDataset(usersSeries);
 
-    const storiesCanvas = document.getElementById("storiesChart");
+    const storiesCanvas = document.querySelector("#storiesChart");
     if (storiesCanvas) {
       new Chart(storiesCanvas, {
         type: "line",
@@ -384,7 +384,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       });
     }
 
-    const usersCanvas = document.getElementById("usersChart");
+    const usersCanvas = document.querySelector("#usersChart");
     if (usersCanvas) {
       new Chart(usersCanvas, {
         type: "line",
@@ -407,9 +407,9 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   }
 
   // ===== REGISTER FORM FRONT VALIDATION =====
-  const registerForm = document.getElementById("register-form");
+  const registerForm = document.querySelector("#register-form");
   if (registerForm) {
-    const regMsg = document.getElementById("register-message");
+    const regMsg = document.querySelector("#register-message");
 
     registerForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -467,7 +467,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
   //   }
   // }, 300_000);
 
-  // ===== Helper =====
+  // ===== Helpers =====
   function escapeHtml(s) {
     return String(s).replace(
       /[&<>"']/g,
@@ -481,4 +481,17 @@ window.CSRF_TOKEN = meta ? meta.content : "";
         }[c])
     );
   }
+
+  let togglePasswordVisibilityCheckbox = document.querySelector(
+    "#togglePasswordVisibilityCheckbox"
+  );
+
+  togglePasswordVisibilityCheckbox.addEventListener("change", () => {
+    var passwordInput = document.querySelector("#passwordInput");
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+    } else {
+      passwordInput.type = "password";
+    }
+  });
 })();

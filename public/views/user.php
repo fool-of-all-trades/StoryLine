@@ -42,8 +42,10 @@ $isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id)
 
                 <label>
                   Password*
-                  <input type="password" name="password" minlength="8" required></input>
+                  <input id="passwordInput" type="password" name="password" minlength="8" required></input>
                 </label>
+
+                <input id="togglePasswordVisibilityCheckbox" type="checkbox">Show
 
                 <button type="submit" class="btn secondary">Change password</button>
                 <p id="password-message" class="form-message"></p>
