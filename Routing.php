@@ -156,6 +156,14 @@ class Routing
                 }
                 http_response_code(405); 
                 return;
+
+            case 'api/me/password':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+                    UserController::updatePassword();
+                    return; 
+                }
+                http_response_code(405); 
+                return;
         }
 
         // API: /api/user/{public_id}/profile

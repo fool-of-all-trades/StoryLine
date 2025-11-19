@@ -23,16 +23,30 @@ $isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id)
               </div>
             </div>
             <?php if ($isOwnProfile): ?>
+              <!-- change username -->
               <form id="username-form" method="post" action="/api/me/username" class="username-form">
                 <?= \App\Security\Csrf::inputField() ?>
 
                 <label>
                   Username*
-                  <input type="text" name="username" maxlength="40"></input>
+                  <input type="text" name="username" maxlength="40" required></input>
                 </label>
 
                 <button type="submit" class="btn secondary">Change username</button>
                 <p id="username-message" class="form-message"></p>
+              </form>
+
+              <!-- change password -->
+              <form id="password-form" method="post" action="/api/me/password" class="password-form">
+                <?= \App\Security\Csrf::inputField() ?>
+
+                <label>
+                  Password*
+                  <input type="password" name="password" minlength="8" required></input>
+                </label>
+
+                <button type="submit" class="btn secondary">Change password</button>
+                <p id="password-message" class="form-message"></p>
               </form>
             <?php endif; ?>
           </section>

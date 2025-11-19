@@ -83,6 +83,15 @@ final class UserRepository
         ]);
     }
 
+    public function updatePassword(int $userId, string $hash): void
+    {
+        $st = $this->pdo->prepare('UPDATE users SET password_hash = :ph WHERE id = :id');
+        $st->execute([
+            ':id' => $userId,
+            ':ph'  => $hash
+        ]);
+    }
+
     // HELPERS FOR ADMIN PANEL
     public function countTotal(): int {
         return (int)$this->pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();

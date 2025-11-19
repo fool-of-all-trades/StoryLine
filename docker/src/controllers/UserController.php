@@ -312,4 +312,35 @@ final class UserController
             echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
         }
     }
+
+    public static function updatePassword(): void
+    {
+        Csrf::verify();
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        $currentUser = current_user();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $password = $_POST['password'] ?? '';
+
+        $userService = new UserService();
+
+        try {
+            $userService->changePassword((int)$currentUser['id'], $password);
+            http_response_code(200);
+            echo json_encode(['status' => 'ok'], JSON_UNESCAPED_UNICODE);
+        } catch (DomainException $e) {
+            $code = $e->getMessage();
+            http_response_code(422);
+            echo json_encode(['error' => $code], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
+        }
+    }
 }

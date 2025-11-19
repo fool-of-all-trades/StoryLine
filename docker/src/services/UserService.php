@@ -139,4 +139,25 @@ final class UserService
 
         $this->userRepository->updateUsername($userId, $username);
     }
+
+    public function changePassword(int $userId, ?string $password): void
+    {
+        $password = trim((string)$password);
+
+        if ($password === '') {
+            throw new DomainException('password_required');
+        }
+
+        if (mb_strlen($password) < 8) {
+            throw new DomainException('password_too_short');
+        }
+
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+
+        if ($hash === false) {
+            throw new DomainException('password_hash_error');
+        }
+
+        $this->userRepository->updatePassword($userId, $hash);
+    }
 }
