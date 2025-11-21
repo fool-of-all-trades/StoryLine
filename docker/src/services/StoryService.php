@@ -27,7 +27,7 @@ final class StoryService
 
         $sort   = \in_array($sort, ['top','new'], true) ? $sort : 'new';
         $page   = max(1, (int)$page);
-        $limit  = max(1, min(50, (int)$limit));
+        $limit  = max(1, min(10, (int)$limit));
         $offset = ($page - 1) * $limit;
 
         return $this->storyRepository->listByDate($dateYmd, $sort, $limit, $offset);

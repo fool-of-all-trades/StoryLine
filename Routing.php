@@ -36,14 +36,17 @@ class Routing
                 return;
 
             case 'stories':
-                // will redirect to today's stories
-                header('Location: /stories/' . date('Y-m-d'));
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                    include 'public/views/stories.php';
+                    return;
+                }
+                http_response_code(405);
+                echo 'Method Not Allowed';
                 return;
 
             case 'stories/today':
-                header('Location: /stories/' . date('Y-m-d'));
+                header('Location: /stories?date=today&sort=new');
                 return;
-
 
             case 'login':
                 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -80,7 +83,7 @@ class Routing
                 echo 'Method Not Allowed'; 
                 return;
                 
-            # Dynamic: /stories/{YYYY-MM-DD}
+            # Dynamic: /stories?date={YYYY-MM-DD}&sort=new
             case 'api/stories':
                 if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
                     StoryController::list(); 
@@ -206,13 +209,6 @@ class Routing
         // Dynamic: /story/{public_id}
         if (preg_match('#^story/([0-9a-fA-F-]{36})$#', $path, $m)) {
             StoryController::viewByPublicId(['public_id' => $m[1]]);
-            return;
-        }
-
-        // Dynamic: /stories/{YYYY-MM-DD}
-        if (preg_match('#^stories/(\d{4}-\d{2}-\d{2})$#', $path, $m)) {
-            $GLOBALS['route_params']['date'] = $m[1];
-            include 'public/views/stories.php';
             return;
         }
 

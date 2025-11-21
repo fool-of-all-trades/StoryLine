@@ -221,7 +221,7 @@ final class UserController
             $limit = (int)($_GET['limit'] ?? 10);
 
             $page  = max(1, $page);
-            $limit = max(1, min(20, $limit));
+            $limit = max(1, min(2, $limit));
 
             $offset = ($page - 1) * $limit;
 

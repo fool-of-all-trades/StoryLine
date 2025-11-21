@@ -1,16 +1,33 @@
 <?php
   $title = "StoryLine — Stories Of The Day";
-  $date = $GLOBALS['route_params']['date'] ?? ($_GET['date'] ?? 'today');
+  $date = $_GET['date'] ?? 'today';
+  $currentSort = $_GET['sort'] ?? 'new';
   include __DIR__."/partials/header.php";
 ?>
 
 <header class="list-header">
   <h1>Stories — <?= htmlspecialchars($date) ?></h1>
+
   <div class="filter">
-    Sort:
-    <a href="?sort=new">Newests</a> ·
-    <a href="?sort=top">Top</a> ·
-    <a href="?sort=date">By date</a>
+    <div class="filter-sort">
+      Sort:
+      <a href="?sort=new&date=<?= urlencode($date) ?>">Newest</a> ·
+      <a href="?sort=top&date=<?= urlencode($date) ?>">Top</a>
+    </div>
+
+    <form method="GET" class="filter-date">
+      <label>
+        Date:
+        <input
+          type="date"
+          name="date"
+          value="<?= $date === 'today' ? date('Y-m-d') : htmlspecialchars($date) ?>"
+        >
+      </label>
+      <input type="hidden" name="sort" value="<?= htmlspecialchars($currentSort) ?>">
+      <button type="submit" class="btn">Show</button>
+      <a class="btn-link" href="/stories?date=today&sort=<?= urlencode($currentSort) ?>">Today</a>
+    </form>
   </div>
 </header>
 

@@ -94,7 +94,7 @@ final class StoryRepository
     }
 
     /** List of stories for a given date (YYYY-MM-DD) with sorting and pagination */
-    public function listByDate(string $dateYmd, string $sort='new', int $limit=20, int $offset=0): array
+    public function listByDate(string $dateYmd, string $sort='new', int $limit=10, int $offset=0): array
     {
         $order = match ($sort) {
             'top' => 'flower_count DESC, s.created_at DESC',
@@ -135,7 +135,7 @@ final class StoryRepository
     /**
      * Stories by user – for user profile panel
      */
-    public function listByUser(int $userId, int $limit = 50, int $offset = 0): array
+    public function listByUser(int $userId, int $limit = 10, int $offset = 0): array
     {
         $sql = <<<SQL
             SELECT
