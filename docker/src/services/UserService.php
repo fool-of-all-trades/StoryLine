@@ -61,26 +61,16 @@ final class UserService
             throw new DomainException('Passwords do not match');
         }
 
-        if (strlen($password) < 8) {
-            throw new DomainException('Password must be at least 8 characters long');
-        }
-
         if ($this->userRepository->findByUsername($username)) {
             throw new DomainException('Username is already taken');
         }
+        
         if ($this->userRepository->findByEmail($email)) {
             throw new DomainException('Email is already in use');
         }
 
-        // at least one lowercase, one uppercase, one digit, one special character
-        $hasLower = preg_match('/[a-z]/', $password);
-        $hasUpper = preg_match('/[A-Z]/', $password);
-        $hasDigit = preg_match('/\d/', $password);
-        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
-
-        if (!$hasLower || !$hasUpper || !$hasDigit || !$hasSpecial) {
-            throw new DomainException('password_too_weak');
-        }
+        // Validate password strength
+        $this->assertStrongPassword($password);
 
         // Password hashing, default for now is bcrypt, but if it changes in the future, then it will update to the stronger one
         $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -162,19 +152,8 @@ final class UserService
             throw new DomainException('password_required');
         }
 
-        if (mb_strlen($password) < 8) {
-            throw new DomainException('password_too_short');
-        }
-
-        // at least one lowercase, one uppercase, one digit, one special character
-        $hasLower = preg_match('/[a-z]/', $password);
-        $hasUpper = preg_match('/[A-Z]/', $password);
-        $hasDigit = preg_match('/\d/', $password);
-        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
-
-        if (!$hasLower || !$hasUpper || !$hasDigit || !$hasSpecial) {
-            throw new DomainException('password_too_weak');
-        }
+        // validate password strength
+        $this->assertStrongPassword($password);
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -183,5 +162,29 @@ final class UserService
         }
 
         $this->userRepository->updatePassword($userId, $hash);
+    }
+
+    // helpter method to validate password strength
+    private function assertStrongPassword(string $password): void
+    {
+        $password = trim($password);
+
+        if ($password === '') {
+            throw new DomainException('password_required');
+        }
+
+        if (mb_strlen($password) < 8) {
+            throw new DomainException('password_too_short');
+        }
+
+        // at least one lowercase, one uppercase, one digit, one special character
+        $hasLower   = preg_match('/[a-z]/', $password);
+        $hasUpper   = preg_match('/[A-Z]/', $password);
+        $hasDigit   = preg_match('/\d/', $password);
+        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
+
+        if (!$hasLower || !$hasUpper || !$hasDigit || !$hasSpecial) {
+            throw new DomainException('password_too_weak');
+        }
     }
 }
