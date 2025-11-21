@@ -17,6 +17,7 @@
         <button type="submit" class="btn primary">Welcome</button>
       </form>
       <p>No account yet? <a href="/register">Register</a></p>
+      <p>Forgot your password? <a href="/password/forgot">Reset</a></p>
 
     </main>
   </body>

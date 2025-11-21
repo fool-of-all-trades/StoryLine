@@ -42,6 +42,7 @@ final class UserRepository
     }
 
     public function create(string $username, string $email, string $passwordHash, Role $role = Role::User): User {
+        // It's just a one statement, so no need for transaction here, pdo treats it as such under the hood anyway
 
         $sql = "INSERT INTO users (username, email, password_hash, role)
                 VALUES (:username, :email, :password_hash, :role)

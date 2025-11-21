@@ -581,6 +581,66 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     });
   }
 
+  // ===== FORGOT PASSWORD =====
+  const forgotForm = document.querySelector("#forgot-form");
+  if (forgotForm) {
+    forgotForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.querySelector("#forgot-message");
+      msg.textContent = "";
+
+      const fd = new FormData(forgotForm);
+
+      const res = await fetch("/password/forgot", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        msg.textContent = "If this email exists, a reset link was sent.";
+        msg.style.color = "green";
+      } else {
+        msg.textContent = data.error || "Unknown error";
+        msg.style.color = "red";
+      }
+    });
+  }
+
+  // ===== RESET PASSWORD =====
+  const resetForm = document.querySelector("#reset-form");
+  if (resetForm) {
+    resetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.querySelector("#reset-message");
+      msg.textContent = "";
+
+      const fd = new FormData(resetForm);
+
+      const res = await fetch("/password/reset", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        msg.style.color = "green";
+        msg.textContent = "Password has been updated. You may now log in.";
+
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+      } else {
+        msg.style.color = "red";
+        msg.textContent = data.error || "Unknown error";
+      }
+    });
+  }
+
   // session keep-alive only if the user is actively typing
   // let lastTyping = Date.now();
   // storyTextarea.addEventListener("input", () => {
@@ -618,7 +678,7 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     "#togglePasswordVisibilityCheckbox"
   );
 
-  togglePasswordVisibilityCheckbox.addEventListener("change", () => {
+  togglePasswordVisibilityCheckbox?.addEventListener("change", () => {
     var passwordInput = document.querySelector("#passwordInput");
     if (passwordInput.type === "password") {
       passwordInput.type = "text";

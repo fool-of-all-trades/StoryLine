@@ -97,6 +97,10 @@ final class UserService
         return $this->userRepository->findByPublicId($uuid);
     }
 
+    public function findByEmail(string $email): ?User {
+        return $this->userRepository->findByEmail($email);
+    }
+
     public function setFavoriteQuote(int $userId, ?string $sentence, ?string $book, ?string $author): void
     {
         $sentence = trim((string)$sentence);

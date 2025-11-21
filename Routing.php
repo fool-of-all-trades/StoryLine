@@ -6,6 +6,7 @@ use App\Controllers\FlowerController;
 use App\Controllers\QuotesApiController;
 use App\Controllers\QuoteController;
 use App\Controllers\AdminController;
+use App\Controllers\PasswordResetController;
 
 // controllers should be singletons
 
@@ -163,6 +164,30 @@ class Routing
                     return; 
                 }
                 http_response_code(405); 
+                return;
+
+            case 'password/forgot':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                    include 'public/views/password_forgot.php';
+                    return;
+                }
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    PasswordResetController::forgot();
+                    return;
+                }
+                http_response_code(405);
+                return;
+
+            case 'password/reset':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                    include 'public/views/password_reset.php';
+                    return;
+                }
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    PasswordResetController::reset();
+                    return;
+                }
+                http_response_code(405);
                 return;
         }
 
