@@ -26,24 +26,91 @@ window.CSRF_TOKEN = meta ? meta.content : "";
 
     // 2) Handle story submission
     const storyForm = qs("#story-form");
-    storyForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(storyForm);
-      // validation of whether the quote is included is done in the db for now
-      const res = await fetch("/api/story", {
-        method: "POST",
-        body: fd,
-        credentials: "include",
-        headers: { "X-CSRF-Token": window.CSRF_TOKEN },
+
+    // 3) Front validation
+    if (storyForm) {
+      const storyMsg = document.querySelector("#story-message");
+      const storyTextarea = document.querySelector("#story-textarea");
+      const guestNameInput = document.querySelector("#guest-name");
+
+      storyForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        storyMsg && (storyMsg.textContent = "");
+        storyMsg && storyMsg.classList.remove("error", "success");
+
+        const content = (storyTextarea?.value || "").trim();
+        const wordLimit = parseInt(
+          storyTextarea?.dataset.wordlimit || "500",
+          10
+        );
+
+        // content required
+        if (!content) {
+          if (storyMsg) {
+            storyMsg.textContent = "Your story can't be empty.";
+            storyMsg.classList.add("error");
+          }
+          return;
+        }
+
+        // word limit
+        const words = content.split(/\s+/).filter(Boolean);
+        if (words.length > wordLimit) {
+          if (storyMsg) {
+            storyMsg.textContent = `Your story is too long (${words.length}/${wordLimit} words).`;
+            storyMsg.classList.add("error");
+          }
+          return;
+        }
+
+        // optional guest_name
+        if (guestNameInput) {
+          const gn = guestNameInput.value.trim();
+          if (gn.length > 60) {
+            if (storyMsg) {
+              storyMsg.textContent =
+                "Your name is too long (max 60 characters).";
+              storyMsg.classList.add("error");
+            }
+            return;
+          }
+        }
+
+        const fd = new FormData(storyForm);
+
+        try {
+          const res = await fetch("/api/story", {
+            method: "POST",
+            body: fd,
+            credentials: "include",
+            headers: { "X-CSRF-Token": window.CSRF_TOKEN },
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            // redirect to the list of today's stories
+            location.href = "/stories?date=today&sort=new";
+          } else {
+            if (storyMsg) {
+              storyMsg.textContent =
+                data.error || "Something went wrong while saving your story.";
+              storyMsg.classList.add("error");
+            } else {
+              alert("Error: " + (data.error || "unknown"));
+            }
+          }
+        } catch (err) {
+          if (storyMsg) {
+            storyMsg.textContent =
+              "Network error while saving your story. Please try again.";
+            storyMsg.classList.add("error");
+          } else {
+            alert("Network error");
+          }
+        }
       });
-      const data = await res.json();
-      if (res.ok) {
-        // redirect to the list of today's stories
-        location.href = "/stories?date=today&sort=new";
-      } else {
-        alert("Error: " + (data.error || "unknown"));
-      }
-    });
+    }
   }
 
   // ===== STORIES LIST =====
@@ -579,55 +646,6 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       }
 
       usernameChangeForm.submit();
-    });
-  }
-
-  // ===== STORY FORM FRONT VALIDATION =====
-  if (storyForm) {
-    const storyMsg = document.querySelector("#story-message");
-    const storyTextarea = document.querySelector("#story-textarea");
-    const guestNameInput = document.querySelector("#guest-name");
-
-    storyForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      storyMsg && (storyMsg.textContent = "");
-      storyMsg && storyMsg.classList.remove("error", "success");
-
-      const content = (storyTextarea?.value || "").trim();
-      const wordLimit = parseInt(storyTextarea?.dataset.wordlimit || "500", 10);
-
-      // content required
-      if (!content) {
-        if (storyMsg) {
-          storyMsg.textContent = "Your story can't be empty.";
-          storyMsg.classList.add("error");
-        }
-        return;
-      }
-
-      // word limit
-      const words = content.split(/\s+/).filter(Boolean);
-      if (words.length > wordLimit) {
-        if (storyMsg) {
-          storyMsg.textContent = `Your story is too long (${words.length}/${wordLimit} words).`;
-          storyMsg.classList.add("error");
-        }
-        return;
-      }
-
-      // optional guest_name
-      if (guestNameInput) {
-        const gn = guestNameInput.value.trim();
-        if (gn.length > 60) {
-          if (storyMsg) {
-            storyMsg.textContent = "Your name is too long (max 60 characters).";
-            storyMsg.classList.add("error");
-          }
-          return;
-        }
-      }
-
-      storyForm.submit();
     });
   }
 
