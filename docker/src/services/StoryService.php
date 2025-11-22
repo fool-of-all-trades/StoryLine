@@ -33,6 +33,15 @@ final class StoryService
         return $this->storyRepository->listByDate($dateYmd, $sort, $limit, $offset);
     }
 
+    public function countByDate(string $dateYmd): int
+    {
+        $dateYmd = $dateYmd === 'today'
+            ? (new DateTimeImmutable('today'))->format('Y-m-d')
+            : (new DateTimeImmutable($dateYmd))->format('Y-m-d');
+
+        return $this->storyRepository->countOnDate($dateYmd);
+    }
+
     public function getStoryById(int $id): ?Story
     {
         return $this->storyRepository->getById($id);

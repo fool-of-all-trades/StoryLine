@@ -28,10 +28,13 @@ final class StoryController
 
         try {
             $items = $storyService->listByDate($date, $sort, $page, $limit);
+            $totalForDay = $storyService->countByDate($date);
+
             self::json([
                 'items' => array_map(fn($s) => $s->toArray(), $items),
                 'page'  => max(1, $page),
                 'limit' => $limit,
+                'total_for_day' => $totalForDay,
             ]);
         } catch (Throwable $e) {
             self::json(['error' => 'internal_error'], 500);

@@ -8,6 +8,10 @@
 <header class="list-header">
   <h1>Stories — <?= htmlspecialchars($date) ?></h1>
 
+  <p class="stories-count">
+    Stories added this day: <strong data-stories-count>0</strong>
+  </p>
+
   <div class="filter">
     <div class="filter-sort">
       Sort:

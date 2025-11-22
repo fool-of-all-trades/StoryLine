@@ -148,6 +148,13 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       const j = await r.json();
       const items = j.items || [];
 
+      const totalForDay =
+        typeof j.total_for_day === "number" ? j.total_for_day : null;
+      const countEl = document.querySelector("[data-stories-count]");
+      if (countEl && totalForDay !== null) {
+        countEl.textContent = totalForDay;
+      }
+
       if (page === 1) {
         list.innerHTML = "";
       }
