@@ -43,4 +43,31 @@ final class QuoteController
             self::json(['error'=>'internal_error','message'=>$e->getMessage()], 500);
         }
     }
+
+    // GET /api/quote?date=YYYY-MM-DD - get quote for given date
+    public static function byDate(): void
+    {
+        $date = $_GET['date'] ?? null;
+        if ($date === null || $date === '') {
+            self::json(['error' => 'missing_date'], 400);
+        }
+
+        $quoteService = new QuoteService();
+
+        try {
+            if ($date === 'today') {
+                $quote = $quoteService->getToday();
+            } else {
+                $quote = $quoteService->getByDate($date);
+            }
+
+            if ($quote === null) {
+                self::json(['error' => 'no_quote_for_date'], 404);
+            } else {
+                self::json($quote->toArray());
+            }
+        } catch (Throwable $e) {
+            self::json(['error' => 'internal_error'], 500);
+        }
+    }
 }

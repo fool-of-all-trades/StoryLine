@@ -125,6 +125,54 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     const dateFromUrl =
       dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : "today";
 
+    // --- quote of the day on /stories ---
+    const quoteWrapper = qs("[data-quote-wrapper]");
+    const quoteTextEl = qs("[data-quote-of-day]");
+    const quoteMetaEl = qs("[data-quote-of-day-meta]");
+
+    async function loadQuoteForStoriesDate() {
+      if (!quoteTextEl || !quoteMetaEl) return;
+
+      try {
+        let res;
+
+        if (dateFromUrl === "today") {
+          res = await fetch("/api/quote/today", { credentials: "include" });
+          if (res.status === 404) {
+            await fetch("/api/quote/ensure", {
+              method: "POST",
+              credentials: "include",
+              headers: { "X-CSRF-Token": window.CSRF_TOKEN },
+            });
+            res = await fetch("/api/quote/today", { credentials: "include" });
+          }
+        } else {
+          res = await fetch(
+            `/api/quote?date=${encodeURIComponent(dateFromUrl)}`,
+            {
+              credentials: "include",
+            }
+          );
+        }
+
+        if (!res.ok) {
+          return;
+        }
+
+        const q = await res.json();
+
+        quoteTextEl.textContent = `"${q.sentence}"`;
+        quoteMetaEl.textContent =
+          [q.source_book, q.source_author].filter(Boolean).join(" — ") || "—";
+
+        if (quoteWrapper) {
+          quoteWrapper.hidden = false;
+        }
+      } catch (err) {
+        console.error("Error loading quote for stories day:", err);
+      }
+    }
+
     let page = 1;
     const limit = 10;
     let loading = false;
@@ -228,6 +276,8 @@ window.CSRF_TOKEN = meta ? meta.content : "";
 
     // first page
     loadPage();
+
+    loadQuoteForStoriesDate();
 
     loadMoreBtn?.addEventListener("click", () => {
       loadPage();

@@ -145,6 +145,14 @@ class Routing
                 http_response_code(405); 
                 return;
 
+            case '/api/quote':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+                    QuoteController::byDate();
+                    return; 
+                }
+                http_response_code(405); 
+                return;
+
             case 'api/me/favorite-quote':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
                     UserController::updateFavoriteQuote();

@@ -115,16 +115,4 @@ final class QuoteService
     {
         return $this->repo->getByDate($ymd);
     }
-
-    /** helper to fetch quote from local API */ 
-    private function fetchLocalQuote(): ?array
-    {
-        $ctx = stream_context_create(['http' => ['timeout' => 3]]);
-        // later add error handling here, for now, just ignore errors
-        $raw = @file_get_contents($this->localApiUrl, false, $ctx);
-        if ($raw === false) return null;
-
-        $data = json_decode($raw, true);
-        return is_array($data) ? $data : null;
-    }
 }
