@@ -87,6 +87,10 @@ final class UserService
         return $this->userRepository->findByPublicId($uuid);
     }
 
+    public function findPrivateIdByPublicId(string $uuid): ?int {
+        return $this->userRepository->findPrivateIdByPublicId($uuid);
+    }
+
     public function findByEmail(string $email): ?User {
         return $this->userRepository->findByEmail($email);
     }

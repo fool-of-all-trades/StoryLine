@@ -129,15 +129,22 @@ final class StoryService
      * Returns profile data for a given user.
      * @return array{items: array, total_stories: int, total_words: int}
      */
-    public function getProfileDataForUser(int $userId, int $limit = 50, int $offset = 0): array
+    public function getProfileDataForUser(int $userId): array
     {
         $totalWords = $this->storyRepository->totalWordsByUser($userId);
         $totalStories = $this->storyRepository->totalStoriesByUser($userId);
-        $stories = $this->storyRepository->listByUser($userId, $limit, $offset);
 
         return [
             'total_words' => $totalWords,
             'total_stories' => $totalStories,
+        ];
+    }
+
+    public function getStoresForUser(int $userId, int $limit = 8, int $offset = 0): array
+    {
+        $stories = $this->storyRepository->listByUser($userId, $limit, $offset);
+
+        return [
             'items' => array_map(fn(Story $s) => $s->toArray(), $stories),
         ];
     }

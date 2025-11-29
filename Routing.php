@@ -202,12 +202,6 @@ class Routing
                 return;
         }
 
-        // API: /api/user/{public_id}/profile
-        if (preg_match('#^api/user/([0-9a-fA-F-]{36})/profile$#', $path, $m)) {
-            UserController::profileData(['public_id' => $m[1]]);
-            return;
-        }
-
         // Dynamic: /user/{public_id}
         if (preg_match('#^user/([0-9a-fA-F-]{36})$#', $path, $m)) {
             UserController::profileByPublicId(['public_id' => $m[1]]);
@@ -217,6 +211,26 @@ class Routing
         // Dynamic: /story/{public_id}
         if (preg_match('#^story/([0-9a-fA-F-]{36})$#', $path, $m)) {
             StoryController::viewByPublicId(['public_id' => $m[1]]);
+            return;
+        }
+
+        // GET /api/user/{public_id}/profile
+        if (preg_match('#^api/user/([0-9a-fA-F-]{36})/profile$#', $path, $m)) {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                UserController::profileData(['public_id' => $m[1]]);
+                return;
+            }
+            http_response_code(405);
+            return;
+        }
+
+        // GET /api/user/{public_id}/stories
+        if (preg_match('#^api/user/([0-9a-fA-F-]{36})/stories$#', $path, $m)) {
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                UserController::profileStories(['public_id' => $m[1]]);
+                return;
+            }
+            http_response_code(405);
             return;
         }
 

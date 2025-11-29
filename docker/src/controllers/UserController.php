@@ -217,15 +217,7 @@ final class UserController
 
         $storyService = new StoryService();
         try {
-            $page  = (int)($_GET['page']  ?? 1);
-            $limit = (int)($_GET['limit'] ?? 10);
-
-            $page  = max(1, $page);
-            $limit = max(1, min(2, $limit));
-
-            $offset = ($page - 1) * $limit;
-
-            $data = $storyService->getProfileDataForUser($user->id, $limit, $offset);
+            $data = $storyService->getProfileDataForUser($user->id);
 
             self::json([
                 'user'   => [
@@ -233,9 +225,43 @@ final class UserController
                     'public_id' => $user->public_id,
                     'created_at'=> $user->createdAt->format('c'),
                 ],
-                'page'  => $page,
-                'limit' => $limit,
                 'data'  => $data,
+            ]);
+        } catch (Throwable $e) {
+            self::json(['error' => 'internal_error'], 500);
+        }
+    }
+
+    public static function profileStories(array $params): void
+    {
+        $publicId = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicId)) {
+            self::json(['error' => 'not_found'], 404);
+        }
+
+        $userService = new UserService();
+        $userPrivateID = $userService->findPrivateIdByPublicId($publicId);
+        if (!$userPrivateID) {
+            self::json(['error' => 'not_found'], 404);
+        }
+
+        $storyService = new StoryService();
+        try {
+            $page  = (int)($_GET['page']  ?? 1);
+            $limit = (int)($_GET['limit'] ?? 8);
+
+            $page  = max(1, $page);
+            $limit = max(1, min(8, $limit));
+
+            // how many stories to skip
+            $offset = ($page - 1) * $limit;
+
+            $storiesPayload = $storyService->getStoresForUser($userPrivateID, $limit, $offset);
+
+            self::json([
+                'page' => $page,
+                'limit' => $limit,
+                'stories' => $storiesPayload,
             ]);
         } catch (Throwable $e) {
             self::json(['error' => 'internal_error'], 500);

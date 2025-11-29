@@ -133,9 +133,9 @@ final class StoryRepository
     }
 
     /**
-     * Stories by user – for user profile panel
+     * Stories by user – for user profile panel, with pagination
      */
-    public function listByUser(int $userId, int $limit = 10, int $offset = 0): array
+    public function listByUser(int $userId, int $limit = 8, int $offset = 0): array
     {
         $sql = <<<SQL
             SELECT

@@ -317,6 +317,15 @@ window.CSRF_TOKEN = meta ? meta.content : "";
     const listEl = document.querySelector("#user-stories-list");
     const searchInput = document.querySelector("#user-stories-search");
 
+    const leftButton = document.querySelector(".left-arrow");
+    const rightButton = document.querySelector(".right-arrow");
+
+    let page = 1;
+    const limit = 8;
+    let totalStories = 0;
+    let currentItems = [];
+
+    // load profile data (without stories list)
     try {
       const res = await fetch(
         `/api/user/${encodeURIComponent(userPid)}/profile`,
@@ -328,40 +337,21 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       if (!res.ok) {
         wordsEl.textContent = "Couldn't load your stats right now.";
         console.error("Profile error:", payload);
-        return;
-      }
+      } else {
+        const { total_words, total_stories } = payload.data || {};
 
-      const { total_words, total_stories, items } = payload.data || {};
+        // 1) number of stories and words
+        if (typeof total_stories === "number" && countEl) {
+          countEl.textContent = String(total_stories);
+          totalStories = total_stories;
+        }
 
-      // 1) number of stories and words
-      if (typeof total_stories === "number" && countEl) {
-        countEl.textContent = String(total_stories);
-      }
-
-      if (typeof total_words === "number" && wordsEl) {
-        let label = "words";
-        if (total_words === 1) label = "word";
-        wordsEl.innerHTML =
-          `You've written <strong>${total_words}</strong> ${label} all together!<br/>` +
-          `I'm proud of you.`;
-      }
-
-      // 2) sotries list
-      if (listEl) {
-        const stories = Array.isArray(items) ? items : [];
-        renderStories(listEl, stories);
-
-        // simple search filter by the title/content
-        if (searchInput) {
-          searchInput.addEventListener("input", () => {
-            const q = searchInput.value.toLowerCase().trim();
-            const filtered = stories.filter((s) => {
-              const title = (s.title || "").toLowerCase();
-              const content = (s.content || "").toLowerCase();
-              return !q || title.includes(q) || content.includes(q);
-            });
-            renderStories(listEl, filtered);
-          });
+        if (typeof total_words === "number" && wordsEl) {
+          let label = "words";
+          if (total_words === 1) label = "word";
+          wordsEl.innerHTML =
+            `You've written <strong>${total_words}</strong> ${label} all together!<br/>` +
+            `I'm proud of you.`;
         }
       }
     } catch (e) {
@@ -369,6 +359,94 @@ window.CSRF_TOKEN = meta ? meta.content : "";
       if (wordsEl) {
         wordsEl.textContent = "Couldn't load your stats right now.";
       }
+    }
+
+    // Load stories list
+    async function loadStoriesPage(newPage) {
+      try {
+        const res = await fetch(
+          `/api/user/${encodeURIComponent(
+            userPid
+          )}/stories?page=${newPage}&limit=${limit}`,
+          { credentials: "include" }
+        );
+        const payload = await res.json();
+
+        if (!res.ok) {
+          console.error("Profile stories error:", payload);
+          if (listEl) {
+            listEl.innerHTML = "<p>Couldn't load your stories.</p>";
+          }
+          return;
+        }
+
+        page = payload.page || newPage;
+
+        const storiesPayload = payload.stories || {};
+        const items = Array.isArray(storiesPayload.items)
+          ? storiesPayload.items
+          : [];
+        currentItems = items;
+
+        if (listEl) {
+          renderStories(listEl, items);
+        }
+
+        updateArrows();
+      } catch (e) {
+        console.error("Failed to load stories page", e);
+        if (listEl) {
+          listEl.innerHTML = "<p>Couldn't load your stories.</p>";
+        }
+      }
+    }
+
+    function updateArrows() {
+      const totalPages = totalStories > 0 ? Math.ceil(totalStories / limit) : 1;
+
+      if (leftButton) {
+        leftButton.disabled = page <= 1;
+      }
+      if (rightButton) {
+        rightButton.disabled = page >= totalPages;
+      }
+    }
+
+    // Simple search filter by the title/content
+    if (searchInput && listEl) {
+      searchInput.addEventListener("input", () => {
+        const q = searchInput.value.toLowerCase().trim();
+        const filtered = currentItems.filter((s) => {
+          const title = (s.title || "").toLowerCase();
+          const content = (s.content || "").toLowerCase();
+          return !q || title.includes(q) || content.includes(q);
+        });
+        renderStories(listEl, filtered);
+      });
+    }
+
+    // Buttons
+    if (leftButton) {
+      leftButton.addEventListener("click", () => {
+        console.log("Left button clicked, current page:", page);
+        if (page > 1) {
+          loadStoriesPage(page - 1);
+        }
+      });
+    }
+    if (rightButton) {
+      rightButton.addEventListener("click", () => {
+        const totalPages =
+          totalStories > 0 ? Math.ceil(totalStories / limit) : 1;
+        if (page < totalPages) {
+          loadStoriesPage(page + 1);
+        }
+      });
+    }
+
+    // Load the first page
+    if (listEl) {
+      loadStoriesPage(page);
     }
   }
 
