@@ -184,7 +184,7 @@
     });
   }
 
-  // ===== Helpers =====
+  // ===== TOGGLE PASSWORD VISIBILITY =====
   let togglePasswordVisibilityCheckbox = document.querySelector(
     "#togglePasswordVisibilityCheckbox"
   );

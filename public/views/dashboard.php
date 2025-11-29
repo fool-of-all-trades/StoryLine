@@ -1,5 +1,6 @@
 <?php 
   $title = "StoryLine — Today"; 
+  $pageScripts = ['pages/dashboard'];
   include __DIR__."/partials/header.php"; 
   use App\Security\Csrf;
 ?>

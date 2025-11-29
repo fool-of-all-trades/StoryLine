@@ -31,6 +31,8 @@
   $storiesSeriesJson = esc(json_encode($stats['storiesSeries'] ?? []));
   $usersSeriesJson   = esc(json_encode($stats['usersSeries']   ?? []));
 
+  $pageScripts = ['pages/admin'];
+  $includeCharts = true;
   include __DIR__ . "/partials/header.php";
 ?>
 

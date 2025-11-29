@@ -1,7 +1,8 @@
 <?php
 /** @var \App\Models\Story $story */
-$title = "StoryLine — " . htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
-include __DIR__ . "/partials/header.php";
+  $title = "StoryLine — " . htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
+  $pageScripts = ['pages/story'];
+  include __DIR__ . "/partials/header.php";
 ?>
 
 <article class="story-full" data-story-uuid="<?= htmlspecialchars($story->story_public_id ?? '') ?>">

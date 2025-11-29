@@ -1,9 +1,10 @@
 <?php
-$title = "Set new password";
-include __DIR__."/partials/header.php";
-use App\Security\Csrf;
+    $title = "Set new password";
+    $pageScripts = ['auth'];
+    include __DIR__."/partials/header.php";
+    use App\Security\Csrf;
 
-$token = htmlspecialchars($_GET['token'] ?? '', ENT_QUOTES, 'UTF-8');
+    $token = htmlspecialchars($_GET['token'] ?? '', ENT_QUOTES, 'UTF-8');
 ?>
 
             <h1>Reset your password</h1>

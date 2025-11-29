@@ -1,5 +1,6 @@
 <?php
   $title = "StoryLine — Stories Of The Day";
+  $pageScripts = ['pages/stories-list'];
   $date = $_GET['date'] ?? 'today';
   $currentSort = $_GET['sort'] ?? 'new';
   include __DIR__."/partials/header.php";

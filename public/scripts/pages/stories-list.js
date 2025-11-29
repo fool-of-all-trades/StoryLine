@@ -1,6 +1,5 @@
-const { escapeHtml } = window.App;
-
 (async () => {
+  const escapeHtml = window.escapeHtml;
   const list = document.querySelector("#stories-list");
   const loadMoreBtn = document.querySelector("[data-loadmore]");
 

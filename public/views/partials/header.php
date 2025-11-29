@@ -30,10 +30,27 @@ if (empty($_COOKIE['device_token'])) {
 
   <title><?= $title ?? 'StoryLine' ?></title>
 
-  <script defer src="/scripts/chart.js"></script>
   <link rel="stylesheet" href="/styles/main.css">
-  <script defer src="/scripts/main.js"></script>
 
+  <!-- global scripts -->
+  <script defer src="/scripts/csrf.js"></script>
+  <script defer src="/scripts/utils.js"></script>
+
+  <!-- only for admin charts -->
+  <?php if (!empty($includeCharts)): ?>
+    <script defer src="/scripts/chart.js"></script>
+  <?php endif; ?>
+
+  <?php
+  // $pageScripts is set in a view file to include page-specific JS files
+  if (!empty($pageScripts) && is_array($pageScripts)): 
+    foreach ($pageScripts as $script):
+  ?>
+      <script defer src="/scripts/<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>.js"></script>
+  <?php
+    endforeach;
+  endif;
+  ?>
 </head>
 <body>
   <nav class="nav">

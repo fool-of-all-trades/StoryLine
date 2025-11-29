@@ -1,6 +1,5 @@
-const { escapeHtml } = window.App;
-
 (async () => {
+  const escapeHtml = window.escapeHtml;
   const userMain = document.querySelector("main[data-user-public-id]");
   if (userMain) {
     const userPid = userMain.dataset.userPublicId;

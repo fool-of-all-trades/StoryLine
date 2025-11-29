@@ -1,5 +1,6 @@
 <?php 
   $title = "StoryLine — Register"; 
+  $pageScripts = ['auth'];
   include __DIR__."/partials/header.php"; 
   use App\Security\Csrf;
 ?>

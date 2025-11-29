@@ -1,6 +1,7 @@
 <?php
 /** @var \App\Models\User $user */
 $title = "StoryLine — User Panel";
+$pageScripts = ['pages/profile'];
 include __DIR__."/partials/header.php";
 
 $sessionUser = current_user();

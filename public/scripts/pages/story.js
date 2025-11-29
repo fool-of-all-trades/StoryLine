@@ -1,7 +1,5 @@
-const { qs, escapeHtml } = window.App;
-
 (async () => {
-  const storyFull = qs("article.story-full");
+  const storyFull = querySelector("article.story-full");
   if (storyFull) {
     storyFull.addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-like]");
