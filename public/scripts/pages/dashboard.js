@@ -4,7 +4,7 @@
     // 1) Get today's quote
     let q = await fetch("/api/quote/today", { credentials: "include" });
     if (q.status === 404) {
-      await fetch("/api/quote/ensure", {
+      await fetch("/api/quote/today", {
         method: "POST",
         credentials: "include",
         headers: { "X-CSRF-Token": window.CSRF_TOKEN },

@@ -5,14 +5,14 @@
 
   if (!isset($stats) || !is_array($stats)) {
       $stats = [
-          'date'           => date('Y-m-d'),
-          'quote'          => null,
-          'topStory'       => null,
+          'date' => date('Y-m-d'),
+          'quote' => null,
+          'topStory' => null,
           'storiesForDate' => 0,
-          'storiesTotal'   => 0,
-          'usersTotal'     => 0,
-          'storiesSeries'  => [],
-          'usersSeries'    => [],
+          'storiesTotal' => 0,
+          'usersTotal' => 0,
+          'storiesSeries' => [],
+          'usersSeries' => [],
       ];
   }
 
@@ -21,12 +21,12 @@
       return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
   }
 
-  $date            = esc($stats['date'] ?? date('Y-m-d'));
-  $quote           = $stats['quote']    ?? null;
-  $top             = $stats['topStory'] ?? null;
-  $storiesForDate  = (int)($stats['storiesForDate'] ?? 0);
-  $storiesTotal    = (int)($stats['storiesTotal']   ?? 0);
-  $usersTotal      = (int)($stats['usersTotal']     ?? 0);
+  $date = esc($stats['date'] ?? date('Y-m-d'));
+  $quote = $stats['quote'] ?? null;
+  $top = $stats['topStory'] ?? null;
+  $storiesForDate = (int)($stats['storiesForDate'] ?? 0);
+  $storiesTotal = (int)($stats['storiesTotal'] ?? 0);
+  $usersTotal = (int)($stats['usersTotal'] ?? 0);
 
   $storiesSeriesJson = esc(json_encode($stats['storiesSeries'] ?? []));
   $usersSeriesJson   = esc(json_encode($stats['usersSeries']   ?? []));

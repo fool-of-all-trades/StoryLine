@@ -6,7 +6,7 @@
 ?>
 
       <h1>Login</h1>
-      <form method="post" action="/login">
+      <form id="login-form" method="post" action="/login">
         <?= Csrf::inputField() ?>
         <input type="hidden" name="redirect" value="/dashboard">
         <label>Username or email <input name="identifier" required maxlength="255"></label>
@@ -16,6 +16,7 @@
         <input id="togglePasswordVisibilityCheckbox" type="checkbox">Show
 
         <button type="submit" class="btn primary">Welcome</button>
+        <p id="login-message" class="form-message"></p>
       </form>
       <p>No account yet? <a href="/register">Register</a></p>
       <p>Forgot your password? <a href="/password/forgot">Reset</a></p>

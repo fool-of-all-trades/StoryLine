@@ -35,6 +35,7 @@
           type="date"
           name="date"
           value="<?= $date === 'today' ? date('Y-m-d') : htmlspecialchars($date) ?>"
+          max="<?= date('Y-m-d') ?>"
         >
       </label>
       <input type="hidden" name="sort" value="<?= htmlspecialchars($currentSort) ?>">

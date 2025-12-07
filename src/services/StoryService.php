@@ -5,6 +5,8 @@ namespace App\Services;
 
 use App\Repository\StoryRepository;
 use App\Models\Story;
+use App\Helpers\DateHelper;
+
 use DomainException;
 use Throwable;
 use DateTimeImmutable;
@@ -13,7 +15,7 @@ final class StoryService
 {
     public function __construct(
         private StoryRepository $storyRepository = new StoryRepository(),
-        private ?QuoteService $quoteService = null, 
+        private ?QuoteService $quoteService = new QuoteService(), 
     ) {}
 
     /**
@@ -21,9 +23,7 @@ final class StoryService
      */
     public function listByDate(string $dateYmd, string $sort='new', int $page=1, int $limit=10): array
     {
-        $dateYmd = $dateYmd === 'today'
-            ? (new DateTimeImmutable('today'))->format('Y-m-d')
-            : (new DateTimeImmutable($dateYmd))->format('Y-m-d');
+        $dateYmd = DateHelper::normalizeYmd($dateYmd, false);
 
         $sort   = \in_array($sort, ['top','new'], true) ? $sort : 'new';
         $page   = max(1, (int)$page);
@@ -35,9 +35,7 @@ final class StoryService
 
     public function countByDate(string $dateYmd): int
     {
-        $dateYmd = $dateYmd === 'today'
-            ? (new DateTimeImmutable('today'))->format('Y-m-d')
-            : (new DateTimeImmutable($dateYmd))->format('Y-m-d');
+        $dateYmd = DateHelper::normalizeYmd($dateYmd, false);
 
         return $this->storyRepository->countOnDate($dateYmd);
     }
@@ -88,7 +86,6 @@ final class StoryService
         }
 
         // Get or create today's quote prompt
-        $this->quoteService ??= new QuoteService();
         $prompt = $this->quoteService->getOrEnsureToday();
         if (!$prompt) {
             throw new DomainException('no_prompt_today');

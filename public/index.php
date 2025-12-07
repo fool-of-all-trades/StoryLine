@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/docker/src/bootstrap.php';
-require __DIR__ . '/Routing.php';
+chdir(dirname(__DIR__));
+
+require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/../Routing.php';
 
 # ten plik to front controller
 

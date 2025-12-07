@@ -5,6 +5,8 @@ namespace App\Services;
 
 use App\Repository\QuoteRepository;
 use App\Models\Quote;
+use App\Helpers\DateHelper;
+
 use DomainException;
 use DateTimeImmutable;
 
@@ -15,30 +17,6 @@ final class QuoteService
         private QuoteRepository $repo = new QuoteRepository(),
         private string $localApiUrl = 'http://web/api/quotes/random' // quote api URL
     ) {}
-
-    /**
-     * normalizes various date inputs into Y-m-d format
-     */
-    private function normalizeYmd(string $input): string
-    {
-        $input = trim($input);
-
-        if ($input === '' || $input === 'today') {
-            $dt = new DateTimeImmutable('today');
-        } elseif ($input === 'yesterday') {
-            $dt = new DateTimeImmutable('yesterday');
-        } else {
-            $dt = DateTimeImmutable::createFromFormat('Y-m-d', $input);
-            
-            $errors = DateTimeImmutable::getLastErrors();
-            if (!$dt || ($errors['warning_count'] ?? 0) || ($errors['error_count'] ?? 0)) {
-                error_log('[QuoteService] invalid_date_format input=' . $input);
-                throw new DomainException('invalid_date_format');
-            }
-        }
-
-        return $dt->format('Y-m-d');
-    }
 
      /**
       * fetches quote for a given date (Y-m-d) from the local API
@@ -64,7 +42,7 @@ final class QuoteService
     * */
     public function getOrEnsureForDate(string $dateInput): Quote
     {
-        $ymd = $this->normalizeYmd($dateInput);
+        $ymd = DateHelper::normalizeYmd($dateInput, false);
 
         // check if quote for a given date exists in database and return it
         $existing = $this->repo->getByDate($ymd);

@@ -6,7 +6,7 @@ services:
     ports:
       - "8081:80"
     volumes:
-      - .:/app
+      - ./public:/app/public
     depends_on:
       - php
     networks:

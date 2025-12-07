@@ -4,55 +4,134 @@
   if (registerForm) {
     const regMsg = document.querySelector("#register-message");
 
-    registerForm.addEventListener("submit", (e) => {
+    registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      regMsg && (regMsg.textContent = "");
-      regMsg && regMsg.classList.remove("error", "success");
+
+      // reset message
+      if (regMsg) {
+        regMsg.textContent = "";
+        regMsg.classList.remove("error", "success");
+      }
 
       const form = registerForm;
       const username = (form.username.value || "").trim();
       const pass = form.password.value || "";
       const pass2 = form.password_confirm.value || "";
 
-      if (username.length < 3) {
-        if (regMsg) {
-          regMsg.textContent = "Username must be at least 3 characters long.";
-          regMsg.classList.add("error");
-        }
-        return;
-      }
-
-      if (pass.length < 8) {
-        if (regMsg) {
-          regMsg.textContent = "Password must be at least 8 characters long.";
-          regMsg.classList.add("error");
-        }
-        return;
-      }
-
+      //  front validation
+      if (username.length < 3)
+        return showMsg(
+          regMsg,
+          "Username must be at least 3 characters long.",
+          "error"
+        );
+      if (pass.length < 8)
+        return showMsg(
+          regMsg,
+          "Password must be at least 8 characters long.",
+          "error"
+        );
       if (
         !/[a-z]/.test(pass) ||
         !/[A-Z]/.test(pass) ||
         !/\d/.test(pass) ||
         !/[^A-Za-z0-9]/.test(pass)
-      ) {
-        if (regMsg) {
-          regMsg.textContent =
-            "Password must contain a lowercase, uppercase, digit and special character.";
-          regMsg.classList.add("error");
+      )
+        return showMsg(
+          regMsg,
+          "Password must contain a lowercase, uppercase, digit and special character.",
+          "error"
+        );
+      if (pass !== pass2)
+        return showMsg(regMsg, "Passwords do not match.", "error");
+
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            username,
+            password: pass,
+            password_confirm: pass2,
+            csrf: form.csrf?.value || "",
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.status === "error") {
+          const msg = userFriendlyMessage(data.code || data.error);
+          return showMsg(regMsg, msg, "error");
         }
-        return;
+
+        // success
+        showMsg(regMsg, "Registration successful! Redirecting...", "success");
+        setTimeout(() => (window.location = "/login"), 1000);
+      } catch (err) {
+        showMsg(
+          regMsg,
+          "Something went wrong. Please try again later.",
+          "error"
+        );
+      }
+    });
+  }
+
+  // ===== LOGIN FORM FRONT VALIDATION =====
+  const loginForm = document.querySelector("#login-form");
+  if (loginForm) {
+    const loginMsg = document.querySelector("#login-message");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (loginMsg) {
+        loginMsg.textContent = "";
+        loginMsg.classList.remove("error", "success");
       }
 
-      if (pass !== pass2) {
-        if (regMsg) {
-          regMsg.textContent = "Passwords do not match.";
-          regMsg.classList.add("error");
-        }
-        return;
+      const form = loginForm;
+      const identifier = (form.identifier.value || "").trim();
+      const password = form.password.value || "";
+      const redirect = form.redirect?.value || "/dashboard";
+
+      if (!identifier || !password) {
+        return showMsg(loginMsg, "Podaj login/e-mail i hasło.", "error");
       }
 
-      registerForm.submit();
+      try {
+        const res = await fetch("/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+          },
+          body: new URLSearchParams({
+            identifier,
+            password,
+            csrf: form.csrf?.value || "",
+            redirect,
+          }),
+          credentials: "include",
+        });
+
+        const ctype = res.headers.get("content-type") || "";
+        const data = ctype.includes("application/json")
+          ? await res.json()
+          : null;
+
+        if (!res.ok || (data && (data.status === "error" || data.error))) {
+          const code = data?.code || data?.error || "invalid_credentials";
+          const msg = userFriendlyMessage(code);
+          return showMsg(loginMsg, msg, "error");
+        }
+
+        // success
+        showMsg(loginMsg, "Zalogowano! Przekierowuję…", "success");
+        setTimeout(() => (window.location.href = redirect), 600);
+      } catch (err) {
+        showMsg(loginMsg, "Coś poszło nie tak. Spróbuj ponownie.", "error");
+      }
     });
   }
 
@@ -197,4 +276,28 @@
       passwordInput.type = "password";
     }
   });
+
+  // ===== HELPERS =====
+  function showMsg(node, text, type) {
+    if (!node) return;
+    node.textContent = text || "";
+    node.classList.remove("error", "success");
+    if (type) node.classList.add(type);
+  }
+  function userFriendlyMessage(code) {
+    switch (code) {
+      case "invalid_credentials":
+        return "Wrong email or password.";
+      case "csrf_failed":
+      case "invalid_csrf":
+        return "Session expired — refresh and try again.";
+      case "rate_limited":
+      case "locked":
+        return "Too many attempts. Please wait a bit.";
+      case "internal_error":
+        return "Server error. Please try again later.";
+      default:
+        return "Something went wrong. Please try again.";
+    }
+  }
 })();

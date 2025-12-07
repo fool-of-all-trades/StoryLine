@@ -5,13 +5,22 @@ namespace App\Controllers;
 
 use App\Services\UserService;
 use App\Services\StoryService;
-use App\Models\Role;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
 
 final class UserController
 {
+    private static function userService(): UserService
+    {
+        return new UserService();
+    }
+
+    private static function storyService(): StoryService
+    {
+        return new StoryService();
+    }
+
     private static function json(mixed $data, int $code=200): void {
         http_response_code($code);
         header('Content-Type: application/json; charset=utf-8');
@@ -70,7 +79,7 @@ final class UserController
         $identifier = trim((string)($_POST['identifier'] ?? ($_POST['username'] ?? '')));
         $password = (string)($_POST['password'] ?? '');
 
-        $userService = new UserService();
+        $userService = self::userService();
 
         try {
             $payload = $userService->login($identifier, $password);
@@ -104,7 +113,7 @@ final class UserController
                 $_SESSION[$key]['until'] = $now + $lockSeconds;
             }
 
-            // we do not say if that user exists! why would we help attackers?
+            // not saying if that user exists! why would I help attackers?
             self::json(['error' => 'invalid_credentials'], 401);
         } catch (Throwable $e) {
             self::json(['error' => 'internal_error'], 500);
@@ -144,7 +153,7 @@ final class UserController
         $password = $_POST['password'] ?? '';
         $passwordConfirm = $_POST['password_confirm'] ?? '';
 
-        $userService = new UserService();
+        $userService = self::userService();
 
         try {
             $user = $userService->register($username, $email, $password, $passwordConfirm);
@@ -156,7 +165,7 @@ final class UserController
                 'username' => $username,
                 'email' => $email,
             ];
-            include __DIR__ . '/../../../public/views/register.php';
+            include __DIR__ . '/../../public/views/register.php';
         }
     }
 
@@ -169,7 +178,7 @@ final class UserController
             return; 
         }
 
-        $userService  = new UserService();
+        $userService  = self::userService();
         $user = $userService->findById($id);
         if (!$user) { 
             http_response_code(404); 
@@ -178,7 +187,7 @@ final class UserController
         }
 
         $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
-        include __DIR__ . '/../../../public/views/user.php';
+        include __DIR__ . '/../../public/views/user.php';
     }
 
     public static function profileByPublicId(array $params): void
@@ -190,7 +199,7 @@ final class UserController
             return;
         }
 
-        $userService  = new UserService();
+        $userService  = self::userService();
         $user = $userService->findByPublicId($publicId);
         if (!$user) { 
             http_response_code(404); 
@@ -199,7 +208,7 @@ final class UserController
         }
 
         $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
-        include __DIR__ . '/../../../public/views/user.php';
+        include __DIR__ . '/../../public/views/user.php';
     }
 
     public static function profileData(array $params): void
@@ -209,13 +218,13 @@ final class UserController
             self::json(['error' => 'not_found'], 404);
         }
 
-        $userService = new UserService();
+        $userService = self::userService();
         $user = $userService->findByPublicId($publicId);
         if (!$user) {
             self::json(['error' => 'not_found'], 404);
         }
 
-        $storyService = new StoryService();
+        $storyService = self::storyService();
         try {
             $data = $storyService->getProfileDataForUser($user->id);
 
@@ -239,13 +248,13 @@ final class UserController
             self::json(['error' => 'not_found'], 404);
         }
 
-        $userService = new UserService();
+        $userService = self::userService();
         $userPrivateID = $userService->findPrivateIdByPublicId($publicId);
         if (!$userPrivateID) {
             self::json(['error' => 'not_found'], 404);
         }
 
-        $storyService = new StoryService();
+        $storyService = self::storyService();
         try {
             $page  = (int)($_GET['page']  ?? 1);
             $limit = (int)($_GET['limit'] ?? 8);
@@ -283,7 +292,7 @@ final class UserController
         $book = $_POST['favorite_quote_book'] ?? '';
         $author = $_POST['favorite_quote_author'] ?? '';
 
-        $userService = new UserService();
+        $userService = self::userService();
 
         try {
             $userService->setFavoriteQuote((int)$currentUser['id'], $sentence, $book, $author);
@@ -320,7 +329,7 @@ final class UserController
 
         $username = $_POST['username'] ?? '';
 
-        $userService = new UserService();
+        $userService = self::userService();
 
         try {
             $userService->changeUsername((int)$currentUser['id'], $username);
@@ -354,7 +363,7 @@ final class UserController
 
         $password = $_POST['password'] ?? '';
 
-        $userService = new UserService();
+        $userService = self::userService();
 
         try {
             $userService->changePassword((int)$currentUser['id'], $password);

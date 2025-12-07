@@ -74,8 +74,8 @@ if ($NOW - $_SESSION['_meta']['started_at'] > $ABSOLUTE_LIMIT) {
     }
 }
 
-// Autoloader przestrzeni App\
-$base = __DIR__;
+// Autoloader
+$base = __DIR__ . '/src';
 
 spl_autoload_register(function (string $class) use ($base) {
     $prefix = 'App\\';
@@ -83,7 +83,7 @@ spl_autoload_register(function (string $class) use ($base) {
     if (strncmp($prefix, $class, $len) !== 0) {
         return;
     }
-    $relative = substr($class, $len); // Controllers\UserController
+    $relative = substr($class, $len); // Controllers\UserController ...
     $file = $base . '/' . str_replace('\\', '/', $relative) . '.php';
     if (is_file($file)) {
         require $file;

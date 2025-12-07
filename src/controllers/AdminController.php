@@ -31,7 +31,7 @@ final class AdminController
         $stats   = $service->getDashboardData($date);
 
         $title = "StoryLine — Admin";
-        include __DIR__ . '/../../../public/views/admin.php';
+        include __DIR__ . '/../../public/views/admin.php';
     }
 
     // if I ever decide to make admin panel fetch stats via AJAX

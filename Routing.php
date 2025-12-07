@@ -130,27 +130,27 @@ class Routing
                 return;
 
             case 'api/quote/today':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
-                    QuoteController::today(); 
-                    return; 
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                    QuoteController::today();
+                    return;
                 }
-                http_response_code(405); 
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    QuoteController::ensureToday();
+                    return;
+                }
+                http_response_code(405);
                 return;
 
-            case 'api/quote/ensure':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    QuoteController::ensureToday(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case '/api/quote':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
+            case 'api/quote':
+                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     QuoteController::byDate();
-                    return; 
+                    return;
                 }
-                http_response_code(405); 
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    QuoteController::ensureByDate();
+                    return;
+                }
+                http_response_code(405);
                 return;
 
             case 'api/me/favorite-quote':

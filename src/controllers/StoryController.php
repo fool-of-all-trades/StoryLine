@@ -10,6 +10,12 @@ use App\Security\Csrf;
 
 final class StoryController
 {
+
+    private static function storyService(): StoryService
+    {
+        return new StoryService();
+    }
+
     private static function json(mixed $data, int $code = 200): void {
         http_response_code($code);
         header('Content-Type: application/json; charset=utf-8');
@@ -20,7 +26,7 @@ final class StoryController
     /** GET /api/stories?date=today|YYYY-MM-DD&sort=top|new&page=1&limit=10 */
     public static function list(): void
     {
-        $storyService = new StoryService();
+        $storyService = self::storyService();
         $date  = $_GET['date'] ?? 'today';
         $sort  = $_GET['sort'] ?? 'new';
         $page  = (int)($_GET['page'] ?? 1);
@@ -49,7 +55,7 @@ final class StoryController
             self::json(['error'=>'bad_request'], 400);
         }
 
-        $storyService = new StoryService();
+        $storyService = self::storyService();
         $story = $storyService->getStoryById($id);
 
         if (!$story) {
@@ -64,14 +70,14 @@ final class StoryController
             http_response_code(404); echo 'Invalid story ID'; return;
         }
 
-        $storyService = new StoryService();
+        $storyService = self::storyService();
         $story = $storyService->getStoryByPublicId($uuid);
         if (!$story) {
             http_response_code(404); echo 'Story not found'; return;
         }
 
         $title = htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
-        include __DIR__ . '/../../../public/views/story.php';
+        include __DIR__ . '/../../public/views/story.php';
     }
 
 
@@ -80,7 +86,7 @@ final class StoryController
     {
         Csrf::verify();
         
-        $storyService = new StoryService();
+        $storyService = self::storyService();
 
         $userId    = $_SESSION['user']['id'] ?? null; // null = anonymous
         $title     = $_POST['title']   ?? null;

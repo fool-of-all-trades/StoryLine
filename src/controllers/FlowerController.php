@@ -10,6 +10,12 @@ use App\Security\Csrf;
 
 final class FlowerController
 {
+
+    private static function flowerService(): FlowerService
+    {
+        return new FlowerService();
+    }
+
     private static function json(mixed $data, int $code = 200): void {
         http_response_code($code);
         header('Content-Type: application/json; charset=utf-8');
@@ -21,7 +27,7 @@ final class FlowerController
     public static function toggle(): void {
         Csrf::verify();
         
-        $flowerService = new FlowerService();
+        $flowerService = self::flowerService();
 
         // for now only logged-in users can flower
         $userId = $_SESSION['user']['id'] ?? null;
@@ -46,7 +52,7 @@ final class FlowerController
 
     /** GET /api/story/flowers?id=123 – liczba kwiatków */
     public static function count(): void {
-        $flowerService = new FlowerService();
+        $flowerService = self::flowerService();
         $storyId = (int)($_GET['id'] ?? 0);
         if ($storyId <= 0) {
             self::json(['error'=>'bad_request'], 400);

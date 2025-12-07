@@ -25,7 +25,7 @@
         if (dateFromUrl === "today") {
           res = await fetch("/api/quote/today", { credentials: "include" });
           if (res.status === 404) {
-            await fetch("/api/quote/ensure", {
+            await fetch("/api/quote/today", {
               method: "POST",
               credentials: "include",
               headers: { "X-CSRF-Token": window.CSRF_TOKEN },
@@ -39,6 +39,19 @@
               credentials: "include",
             }
           );
+          if (res.status === 500 || res.status === 404) {
+            await fetch(`/api/quote?date=${encodeURIComponent(dateFromUrl)}`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "X-CSRF-Token": window.CSRF_TOKEN },
+            });
+            res = await fetch(
+              `/api/quote?date=${encodeURIComponent(dateFromUrl)}`,
+              {
+                credentials: "include",
+              }
+            );
+          }
         }
 
         if (!res.ok) {
