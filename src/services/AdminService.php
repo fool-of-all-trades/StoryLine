@@ -40,21 +40,21 @@ final class AdminService
         }
 
         $storiesForDate = $this->storyRepository->countOnDate($ymd);
-        $storiesTotal   = $this->storyRepository->countTotal();
-        $topStory       = $this->storyRepository->topOfDay($ymd);
-        $usersTotal     = $this->userRepository->countTotal();
-        $storiesSeries  = $this->storyRepository->timeSeries(6, 'day');
-        $usersSeries    = $this->userRepository->timeSeries(12, 'month');
+        $storiesTotal = $this->storyRepository->countTotal();
+        $topStory = $this->storyRepository->topOfDay($ymd);
+        $usersTotal = $this->userRepository->countTotal();
+        $storiesSeries = $this->storyRepository->timeSeries(6, 'day');
+        $usersSeries = $this->userRepository->timeSeries(12, 'month');
 
         return [
-            'date'           => $ymd,
-            'quote'          => $quote,
-            'topStory'       => $topStory,
+            'date' => $ymd,
+            'quote' => $quote,
+            'topStory' => $topStory,
             'storiesForDate' => $storiesForDate,
-            'storiesTotal'   => $storiesTotal,
-            'usersTotal'     => $usersTotal,
-            'storiesSeries'  => $storiesSeries,
-            'usersSeries'    => $usersSeries,
+            'storiesTotal' => $storiesTotal,
+            'usersTotal' => $usersTotal,
+            'storiesSeries' => $storiesSeries,
+            'usersSeries' => $usersSeries,
         ];
     }
 

@@ -210,8 +210,7 @@ final class StoryRepository
                 FROM stories s
                 LEFT JOIN users   u ON u.id = s.user_id
                 LEFT JOIN flowers f ON f.story_id = s.id
-                                    AND f.created_at::date = :d
-                WHERE s.created_at::date = :d
+                WHERE s.created_at::date = :d 
                 GROUP BY
                     s.id,
                     s.public_id,
