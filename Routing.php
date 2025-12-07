@@ -200,6 +200,14 @@ class Routing
                 }
                 http_response_code(405);
                 return;
+
+            case 'api/me/avatar':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    UserController::updateAvatar();
+                    return;
+                }
+                http_response_code(405);
+                return;
         }
 
         // Dynamic: /user/{public_id}

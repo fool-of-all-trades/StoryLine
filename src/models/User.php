@@ -18,6 +18,7 @@ final class User
         public ?string $favorite_quote_sentence = null,
         public ?string $favorite_quote_book = null,
         public ?string $favorite_quote_author = null,
+        public ?string $avatar_path = null,
     ) {}
 
     public static function fromArray(array $row): self {
@@ -32,6 +33,7 @@ final class User
             favorite_quote_sentence: $row['favorite_quote_sentence'] ?? null,
             favorite_quote_book: $row['favorite_quote_book'] ?? null,
             favorite_quote_author: $row['favorite_quote_author'] ?? null,
+            avatar_path: $row['avatar_path'] ?? null,
         );
     }
 

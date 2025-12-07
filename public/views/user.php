@@ -10,7 +10,37 @@ $isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id)
       <main data-user-public-id="<?= htmlspecialchars($user->public_id, ENT_QUOTES, 'UTF-8') ?>">
         <section class="parent">
           <section class="section1">
-            <div class="section1-left"></div>
+            <div class="section1-left">
+                <?php
+                  $avatar = $user->avatar_path ?? null;
+
+                  if (!$avatar) {
+                      $avatar = '/uploads/avatars/default-avatar.jpg';
+                  }
+                ?>
+
+                <img src="<?= htmlspecialchars($avatar, ENT_QUOTES, 'UTF-8') ?>"
+                    alt="Avatar of <?= htmlspecialchars($user->username ?? 'user', ENT_QUOTES, 'UTF-8') ?>"
+                    class="avatar">
+
+                <?php if ($isOwnProfile): ?>
+                  <form id="avatar-form"
+                        method="post"
+                        action="/api/me/avatar"
+                        enctype="multipart/form-data"
+                        class="avatar-form">
+                    <?= \App\Security\Csrf::inputField() ?>
+
+                    <label>
+                      Avatar
+                      <input type="file" name="avatar" accept="image/*">
+                    </label>
+
+                    <button type="submit" class="btn secondary">Change avatar</button>
+                    <p id="avatar-message" class="form-message"></p>
+                  </form>
+                <?php endif; ?>
+            </div>
 
             <div class="section1-right">
               <div class="gold-label">

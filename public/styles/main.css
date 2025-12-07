@@ -225,6 +225,12 @@ section {
   margin-left: 0.2rem;
 }
 
+.avatar {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+}
+
 /* tablets */
 @media screen and (min-width: 768px) {
   .parent {

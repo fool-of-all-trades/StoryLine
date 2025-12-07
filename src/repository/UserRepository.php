@@ -101,6 +101,16 @@ final class UserRepository
         ]);
     }
 
+    public function updateAvatar(int $userId, ?string $avatarPath): void
+    {
+        $st = $this->pdo->prepare('UPDATE users SET avatar_path = :p WHERE id = :id');
+        $st->execute([
+            ':id' => $userId,
+            ':p'  => $avatarPath,
+        ]);
+    }
+
+
     // HELPERS FOR ADMIN PANEL
     public function countTotal(): int {
         return (int)$this->pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();

@@ -191,4 +191,11 @@ final class UserService
             throw new DomainException('password_too_weak');
         }
     }
+
+    public function changeAvatar(int $userId, ?string $path): void
+    {
+        // add validation later + maybe delete old avatar file from storage
+        $this->userRepository->updateAvatar($userId, $path);
+    }
+
 }

@@ -378,4 +378,80 @@ final class UserController
             echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
         }
     }
+
+    public static function updateAvatar(): void
+    {
+        Csrf::verify();
+        header('Content-Type: application/json; charset=utf-8');
+
+        $currentUser = current_user();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(['error' => 'upload_failed'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $file = $_FILES['avatar'];
+
+        // Walidacja: rozmiar (np. max 2MB)
+        if ($file['size'] > 2 * 1024 * 1024) {
+            http_response_code(422);
+            echo json_encode(['error' => 'avatar_too_large'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        // Walidacja: MIME (nie ufamy tylko rozszerzeniu)
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime  = $finfo->file($file['tmp_name']) ?: 'application/octet-stream';
+
+        $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/gif'  => 'gif',
+            'image/webp' => 'webp',
+        ];
+
+        if (!isset($allowed[$mime])) {
+            http_response_code(422);
+            echo json_encode(['error' => 'avatar_invalid_type'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $ext = $allowed[$mime];
+
+        // Ścieżka docelowa
+        $publicId = $currentUser['public_id']; // upewnij się że to jest w current_user()
+        $fileName = $publicId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+
+        $relativePath = '/uploads/avatars/' . $fileName;
+        $targetDir    = __DIR__ . '/../../public/uploads/avatars';
+        $targetPath   = $targetDir . '/' . $fileName;
+
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0775, true);
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'avatar_save_failed'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        // Zapis ścieżki w bazie
+        $userService = self::userService();
+        $userService->changeAvatar((int)$currentUser['id'], $relativePath);
+
+        http_response_code(200);
+        echo json_encode([
+            'status' => 'ok',
+            'avatar_url' => $relativePath,
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
 }
