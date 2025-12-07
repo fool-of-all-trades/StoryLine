@@ -15,11 +15,11 @@ final class Database
         if (self::$pdo) return self::$pdo;
 
         $cfg = [
-        'host' => getenv('DB_HOST') ?: 'db',
-        'port' => getenv('DB_PORT') ?: '5432',
-        'db'   => getenv('DB_NAME') ?: 'appdb',
-        'user' => getenv('DB_USER') ?: 'appuser',
-        'pass' => getenv('DB_PASS') ?: 'apppass',
+        'host' => getenv('DB_HOST'),
+        'port' => getenv('DB_PORT'),
+        'db'   => getenv('DB_NAME'),
+        'user' => getenv('DB_USER'),
+        'pass' => getenv('DB_PASS'),
         ];
 
         $dsn = "pgsql:host={$cfg['host']};port={$cfg['port']};dbname={$cfg['db']}";

@@ -18,13 +18,8 @@ services:
       dockerfile: docker/php/Dockerfile
     volumes:
       - .:/app
-    environment:
-      DB_HOST: db
-      DB_PORT: "5432"
-      DB_NAME: appdb
-      DB_USER: appuser
-      DB_PASS: apppass
-      QUOTES_LOCAL_PATH: "/app/database/quotes.json"
+    env_file:
+      - .env
     depends_on:
       - db
     networks:
