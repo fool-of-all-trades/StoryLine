@@ -1,11 +1,15 @@
 -- ========= USERS =========
-INSERT INTO users (username, password_hash, role) VALUES
-  ('admin',  '$2y$10$nDpNHgZG0b4E3CvBmDCmueCpgMdUssSlBfpkqfTwq9QdFvAp11lbe', 'admin'),
-  ('alice',  '$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user'),
-  ('bob',    '$2y$10$5BbM488Z144v9oRL2ftNuuscpHz4F.7.fOhbHGTlaBakhri1tE/ce', 'user'),
-  ('charlie','$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user'),
-  ('diana',  '$2y$10$5BbM488Z144v9oRL2ftNuuscpHz4F.7.fOhbHGTlaBakhri1tE/ce', 'user'),
-  ('erin',   '$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user')
+INSERT INTO users (username, password_hash, role, created_at) VALUES
+  ('admin',  '$2y$10$nDpNHgZG0b4E3CvBmDCmueCpgMdUssSlBfpkqfTwq9QdFvAp11lbe', 'admin', '2025-11-21 19:35:41.279561+00'),
+  ('alice',  '$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user', '2025-11-22 19:35:41.279561+00'),
+  ('bob',    '$2y$10$5BbM488Z144v9oRL2ftNuuscpHz4F.7.fOhbHGTlaBakhri1tE/ce', 'user', '2025-11-22 19:35:41.279561+00'),
+  ('charlie','$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user', '2025-11-24 19:35:41.279561+00'),
+  ('diana',  '$2y$10$5BbM488Z144v9oRL2ftNuuscpHz4F.7.fOhbHGTlaBakhri1tE/ce', 'user', '2025-11-24 19:35:41.279561+00'),
+  ('erin',   '$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user', '2025-11-25 19:35:41.279561+00'),
+  ('adam',  '$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user', '2025-11-28 19:35:41.279561+00'),
+  ('peter',    '$2y$10$5BbM488Z144v9oRL2ftNuuscpHz4F.7.fOhbHGTlaBakhri1tE/ce', 'user', '2025-11-28 19:35:41.279561+00'),
+  ('edgard','$2y$10$u8seQz2w5N4uu.i6s5dxYOItnNWlNyzfn.ZhgnDu50z7kJNu2Xxfy', 'user', '2025-12-01 19:35:41.279561+00'),
+  ('samuel',  '$2y$10$5BbM488Z144v9oRL2ftNuuscpHz4F.7.fOhbHGTlaBakhri1tE/ce', 'user', '2025-12-02 19:35:41.279561+00')
 ON CONFLICT (username) DO NOTHING;
 
 -- ========= DAILY PROMPTS =========
@@ -531,7 +535,7 @@ INSERT INTO flowers (story_id, user_id, value)
 SELECT s.id, u.id, 1
 FROM stories s
 JOIN users u ON u.username IN ('admin', 'charlie', 'diana')
-WHERE s.title IN ('Thirteen O''Clock','Mother Died Today','Dead Channel', 
+WHERE s.title IN ('Thirteen O''Clock','Mother Died Today', 'Dead Channel', 
 'Worst of Times, Best of Logs', 'Gunslinger.exe', 
   'Truth Universally Acknowledged', 'Families of Code')
 ON CONFLICT DO NOTHING;
@@ -551,4 +555,11 @@ FROM stories s
 JOIN users u ON u.username IN ('diana','erin', 'bob', 'admin')
 WHERE s.title IN ('Less or More', 'Foreign Country','Barstow Logs', 'Worst of Times, Best of Logs',
 'Another Ishmael part 2', 'Gunslinger.exe', 'Another Ishmael', 'More or Less')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO flowers (story_id, user_id, value)
+SELECT s.id, u.id, 1
+FROM stories s
+JOIN users u ON u.username IN ('diana','erin', 'bob', 'admin', 'charlie', 'alice', 'peter', 'edgard', 'samuel', 'adam')
+WHERE s.title = 'Mother Died Today, again'
 ON CONFLICT DO NOTHING;
