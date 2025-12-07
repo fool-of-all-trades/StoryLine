@@ -1,5 +1,5 @@
 (async () => {
-  const storyFull = querySelector("article.story-full");
+  const storyFull = document.querySelector(".story-full");
   if (storyFull) {
     storyFull.addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-like]");
