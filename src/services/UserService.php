@@ -194,7 +194,16 @@ final class UserService
 
     public function changeAvatar(int $userId, ?string $path): void
     {
-        // add validation later + maybe delete old avatar file from storage
+        if ($path === null) {
+            $path = 'default-avatar.jpg';
+        }
+        else{
+            $oldAvatarPath = $this->userRepository->findAvatarPathForUser($userId);
+            if ($oldAvatarPath !== 'default-avatar.jpg' && file_exists(__DIR__ .'/../../public' . $oldAvatarPath)) {
+                unlink(__DIR__ .'/../../public' . $oldAvatarPath);
+            }
+        }
+
         $this->userRepository->updateAvatar($userId, $path);
     }
 

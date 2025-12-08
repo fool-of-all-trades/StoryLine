@@ -113,6 +113,8 @@ final class StoryService
                 throw new DomainException('quote_missing');
             if (str_contains($msg, 'Too many words'))
                 throw new DomainException('too_many_words');
+            if(str_contains($msg, 'Content must include the prompt sentence'))
+                throw new DomainException('prompt_missing_in_content');
             if (str_contains($msg, 'Only one story per prompt'))
                 throw new DomainException('already_submitted_today');
             if (str_contains($msg, 'uq_story_user_per_day') || str_contains($msg, 'uq_story_device_per_day'))

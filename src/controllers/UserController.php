@@ -399,14 +399,14 @@ final class UserController
 
         $file = $_FILES['avatar'];
 
-        // Walidacja: rozmiar (np. max 2MB)
+        // It's just a profile picture, so limit size to 2MB
         if ($file['size'] > 2 * 1024 * 1024) {
             http_response_code(422);
             echo json_encode(['error' => 'avatar_too_large'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        // Walidacja: MIME (nie ufamy tylko rozszerzeniu)
+        // Validation, cuz I don't trust the client
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime  = $finfo->file($file['tmp_name']) ?: 'application/octet-stream';
 
@@ -425,8 +425,7 @@ final class UserController
 
         $ext = $allowed[$mime];
 
-        // Ścieżka docelowa
-        $publicId = $currentUser['public_id']; // upewnij się że to jest w current_user()
+        $publicId = $currentUser['public_id']; // make sure it's the current user
         $fileName = $publicId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
 
         $relativePath = '/uploads/avatars/' . $fileName;
@@ -443,7 +442,7 @@ final class UserController
             return;
         }
 
-        // Zapis ścieżki w bazie
+        // Save path to DB
         $userService = self::userService();
         $userService->changeAvatar((int)$currentUser['id'], $relativePath);
 

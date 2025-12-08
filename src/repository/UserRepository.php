@@ -110,6 +110,10 @@ final class UserRepository
         ]);
     }
 
+    public function findAvatarPathForUser(int $userId): string
+    {
+        return (string)$this->pdo->query("SELECT avatar_path FROM users WHERE id = '$userId'")->fetchColumn();
+    }
 
     // HELPERS FOR ADMIN PANEL
     public function countTotal(): int {

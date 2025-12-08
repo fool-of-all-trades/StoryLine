@@ -112,11 +112,12 @@ final class StoryController
             self::json(['id'=>$id], 201);
         } catch (DomainException $e) {
             $code = match ($e->getMessage()) {
-                'no_prompt_today'        => 400,
+                'no_prompt_today' => 400,
                 'already_submitted_today'=> 409,
-                'quote_missing'          => 400,
-                'too_many_words'         => 400,
-                default                  => 500,
+                'quote_missing' => 400,
+                'too_many_words' => 400,
+                'prompt_missing_in_content' => 400,
+                default => 500,
             };
             self::json(['error'=>$e->getMessage()], $code);
         } catch (Throwable $e) {
