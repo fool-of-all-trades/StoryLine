@@ -14,11 +14,12 @@
     <section id="write" class="writer">
       <form id="story-form" method="post" action="/api/story">
         <?= Csrf::inputField() ?>
-        <input id="title" name="title" placeholder="Title" maxlength="100" />
+        <input type="text" id="title" name="title" placeholder="Title" maxlength="100" />
         <br>
         
         <?php if (!$current_user) : ?>
           <input
+            type="text"
             id="guest-name"
             name="guest_name"
             placeholder="Your name (optional)"
@@ -26,6 +27,10 @@
           />
           <br>
         <?php endif; ?>
+
+        <p id="word-counter">
+          <span id="word-count-span">0</span>/500 words
+        </p>
 
         <textarea
           id="story-textarea"

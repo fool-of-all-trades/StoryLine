@@ -107,9 +107,20 @@
     }
   }
 
-  // --- Autosave + session keep-alive ---
   const storyTextarea = document.querySelector("#story-textarea");
   const storyForm = document.querySelector("#story-form");
+  const counterEl = document.querySelector("#word-count-span");
+
+  // --- word count logging for testing ---
+  if (storyTextarea && counterEl) {
+    storyTextarea.addEventListener("input", () => {
+      const currentContent = storyTextarea.value.trim();
+      const count = wordCount(currentContent);
+      counterEl.textContent = count;
+    });
+  }
+
+  // --- Autosave + session keep-alive ---
 
   // works only on the dahsboard
   if (storyTextarea && storyForm) {
@@ -139,6 +150,12 @@
     // After the user submits the form, clear the saved draft
     storyForm.addEventListener("submit", () => localStorage.removeItem(KEY));
   }
+
+  // helper
+  const wordCount = (s) => {
+    const words = s.match(/\p{L}[\p{L}\p{N}'’-]*/gu); // sequences starting with a letter
+    return words ? words.length : 0;
+  };
 
   // session keep-alive only if the user is actively typing
   // let lastTyping = Date.now();
