@@ -9,6 +9,7 @@ async function handleRegisterSubmit(e) {
   showMsg(regMsg, "", null);
 
   const username = (form.username.value || "").trim();
+  const email = (form.email.value || "").trim();
   const password = form.password.value || "";
   const passwordConfirm = form.password_confirm.value || "";
 
@@ -24,11 +25,12 @@ async function handleRegisterSubmit(e) {
   }
 
   try {
-    const res = await fetch("/api/register", {
+    const res = await fetch("/register", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         username,
+        email,
         password,
         password_confirm: passwordConfirm,
         csrf: form.csrf?.value || "",

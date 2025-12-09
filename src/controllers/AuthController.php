@@ -151,15 +151,20 @@ final class AuthController
 
         try {
             $user = $userService->register($username, $email, $password, $passwordConfirm);
-            header('Location: /login');
-            exit;
+            self::json([
+                'status' => 'success',
+                'message' => 'Registration successful',
+            ], 200);
         } catch (DomainException $e) {
-            $error = $e->getMessage();
-            $old = [
-                'username' => $username,
-                'email' => $email,
-            ];
-            include __DIR__ . '/../../public/views/register.php';
+            self::json([
+                'status' => 'error',
+                'code'   => $e->getMessage()
+            ], 400);
+        } catch (Throwable $e) {
+            self::json([
+                'status' => 'error',
+                'code'   => 'internal_error',
+            ], 500);
         }
     }
 }
