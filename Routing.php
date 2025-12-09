@@ -1,14 +1,13 @@
 <?php
 
 use App\Controllers\UserController;
+use App\Controllers\AuthController;
 use App\Controllers\StoryController;
 use App\Controllers\FlowerController;
 use App\Controllers\QuotesApiController;
 use App\Controllers\QuoteController;
 use App\Controllers\AdminController;
 use App\Controllers\PasswordResetController;
-
-// controllers should be singletons
 
 class Routing
 {
@@ -54,7 +53,7 @@ class Routing
                     return;
                 }
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    UserController::login(); 
+                    AuthController::login(); 
                     return; 
                 }
                 http_response_code(405); 
@@ -63,7 +62,7 @@ class Routing
 
             case 'logout':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    UserController::logout(); 
+                    AuthController::logout(); 
                     return; 
                 }
                 http_response_code(405); 
@@ -76,7 +75,7 @@ class Routing
                     return;
                 }
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    UserController::register(); 
+                    AuthController::register(); 
                     return; 
                 }
                 http_response_code(405); 
