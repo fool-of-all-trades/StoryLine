@@ -198,13 +198,19 @@ final class UserService
             $path = 'default-avatar.jpg';
         }
         else{
+            // delete old avatar file if the user had a custom one
             $oldAvatarPath = $this->userRepository->findAvatarPathForUser($userId);
-            if ($oldAvatarPath !== 'default-avatar.jpg' && file_exists(__DIR__ .'/../../public' . $oldAvatarPath)) {
-                unlink(__DIR__ .'/../../public' . $oldAvatarPath);
+            if ($oldAvatarPath !== 'default-avatar.jpg') {
+                // Validate the path is within uploads/avatars
+                $fullPath = realpath(__DIR__ .'/../../public' . $oldAvatarPath);
+                $allowedDir = realpath(__DIR__ .'/../../public/uploads/avatars');
+                
+                if ($fullPath && $allowedDir && str_starts_with($fullPath, $allowedDir) && file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
             }
         }
 
         $this->userRepository->updateAvatar($userId, $path);
     }
-
 }
