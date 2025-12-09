@@ -11,237 +11,167 @@ use App\Controllers\PasswordResetController;
 
 class Routing
 {
-    public static function run(string $path)
+    private static array $routes = [];
+
+    // Register a GET route
+    private static function get(string $path, callable|array|string $handler): void
     {
+        self::$routes[$path]['GET'] = $handler;
+    }
+
+    // Register a POST route
+    private static function post(string $path, callable|array $handler): void
+    {
+        self::$routes[$path]['POST'] = $handler;
+    }
+
+    // Define all application routes
+    private static function defineRoutes(): void
+    {
+        // Static pages
+        self::get('', fn() => include 'public/views/dashboard.php');
+        self::get('dashboard', fn() => include 'public/views/dashboard.php');
+        self::get('test', fn() => include 'public/views/test.html');
+
+        // Admin
+        self::get('admin', [AdminController::class, 'index']);
+
+        // Stories
+        self::get('stories', fn() => include 'public/views/stories.php');
+        self::get('stories/today', fn() => header('Location: /stories?date=today&sort=new'));
+
+        // Auth - Views and Actions
+        self::get('login', fn() => include 'public/views/login.php');
+        self::post('login', [AuthController::class, 'login']);
+        self::post('logout', [AuthController::class, 'logout']);
+        self::get('register', fn() => include 'public/views/register.php');
+        self::post('register', [AuthController::class, 'register']);
+
+        // Password Reset
+        self::get('password/forgot', fn() => include 'public/views/password_forgot.php');
+        self::post('password/forgot', [PasswordResetController::class, 'forgot']);
+        self::get('password/reset', fn() => include 'public/views/password_reset.php');
+        self::post('password/reset', [PasswordResetController::class, 'reset']);
+
+        // API - Stories
+        self::get('api/stories', [StoryController::class, 'list']);
+        self::get('api/story', [StoryController::class, 'getStoryById']);
+        self::post('api/story', [StoryController::class, 'create']);
+
+        // API - Flowers (likes)
+        self::post('api/story/flower', [FlowerController::class, 'toggle']);
+        self::get('api/story/flowers', [FlowerController::class, 'count']);
+
+        // API - Quotes
+        self::get('api/quotes/random', [QuotesApiController::class, 'random']);
+        self::get('api/quote/today', [QuoteController::class, 'today']);
+        self::post('api/quote/today', [QuoteController::class, 'ensureToday']);
+        self::get('api/quote', [QuoteController::class, 'byDate']);
+        self::post('api/quote', [QuoteController::class, 'ensureByDate']);
+
+        // API - User Profile Updates
+        self::post('api/me/favorite-quote', [UserController::class, 'updateFavoriteQuote']);
+        self::post('api/me/username', [UserController::class, 'updateUsername']);
+        self::post('api/me/password', [UserController::class, 'updatePassword']);
+        self::post('api/me/avatar', [UserController::class, 'updateAvatar']);
+    }
+
+    // Execute a route handler
+    private static function executeHandler(callable|array|string $handler, array $params = []): void
+    {
+        if (is_array($handler)) {
+            // Controller action: [ControllerClass::class, 'methodName']
+            [$controller, $method] = $handler;
+            if (!empty($params)) {
+                $controller::$method($params);
+            } else {
+                $controller::$method();
+            }
+        } elseif (is_callable($handler)) {
+            // Closure or callable
+            $handler($params);
+        } elseif (is_string($handler)) {
+            // View path
+            include $handler;
+        }
+    }
+
+    
+    // Main routing logic
+    public static function run(string $path): void
+    {
+        // Define routes once
+        if (empty(self::$routes)) {
+            self::defineRoutes();
+        }
+
         $path = parse_url($path, PHP_URL_PATH) ?? '/';
         $path = trim($path, "/");
+        $method = $_SERVER['REQUEST_METHOD'];
 
-        switch ($path) {
-            case '':
-            case 'dashboard':
-                include 'public/views/dashboard.php';
-                return;
-
-            case 'test':
-                include 'public/views/test.html';
-                return;
-                
-            case 'admin':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
-                    AdminController::index(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'stories':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    include 'public/views/stories.php';
-                    return;
-                }
-                http_response_code(405);
-                echo 'Method Not Allowed';
-                return;
-
-            case 'stories/today':
-                header('Location: /stories?date=today&sort=new');
-                return;
-
-            case 'login':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    include 'public/views/login.php'; 
-                    return;
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    AuthController::login(); 
-                    return; 
-                }
-                http_response_code(405); 
-                echo 'Method Not Allowed'; 
-                return;
-
-            case 'logout':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    AuthController::logout(); 
-                    return; 
-                }
-                http_response_code(405); 
-                echo 'Method Not Allowed'; 
-                return;
-
-            case 'register':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    include 'public/views/register.php'; 
-                    return;
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    AuthController::register(); 
-                    return; 
-                }
-                http_response_code(405); 
-                echo 'Method Not Allowed'; 
-                return;
-                
-            # Dynamic: /stories?date={YYYY-MM-DD}&sort=new
-            case 'api/stories':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
-                    StoryController::list(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            # Dynamic: /story/{id}
-            case 'api/story':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET')  { 
-                    StoryController::getStoryById(); 
-                    return; 
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    StoryController::create(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'api/story/flower':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    FlowerController::toggle(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'api/story/flowers':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
-                    FlowerController::count(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'api/quotes/random':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') { 
-                    QuotesApiController::random(); 
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'api/quote/today':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    QuoteController::today();
-                    return;
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    QuoteController::ensureToday();
-                    return;
-                }
-                http_response_code(405);
-                return;
-
-            case 'api/quote':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    QuoteController::byDate();
-                    return;
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    QuoteController::ensureByDate();
-                    return;
-                }
-                http_response_code(405);
-                return;
-
-            case 'api/me/favorite-quote':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    UserController::updateFavoriteQuote();
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'api/me/username':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    UserController::updateUsername();
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'api/me/password':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-                    UserController::updatePassword();
-                    return; 
-                }
-                http_response_code(405); 
-                return;
-
-            case 'password/forgot':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    include 'public/views/password_forgot.php';
-                    return;
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    PasswordResetController::forgot();
-                    return;
-                }
-                http_response_code(405);
-                return;
-
-            case 'password/reset':
-                if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                    include 'public/views/password_reset.php';
-                    return;
-                }
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    PasswordResetController::reset();
-                    return;
-                }
-                http_response_code(405);
-                return;
-
-            case 'api/me/avatar':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    UserController::updateAvatar();
-                    return;
-                }
-                http_response_code(405);
-                return;
-        }
-
-        // Dynamic: /user/{public_id}
-        if (preg_match('#^user/([0-9a-fA-F-]{36})$#', $path, $m)) {
-            UserController::profileByPublicId(['public_id' => $m[1]]);
+        // Check static routes first
+        if (isset(self::$routes[$path][$method])) {
+            self::executeHandler(self::$routes[$path][$method]);
             return;
         }
 
-        // Dynamic: /story/{public_id}
-        if (preg_match('#^story/([0-9a-fA-F-]{36})$#', $path, $m)) {
-            StoryController::viewByPublicId(['public_id' => $m[1]]);
+        // If route exists but method is wrong, return 405
+        if (isset(self::$routes[$path])) {
+            http_response_code(405);
+            $allowed = implode(', ', array_keys(self::$routes[$path]));
+            header("Allow: $allowed");
+            echo json_encode(['error' => 'method_not_allowed']);
             return;
         }
 
-        // GET /api/user/{public_id}/profile
-        if (preg_match('#^api/user/([0-9a-fA-F-]{36})/profile$#', $path, $m)) {
-            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                UserController::profileData(['public_id' => $m[1]]);
+        // Dynamic routes with regex
+        $dynamicRoutes = [
+            // GET /user/{public_id}
+            [
+                'pattern' => '#^user/([0-9a-fA-F-]{36})$#',
+                'method' => 'GET',
+                'handler' => [UserController::class, 'profileByPublicId'],
+                'params' => fn($m) => ['public_id' => $m[1]]
+            ],
+            // GET /story/{public_id}
+            [
+                'pattern' => '#^story/([0-9a-fA-F-]{36})$#',
+                'method' => 'GET',
+                'handler' => [StoryController::class, 'viewByPublicId'],
+                'params' => fn($m) => ['public_id' => $m[1]]
+            ],
+            // GET /api/user/{public_id}/profile
+            [
+                'pattern' => '#^api/user/([0-9a-fA-F-]{36})/profile$#',
+                'method' => 'GET',
+                'handler' => [UserController::class, 'profileData'],
+                'params' => fn($m) => ['public_id' => $m[1]]
+            ],
+            // GET /api/user/{public_id}/stories
+            [
+                'pattern' => '#^api/user/([0-9a-fA-F-]{36})/stories$#',
+                'method' => 'GET',
+                'handler' => [UserController::class, 'profileStories'],
+                'params' => fn($m) => ['public_id' => $m[1]]
+            ],
+        ];
+
+        foreach ($dynamicRoutes as $route) {
+            if (preg_match($route['pattern'], $path, $matches)) {
+                if ($method !== $route['method']) {
+                    http_response_code(405);
+                    header("Allow: {$route['method']}");
+                    echo json_encode(['error' => 'method_not_allowed']);
+                    return;
+                }
+                
+                $params = $route['params']($matches);
+                self::executeHandler($route['handler'], $params);
                 return;
             }
-            http_response_code(405);
-            return;
         }
 
-        // GET /api/user/{public_id}/stories
-        if (preg_match('#^api/user/([0-9a-fA-F-]{36})/stories$#', $path, $m)) {
-            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-                UserController::profileStories(['public_id' => $m[1]]);
-                return;
-            }
-            http_response_code(405);
-            return;
-        }
-
-        // 404
+        // 404 Not Found
         http_response_code(404);
         include 'public/views/404.html';
     }
