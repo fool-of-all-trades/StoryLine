@@ -423,6 +423,14 @@ final class UserController
             return;
         }
 
+        // Validate dimensions, no dimensions? that's not a photo
+        list($width, $height) = @getimagesize($file['tmp_name']);
+        if (!$width || !$height || $width > 4000 || $height > 4000) {
+            http_response_code(422);
+            echo json_encode(['error' => 'avatar_invalid_dimensions'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
         $ext = $allowed[$mime];
 
         $publicId = $currentUser['public_id']; // make sure it's the current user
@@ -436,9 +444,37 @@ final class UserController
             mkdir($targetDir, 0775, true);
         }
 
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-            http_response_code(500);
-            echo json_encode(['error' => 'avatar_save_failed'], JSON_UNESCAPED_UNICODE);
+        // Re-encode image to strip malicious content
+        try {
+            switch ($mime) {
+                case 'image/jpeg':
+                    $img = imagecreatefromjpeg($file['tmp_name']);
+                    if (!$img) throw new \Exception('Invalid JPEG');
+                    imagejpeg($img, $targetPath, 85);
+                    imagedestroy($img);
+                    break;
+                case 'image/png':
+                    $img = imagecreatefrompng($file['tmp_name']);
+                    if (!$img) throw new \Exception('Invalid PNG');
+                    imagepng($img, $targetPath, 8);
+                    imagedestroy($img);
+                    break;
+                case 'image/gif':
+                    $img = imagecreatefromgif($file['tmp_name']);
+                    if (!$img) throw new \Exception('Invalid GIF');
+                    imagegif($img, $targetPath);
+                    imagedestroy($img);
+                    break;
+                case 'image/webp':
+                    $img = imagecreatefromwebp($file['tmp_name']);
+                    if (!$img) throw new \Exception('Invalid WebP');
+                    imagewebp($img, $targetPath, 85);
+                    imagedestroy($img);
+                    break;
+            }
+        } catch (\Exception $e) {
+            http_response_code(422);
+            echo json_encode(['error' => 'avatar_processing_failed'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
