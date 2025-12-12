@@ -12,7 +12,7 @@ use App\Security\Csrf;
 class FlowerController extends BaseController
 {
 
-    private $flowerService;
+    private FlowerService $flowerService;
 
     public function __construct() {
         $this->flowerService = new FlowerService();

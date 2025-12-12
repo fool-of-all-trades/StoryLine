@@ -11,7 +11,7 @@ use App\Security\Csrf;
 
 class AuthController extends BaseController
 {
-    private $userService;
+    private UserService $userService;
 
     public function __construct() {
         $this->userService = new UserService();

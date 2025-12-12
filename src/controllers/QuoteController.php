@@ -11,7 +11,7 @@ use App\Security\Csrf;
 
 class QuoteController extends BaseController
 {
-    private $quoteService;
+    private QuoteService $quoteService;
 
     public function __construct() {
         $this->quoteService = new QuoteService();

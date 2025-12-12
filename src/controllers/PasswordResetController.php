@@ -14,8 +14,8 @@ use Throwable;
 
 class PasswordResetController extends BaseController
 {
-    private $userService;
-    private $resetService;
+    private UserService $userService;
+    private PasswordResetService $resetService;
 
     public function __construct() {
         $this->userService = new UserService();

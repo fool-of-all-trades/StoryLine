@@ -63,7 +63,7 @@ final class StoryRepository
 
             $sql = 'INSERT INTO stories (prompt_id, user_id, device_token, guest_name, ip_hash, title, content, is_anonymous)
                     VALUES (:p, :u, :dt, :gn, :ip, :t, :c, :anon)
-                    RETURNING id';
+                    RETURNING public_id';
             $st = $this->pdo->prepare($sql);
             $st->execute([
                 ':p'   => $s->quoteId,
@@ -76,9 +76,9 @@ final class StoryRepository
                 ':anon'=> $s->isAnonymous ? 't' : 'f',
             ]);
 
-            $id = (int)$st->fetchColumn();
+            $publicId = (int)$st->fetchColumn();
             Database::commit();
-            return $id;
+            return $publicId;
 
         } catch (PDOException $e) {
             Database::rollBack();

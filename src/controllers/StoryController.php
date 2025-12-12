@@ -11,7 +11,7 @@ use App\Security\Csrf;
 
 class StoryController extends BaseController
 {
-    private $storyService;
+    private StoryService $storyService;
 
     public function __construct() {
         $this->storyService = new StoryService();
@@ -92,9 +92,9 @@ class StoryController extends BaseController
     {
         Csrf::verify();
         
-        $userId    = $_SESSION['user']['id'] ?? null; // null = anonymous
-        $title     = $_POST['title']   ?? null;
-        $content   = trim($_POST['content'] ?? '');
+        $userId = $_SESSION['user']['id'] ?? null; // null = anonymous
+        $title = $_POST['title']   ?? null;
+        $content = trim($_POST['content'] ?? '');
         $anonymous = !empty($_POST['anonymous']);
         $guestName = $_POST['guest_name'] ?? null;
 
@@ -111,9 +111,9 @@ class StoryController extends BaseController
         $ipHash = $ip ? hash('sha256', $ip . '|' . $salt) : null;
 
         try {
-            $id = $this->storyService->addTodayStory($userId, $title, $content, $anonymous, 
+            $publicId = $this->storyService->addTodayStory($userId, $title, $content, $anonymous, 
                                                 $guestName, $deviceToken, $ipHash);
-            $this->json(['id'=>$id], 201);
+            $this->json(['public_id'=>$publicId], 201);
         } catch (DomainException $e) {
             $code = match ($e->getMessage()) {
                 'no_prompt_today' => 400,

@@ -12,8 +12,8 @@ use App\Security\Csrf;
 
 class UserController extends BaseController
 {
-    private $storyService;
-    private $userService;
+    private StoryService $storyService;
+    private UserService $userService;
 
     public function __construct() {
         $this->storyService = new StoryService();
