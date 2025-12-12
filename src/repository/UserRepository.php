@@ -36,9 +36,9 @@ final class UserRepository
     }
 
     public function findByUsername(string $username): ?User {
-        $st = $this->pdo->prepare('SELECT * FROM users WHERE username = :u');
-        $st->execute([':u'=>$username]);
-        $row = $st->fetch();
+        $st = $this->pdo->prepare('SELECT * FROM users WHERE LOWER(TRIM(username)) = :u');
+        $st->execute(['u' => $username]); 
+        $row = $st->fetch(PDO::FETCH_ASSOC);
         return $row ? User::fromArray($row) : null;
     }
 
