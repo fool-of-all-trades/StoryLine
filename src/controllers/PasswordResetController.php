@@ -22,6 +22,16 @@ class PasswordResetController extends BaseController
         $this->resetService = new PasswordResetService();
     }
 
+    public function passwordForgotPage(): void
+    {
+        $this->render('password_forgot');
+    }
+
+    public function passwordResetPage(): void
+    {
+        $this->render('password_reset');
+    }
+
     public function forgot(): void
     {
         Csrf::verify();

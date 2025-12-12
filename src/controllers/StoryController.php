@@ -17,6 +17,16 @@ class StoryController extends BaseController
         $this->storyService = new StoryService();
     }
 
+    public function storiesPage(): void
+    {
+        $this->render('stories');
+    }
+
+    public function storiesTodayRedirect(): void
+    {
+        $this->redirect('/stories?date=today&sort=new');
+    }
+
     /** GET /api/stories?date=today|YYYY-MM-DD&sort=top|new&page=1&limit=10 */
     public function list(): void
     {

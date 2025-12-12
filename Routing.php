@@ -8,6 +8,7 @@ use App\Controllers\QuotesApiController;
 use App\Controllers\QuoteController;
 use App\Controllers\AdminController;
 use App\Controllers\PasswordResetController;
+use App\Controllers\DashboardController;
 
 class Routing
 {
@@ -29,28 +30,27 @@ class Routing
     private static function defineRoutes(): void
     {
         // Static pages
-        self::get('', fn() => include 'public/views/dashboard.php');
-        self::get('dashboard', fn() => include 'public/views/dashboard.php');
-        self::get('test', fn() => include 'public/views/test.html');
+        self::get('', [DashboardController::class, 'dashboardPage']);
+        self::get('dashboard', [DashboardController::class, 'dashboardPage']);
 
         // Admin
         self::get('admin', [AdminController::class, 'index']);
 
         // Stories
-        self::get('stories', fn() => include 'public/views/stories.php');
-        self::get('stories/today', fn() => header('Location: /stories?date=today&sort=new'));
+        self::get('stories', [StoryController::class, 'storiesPage']);
+        self::get('stories/today', [StoryController::class, 'storiesTodayRedirect']);
 
         // Auth - Views and Actions
-        self::get('login', fn() => include 'public/views/login.php');
+        self::get('login', [AuthController::class, 'loginPage']);
         self::post('login', [AuthController::class, 'login']);
         self::post('logout', [AuthController::class, 'logout']);
-        self::get('register', fn() => include 'public/views/register.php');
+        self::get('register', [AuthController::class, 'registerPage']);
         self::post('register', [AuthController::class, 'register']);
 
         // Password Reset
-        self::get('password/forgot', fn() => include 'public/views/password_forgot.php');
+        self::get('password/forgot', [PasswordResetController::class, 'passwordForgotPage']);
         self::post('password/forgot', [PasswordResetController::class, 'forgot']);
-        self::get('password/reset', fn() => include 'public/views/password_reset.php');
+        self::get('password/reset', [PasswordResetController::class, 'passwordResetPage']);
         self::post('password/reset', [PasswordResetController::class, 'reset']);
 
         // API - Stories

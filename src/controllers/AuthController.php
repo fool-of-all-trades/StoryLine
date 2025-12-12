@@ -31,6 +31,16 @@ class AuthController extends BaseController
         Csrf::verify();
     }
 
+    public function loginPage(): void
+    {
+        $this->render('login');
+    }
+
+    public function registerPage(): void
+    {
+        $this->render('register');
+    }
+
     /**
     *  Handle user login
     *
