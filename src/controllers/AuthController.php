@@ -7,6 +7,7 @@ use App\Services\UserService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
+use App\Helpers\Logger;
 
 class AuthController extends BaseController
 {
@@ -58,6 +59,8 @@ class AuthController extends BaseController
     {
         self::requirePostWithCsrf();
 
+        $logger = new Logger(getenv('APP_LOG_PATH') ?: __DIR__ . '/../../var/log/app.log');
+
         // ---- Throttle (rate limiting) ----
         $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $key = 'login_attempts_' . $ip; // per-IP
@@ -68,14 +71,27 @@ class AuthController extends BaseController
 
         $now = time();
 
-        // If they try while the time hasn't passed yet -> 429
-        if ($now < $_SESSION[$key]['until']) {
-            header('Retry-After: ' . ($_SESSION[$key]['until'] - $now));
-            $this->json(['error' => 'too_many_attempts', 'retry_after' => $_SESSION[$key]['until'] - $now], 429);
-        }
+        // Hash the IP with a salt to avoid leaking real IPs in the logger
+        $salt = getenv('APP_IP_SALT') ?: 'default_salt_value_that_if_everything_works_out_wont_be_used';
+        $ipHash = $ip ? hash('sha256', $ip . '|' . $salt) : null;
 
         $identifier = trim((string)($_POST['identifier'] ?? ($_POST['username'] ?? '')));
         $password = (string)($_POST['password'] ?? '');
+
+        // If they try while the time hasn't passed yet -> 429
+        if ($now < $_SESSION[$key]['until']) {
+            $retryAfter = $_SESSION[$key]['until'] - $now;
+
+            $logger->warning('login_rate_limited', [
+                'identifier' => $identifier ?? null, // (see note below)
+                'ip_hash' => $ipHash,
+                'retry_after' => $retryAfter,
+                'ua' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ]);
+
+            header('Retry-After: ' . $retryAfter);
+            $this->json(['error' => 'too_many_attempts', 'retry_after' => $retryAfter], 429);
+        }
 
         try {
             $payload = $this->userService->login($identifier, $password);
@@ -108,6 +124,13 @@ class AuthController extends BaseController
                 $_SESSION[$key]['cnt'] = 0;
                 $_SESSION[$key]['until'] = $now + $lockSeconds;
             }
+
+            $logger->warning('login_failed', [
+                'identifier' => $identifier,
+                'ip_hash' => $ipHash,
+                'cnt' => $_SESSION[$key]['cnt'],
+                'ua' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ]);
 
             // not saying if that user exists! why would I help attackers?
             $this->json(['error' => 'invalid_credentials'], 401);

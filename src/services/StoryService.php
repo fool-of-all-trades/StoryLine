@@ -62,7 +62,7 @@ final class StoryService
         ?string $guestName = null,
         ?string $deviceToken = null,
         ?string $ipHash = null
-    ): int {
+    ): string {
 
         $isAnonymous = (bool)$anonymous;
 
