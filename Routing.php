@@ -80,20 +80,15 @@ class Routing
     private static function executeHandler(callable|array|string $handler, array $params = []): void
     {
         if (is_array($handler)) {
-            // Controller action: [ControllerClass::class, 'methodName']
-            [$controller, $method] = $handler;
-            if (!empty($params)) {
-                $controller::$method($params);
-            } else {
-                $controller::$method();
-            }
-        } elseif (is_callable($handler)) {
-            // Closure or callable
-            $handler($params);
-        } elseif (is_string($handler)) {
-            // View path
-            include $handler;
+            [$class, $method] = $handler;
+            $controller = new $class();
+
+            if ($params) $controller->$method($params); 
+            else  $controller->$method(); 
+            
+            return;
         }
+        $handler($params);
     }
 
     
@@ -107,7 +102,7 @@ class Routing
 
         $path = parse_url($path, PHP_URL_PATH) ?? '/';
         $path = trim($path, "/");
-        $method = $_SERVER['REQUEST_METHOD'];
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
         // Check static routes first
         if (isset(self::$routes[$path][$method])) {

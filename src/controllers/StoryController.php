@@ -3,91 +3,85 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
 use App\Services\StoryService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
 
-final class StoryController
+class StoryController extends BaseController
 {
+    private $storyService;
 
-    private static function storyService(): StoryService
-    {
-        return new StoryService();
-    }
-
-    private static function json(mixed $data, int $code = 200): void {
-        http_response_code($code);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
-        exit;
+    public function __construct() {
+        $this->storyService = new StoryService();
     }
 
     /** GET /api/stories?date=today|YYYY-MM-DD&sort=top|new&page=1&limit=10 */
-    public static function list(): void
+    public function list(): void
     {
-        $storyService = self::storyService();
         $date  = $_GET['date'] ?? 'today';
         $sort  = $_GET['sort'] ?? 'new';
         $page  = (int)($_GET['page'] ?? 1);
         $limit = (int)($_GET['limit'] ?? 10);
 
         try {
-            $items = $storyService->listByDate($date, $sort, $page, $limit);
-            $totalForDay = $storyService->countByDate($date);
+            $items = $this->storyService->listByDate($date, $sort, $page, $limit);
+            $totalForDay = $this->storyService->countByDate($date);
 
-            self::json([
+            $this->json([
                 'items' => array_map(fn($s) => $s->toArray(), $items),
                 'page'  => max(1, $page),
                 'limit' => $limit,
                 'total_for_day' => $totalForDay,
             ]);
         } catch (Throwable $e) {
-            self::json(['error' => 'internal_error'], 500);
+            $this->json(['error' => 'internal_error'], 500);
         }
     }
 
     /** GET /api/story?id=123 */
-    public static function getStoryById(): void
+    public function getStoryById(): void
     {
         $id = (int)($_GET['id'] ?? 0);
         if ($id <= 0) {
-            self::json(['error'=>'bad_request'], 400);
+            $this->json(['error'=>'bad_request'], 400);
         }
 
-        $storyService = self::storyService();
-        $story = $storyService->getStoryById($id);
+        $story = $this->storyService->getStoryById($id);
 
         if (!$story) {
-            self::json(['error'=>'not_found'], 404);
+            $this->json(['error'=>'not_found'], 404);
         }
-        self::json($story->toArray());
+        $this->json($story->toArray());
     }
 
-    public static function viewByPublicId(array $params): void {
+    public function viewByPublicId(array $params): void {
         $uuid = (string)($params['public_id'] ?? '');
         if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
             http_response_code(404); echo 'Invalid story ID'; return;
         }
 
-        $storyService = self::storyService();
-        $story = $storyService->getStoryByPublicId($uuid);
+        $story = $this->storyService->getStoryByPublicId($uuid);
         if (!$story) {
             http_response_code(404); echo 'Story not found'; return;
         }
 
         $title = htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
-        include __DIR__ . '/../../public/views/story.php';
+        // include __DIR__ . '/../../public/views/story.php';
+
+        $this->render('story', [
+        'title' => $title,
+        'story' => $story,
+        ]);
     }
 
 
     /** POST /api/story (title, content, anonymous=on|1) */
-    public static function create(): void
+    public function create(): void
     {
         Csrf::verify();
         
-        $storyService = self::storyService();
-
         $userId    = $_SESSION['user']['id'] ?? null; // null = anonymous
         $title     = $_POST['title']   ?? null;
         $content   = trim($_POST['content'] ?? '');
@@ -95,7 +89,7 @@ final class StoryController
         $guestName = $_POST['guest_name'] ?? null;
 
         if ($content === '') {
-            self::json(['error'=>'empty_content'], 400);
+            $this->json(['error'=>'empty_content'], 400);
         }
 
         // device token (cookie) – identification for anonymous users, cuz one story per day is allowed
@@ -107,9 +101,9 @@ final class StoryController
         $ipHash = $ip ? hash('sha256', $ip . '|' . $salt) : null;
 
         try {
-            $id = $storyService->addTodayStory($userId, $title, $content, $anonymous, 
+            $id = $this->storyService->addTodayStory($userId, $title, $content, $anonymous, 
                                                 $guestName, $deviceToken, $ipHash);
-            self::json(['id'=>$id], 201);
+            $this->json(['id'=>$id], 201);
         } catch (DomainException $e) {
             $code = match ($e->getMessage()) {
                 'no_prompt_today' => 400,
@@ -119,9 +113,9 @@ final class StoryController
                 'prompt_missing_in_content' => 400,
                 default => 500,
             };
-            self::json(['error'=>$e->getMessage()], $code);
+            $this->json(['error'=>$e->getMessage()], $code);
         } catch (Throwable $e) {
-            self::json(['error'=>'internal_error'], 500);
+            $this->json(['error'=>'internal_error'], 500);
         }
     }
 }

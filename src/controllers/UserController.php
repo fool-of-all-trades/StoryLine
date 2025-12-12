@@ -3,91 +3,63 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
 use App\Services\UserService;
 use App\Services\StoryService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
 
-final class UserController
+class UserController extends BaseController
 {
-    private static function userService(): UserService
-    {
-        return new UserService();
+    private $storyService;
+    private $userService;
+
+    public function __construct() {
+        $this->storyService = new StoryService();
+        $this->userService = new UserService();
     }
 
-    private static function storyService(): StoryService
-    {
-        return new StoryService();
-    }
-
-    private static function json(mixed $data, int $code=200): void {
-        http_response_code($code);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    public static function profile(array $params): void
-    {
-        $id = (int)($params['user_id'] ?? 0);
-        if ($id <= 0) { 
-            http_response_code(404); 
-            echo 'User not found'; 
-            return; 
-        }
-
-        $userService  = self::userService();
-        $user = $userService->findById($id);
-        if (!$user) { 
-            http_response_code(404); 
-            echo 'User not found'; 
-            return; 
-        }
-
-        $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
-        include __DIR__ . '/../../public/views/user.php';
-    }
-
-    public static function profileByPublicId(array $params): void
+    public function profileByPublicId(array $params): void
     {
         $publicId = (string)($params['public_id'] ?? '');
         if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicId)) {
-            http_response_code(404); 
-            echo 'User not found'; 
-            return;
+            $this->notFound(
+                "User not found"
+            );
         }
 
-        $userService  = self::userService();
-        $user = $userService->findByPublicId($publicId);
+        $user = $this->userService->findByPublicId($publicId);
         if (!$user) { 
-            http_response_code(404); 
-            echo 'User not found'; 
-            return; 
+            $this->notFound(
+                "User not found"
+            );
         }
 
         $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
-        include __DIR__ . '/../../public/views/user.php';
+        
+        $this->render('user', [
+            'user' => $user,
+            'title' => $title,
+        ]);
     }
 
-    public static function profileData(array $params): void
+    public function profileData(array $params): void
     {
         $publicId = (string)($params['public_id'] ?? '');
         if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicId)) {
-            self::json(['error' => 'not_found'], 404);
+            $this->json(['error' => 'not_found'], 404);
         }
 
-        $userService = self::userService();
-        $user = $userService->findByPublicId($publicId);
+        $user = $this->userService->findByPublicId($publicId);
         if (!$user) {
-            self::json(['error' => 'not_found'], 404);
+            $this->json(['error' => 'not_found'], 404);
         }
 
-        $storyService = self::storyService();
         try {
-            $data = $storyService->getProfileDataForUser($user->id);
+            $data = $this->storyService->getProfileDataForUser($user->id);
 
-            self::json([
+            $this->json([
                 'user'   => [
                     'username'  => $user->username,
                     'public_id' => $user->public_id,
@@ -96,24 +68,22 @@ final class UserController
                 'data'  => $data,
             ]);
         } catch (Throwable $e) {
-            self::json(['error' => 'internal_error'], 500);
+            $this->json(['error' => 'internal_error'], 500);
         }
     }
 
-    public static function profileStories(array $params): void
+    public function profileStories(array $params): void
     {
         $publicId = (string)($params['public_id'] ?? '');
         if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicId)) {
-            self::json(['error' => 'not_found'], 404);
+            $this->json(['error' => 'not_found'], 404);
         }
 
-        $userService = self::userService();
-        $userPrivateID = $userService->findPrivateIdByPublicId($publicId);
+        $userPrivateID = $this->userService->findPrivateIdByPublicId($publicId);
         if (!$userPrivateID) {
-            self::json(['error' => 'not_found'], 404);
+            $this->json(['error' => 'not_found'], 404);
         }
 
-        $storyService = self::storyService();
         try {
             $page  = (int)($_GET['page']  ?? 1);
             $limit = (int)($_GET['limit'] ?? 8);
@@ -124,19 +94,19 @@ final class UserController
             // how many stories to skip
             $offset = ($page - 1) * $limit;
 
-            $storiesPayload = $storyService->getStoresForUser($userPrivateID, $limit, $offset);
+            $storiesPayload = $this->storyService->getStoresForUser($userPrivateID, $limit, $offset);
 
-            self::json([
+            $this->json([
                 'page' => $page,
                 'limit' => $limit,
                 'stories' => $storiesPayload,
             ]);
         } catch (Throwable $e) {
-            self::json(['error' => 'internal_error'], 500);
+            $this->json(['error' => 'internal_error'], 500);
         }
     }
 
-    public static function updateFavoriteQuote(): void
+    public function updateFavoriteQuote(): void
     {
         Csrf::verify();
 
@@ -153,10 +123,8 @@ final class UserController
         $book = $_POST['favorite_quote_book'] ?? '';
         $author = $_POST['favorite_quote_author'] ?? '';
 
-        $userService = self::userService();
-
         try {
-            $userService->setFavoriteQuote((int)$currentUser['id'], $sentence, $book, $author);
+            $this->userService->setFavoriteQuote((int)$currentUser['id'], $sentence, $book, $author);
             http_response_code(200);
             echo json_encode([
                 'status' => 'ok',
@@ -175,7 +143,8 @@ final class UserController
             echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
         }
     }
-    public static function updateUsername(): void
+    
+    public function updateUsername(): void
     {
         Csrf::verify();
 
@@ -190,10 +159,8 @@ final class UserController
 
         $username = $_POST['username'] ?? '';
 
-        $userService = self::userService();
-
         try {
-            $userService->changeUsername((int)$currentUser['id'], $username);
+            $this->userService->changeUsername((int)$currentUser['id'], $username);
             http_response_code(200);
             echo json_encode([
                 'status' => 'ok',
@@ -209,7 +176,7 @@ final class UserController
         }
     }
 
-    public static function updatePassword(): void
+    public function updatePassword(): void
     {
         Csrf::verify();
 
@@ -224,10 +191,8 @@ final class UserController
 
         $password = $_POST['password'] ?? '';
 
-        $userService = self::userService();
-
         try {
-            $userService->changePassword((int)$currentUser['id'], $password);
+            $this->userService->changePassword((int)$currentUser['id'], $password);
             http_response_code(200);
             echo json_encode(['status' => 'ok'], JSON_UNESCAPED_UNICODE);
         } catch (DomainException $e) {
@@ -240,7 +205,7 @@ final class UserController
         }
     }
 
-    public static function updateAvatar(): void
+    public function updateAvatar(): void
     {
         Csrf::verify();
         header('Content-Type: application/json; charset=utf-8');
@@ -340,8 +305,7 @@ final class UserController
         }
 
         // Save path to DB
-        $userService = self::userService();
-        $userService->changeAvatar((int)$currentUser['id'], $relativePath);
+        $this->userService->changeAvatar((int)$currentUser['id'], $relativePath);
 
         http_response_code(200);
         echo json_encode([

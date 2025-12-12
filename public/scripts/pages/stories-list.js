@@ -132,6 +132,25 @@ async function loadStoriesPage(date, sort) {
       { credentials: "include" }
     );
 
+    if (!res.ok) {
+      // 401/403 → maybe redirect to login (or show a message)
+      if (res.status === 401 || res.status === 403) {
+        location.href = "/login";
+        return;
+      }
+      const text = await res.text();
+      console.error("Stories API error:", res.status, text);
+      throw new Error(`Stories API ${res.status}`);
+    }
+
+    // Ensure it's JSON before parsing
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      const text = await res.text();
+      console.error("Expected JSON, got:", text.slice(0, 500));
+      throw new Error("Non-JSON response");
+    }
+
     const data = await res.json();
     const items = data.items || [];
 
