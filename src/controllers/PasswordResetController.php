@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
 use App\Services\UserService;
 use App\Services\PasswordResetService;
 use App\Security\Csrf;
@@ -11,20 +12,17 @@ use DomainException;
 
 use Throwable;
 
-final class PasswordResetController
+class PasswordResetController extends BaseController
 {
+    private $userService;
+    private $resetService;
 
-    private static function userService(): UserService
-    {
-        return new UserService();
+    public function __construct() {
+        $this->userService = new UserService();
+        $this->resetService = new PasswordResetService();
     }
 
-    private static function passwordService(): PasswordResetService
-    {
-        return new PasswordResetService();
-    }
-
-    public static function forgot(): void
+    public function forgot(): void
     {
         Csrf::verify();
         header("Content-Type: application/json");
@@ -36,8 +34,7 @@ final class PasswordResetController
             return;
         }
 
-        $userService = self::userService();
-        $user = $userService->findByEmail($email);
+        $user = $this->userService->findByEmail($email);
 
         if (!$user) {
             echo json_encode(['status' => 'ok']);
@@ -45,8 +42,7 @@ final class PasswordResetController
         }
 
         try {
-            $resetService = self::passwordService();
-            $token = $resetService->createToken($user->id);
+            $token = $this->resetService->createToken($user->id);
         } catch (Throwable $e) {
             error_log("Password reset error: ".$e->getMessage());
             http_response_code(500);
@@ -65,7 +61,7 @@ final class PasswordResetController
     }
 
 
-    public static function reset(): void
+    public function reset(): void
     {
         Csrf::verify();
 
@@ -81,8 +77,7 @@ final class PasswordResetController
             return;
         }
 
-        $resetService = self::passwordService();
-        $userId = $resetService->validateToken($token);
+        $userId = $this->resetService->validateToken($token);
 
         if (!$userId) {
             http_response_code(422);
@@ -91,16 +86,15 @@ final class PasswordResetController
         }
 
         // Update password
-        $userService = self::userService();
         try {
-            $userService->changePassword($userId, $pass1);
+            $this->userService->changePassword($userId, $pass1);
         } catch (DomainException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
             return;
         }
 
-        $resetService->deleteToken($token);
+        $this->resetService->deleteToken($token);
 
         echo json_encode(['status' => 'ok']);
     }

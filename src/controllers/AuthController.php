@@ -3,32 +3,27 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
 use App\Services\UserService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
 
-final class AuthController
+class AuthController extends BaseController
 {
-    private static function userService(): UserService
-    {
-        return new UserService();
+    private $userService;
+
+    public function __construct() {
+        $this->userService = new UserService();
     }
 
-    private static function json(mixed $data, int $code=200): void {
-        http_response_code($code);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    private static function isSafeRedirect(string $url): bool {
+    private function isSafeRedirect(string $url): bool {
         return str_starts_with($url, '/')
             && !str_starts_with($url, '//')
             && !str_contains($url, "\n");
     }
 
-    private static function requirePostWithCsrf(): void {
+    private function requirePostWithCsrf(): void {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             http_response_code(405);
             exit('Method Not Allowed');
@@ -50,7 +45,7 @@ final class AuthController
     * - 401 Unauthorized       — { error: "invalid_credentials" } (no user enumeration)
     * - 500 Internal Server Error — { error: "internal_error" }
     */
-    public static function login(): void
+    public function login(): void
     {
         self::requirePostWithCsrf();
 
@@ -67,16 +62,14 @@ final class AuthController
         // If they try while the time hasn't passed yet -> 429
         if ($now < $_SESSION[$key]['until']) {
             header('Retry-After: ' . ($_SESSION[$key]['until'] - $now));
-            self::json(['error' => 'too_many_attempts', 'retry_after' => $_SESSION[$key]['until'] - $now], 429);
+            $this->json(['error' => 'too_many_attempts', 'retry_after' => $_SESSION[$key]['until'] - $now], 429);
         }
 
         $identifier = trim((string)($_POST['identifier'] ?? ($_POST['username'] ?? '')));
         $password = (string)($_POST['password'] ?? '');
 
-        $userService = self::userService();
-
         try {
-            $payload = $userService->login($identifier, $password);
+            $payload = $this->userService->login($identifier, $password);
 
             // SUCCESS: reset throttle + rotate session & CSRF
             $_SESSION[$key] = ['cnt' => 0, 'until' => 0];
@@ -108,13 +101,13 @@ final class AuthController
             }
 
             // not saying if that user exists! why would I help attackers?
-            self::json(['error' => 'invalid_credentials'], 401);
+            $this->json(['error' => 'invalid_credentials'], 401);
         } catch (Throwable $e) {
-            self::json(['error' => 'internal_error'], 500);
+            $this->json(['error' => 'internal_error'], 500);
         }
     }
 
-    public static function logout(): void
+    public function logout(): void
     {
         self::requirePostWithCsrf();
 
@@ -138,7 +131,7 @@ final class AuthController
         exit;
     }
 
-    public static function register(): void
+    public function register(): void
     {
         self::requirePostWithCsrf();
         
@@ -147,21 +140,19 @@ final class AuthController
         $password = $_POST['password'] ?? '';
         $passwordConfirm = $_POST['password_confirm'] ?? '';
 
-        $userService = self::userService();
-
         try {
-            $user = $userService->register($username, $email, $password, $passwordConfirm);
-            self::json([
+            $user = $this->userService->register($username, $email, $password, $passwordConfirm);
+            $this->json([
                 'status' => 'success',
                 'message' => 'Registration successful',
             ], 200);
         } catch (DomainException $e) {
-            self::json([
+            $this->json([
                 'status' => 'error',
                 'code'   => $e->getMessage()
             ], 400);
         } catch (Throwable $e) {
-            self::json([
+            $this->json([
                 'status' => 'error',
                 'code'   => 'internal_error',
             ], 500);
