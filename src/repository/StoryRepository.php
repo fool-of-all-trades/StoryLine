@@ -57,7 +57,7 @@ final class StoryRepository
      * Limit of 1 story per prompt per (user/device/ip).
      * Plus (optionally) validation of word_count <= 500 (triggers in DB will enforce this anyway).
      */
-    public function create(Story $s): int{
+    public function create(Story $s): string{
         try {
             Database::begin();
 
@@ -76,7 +76,7 @@ final class StoryRepository
                 ':anon'=> $s->isAnonymous ? 't' : 'f',
             ]);
 
-            $publicId = (int)$st->fetchColumn();
+            $publicId = (string)$st->fetchColumn();
             Database::commit();
             return $publicId;
 

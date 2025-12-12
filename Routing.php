@@ -1,14 +1,16 @@
 <?php
 
-use App\Controllers\UserController;
-use App\Controllers\AuthController;
-use App\Controllers\StoryController;
-use App\Controllers\FlowerController;
-use App\Controllers\QuotesApiController;
-use App\Controllers\QuoteController;
-use App\Controllers\AdminController;
-use App\Controllers\PasswordResetController;
-use App\Controllers\DashboardController;
+use App\Controllers\{
+    UserController,
+    AuthController,
+    StoryController,
+    FlowerController,
+    QuotesApiController,
+    QuoteController,
+    AdminController,
+    PasswordResetController,
+    DashboardController
+};
 
 class Routing
 {
@@ -57,10 +59,6 @@ class Routing
         self::get('api/stories', [StoryController::class, 'list']);
         self::get('api/story', [StoryController::class, 'getStoryById']);
         self::post('api/story', [StoryController::class, 'create']);
-
-        // API - Flowers (likes)
-        self::post('api/story/flower', [FlowerController::class, 'toggle']);
-        self::get('api/story/flowers', [FlowerController::class, 'count']);
 
         // API - Quotes
         self::get('api/quotes/random', [QuotesApiController::class, 'random']);
@@ -148,6 +146,21 @@ class Routing
                 'method' => 'GET',
                 'handler' => [UserController::class, 'profileStories'],
                 'params' => fn($m) => ['public_id' => $m[1]]
+            ],
+            // POST /api/story/{public_id}/flower
+            [
+                'pattern' => '#^api/story/([0-9a-fA-F-]{36})/flower$#',
+                'method'  => 'POST',
+                'handler' => [FlowerController::class, 'toggle'],
+                'params'  => fn($m) => ['public_id' => $m[1]],
+            ],
+
+            // GET /api/story/{public_id}/flowers
+            [
+                'pattern' => '#^api/story/([0-9a-fA-F-]{36})/flowers$#',
+                'method'  => 'GET',
+                'handler' => [FlowerController::class, 'count'],
+                'params'  => fn($m) => ['public_id' => $m[1]],
             ],
         ];
 

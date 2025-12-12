@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Controllers\BaseController;
 use App\Services\UserService;
 use App\Services\StoryService;
 use DomainException;

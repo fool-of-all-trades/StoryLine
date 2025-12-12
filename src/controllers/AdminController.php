@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Controllers\BaseController;
 use App\Services\AdminService;
 
 class AdminController extends BaseController

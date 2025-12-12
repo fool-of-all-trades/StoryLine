@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Controllers\BaseController;
 use App\Services\FlowerService;
 use DomainException;
 use Throwable;
@@ -19,7 +18,7 @@ class FlowerController extends BaseController
     }
 
     /** POST /api/story/flower?id=123 – toggle */
-    public function toggle(): void {
+    public function toggle(array $params): void {
         Csrf::verify();
 
         // for now only logged-in users can flower
@@ -28,11 +27,13 @@ class FlowerController extends BaseController
             $this->json(['error'=>'unauthorized'], 401);
         }
 
-        $storyId = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
-        if ($storyId <= 0) $this->json(['error'=>'bad_request'], 400);
+        $publicStoryId = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicStoryId)) {
+            $this->json(['error' => 'bad_request'], 400);
+        }
 
         try {
-            $result = $this->flowerService->toggleFlower($storyId, $userId);
+            $result = $this->flowerService->toggleFlower($publicStoryId, $userId);
             $this->json($result, 200);
         } catch (DomainException $e) {
             $code = $e->getMessage()==='story_not_found' ? 404 : 400;
@@ -42,16 +43,15 @@ class FlowerController extends BaseController
         }
     }
 
-
     /** GET /api/story/flowers?id=123 – liczba kwiatków */
-    public function count(): void {
-        $storyId = (int)($_GET['id'] ?? 0);
-        if ($storyId <= 0) {
-            $this->json(['error'=>'bad_request'], 400);
+    public function count(array $params): void {
+        $publicStoryId = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $publicStoryId)) {
+            $this->json(['error' => 'bad_request'], 400);
         }
 
         try {
-            $flowerCountForStory = $this->flowerService->countForStory($storyId);
+            $flowerCountForStory = $this->flowerService->countForStory($publicStoryId);
             $this->json(['count'=>$flowerCountForStory], 200);
         } catch (Throwable $e) {
             $this->json(['error'=>'internal_error'], 500);

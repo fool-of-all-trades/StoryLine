@@ -104,7 +104,9 @@ function renderStoryItem(story) {
   }</span> 🌸
     </div>
     <p class="preview">${preview}${needsEllipsis ? "…" : ""}</p>
-    <button class="like" data-like data-story="${story.id}">🌸 Flower</button>
+    <button class="like" data-like data-story="${
+      story.story_public_id
+    }">🌸 Flower</button>
   `;
 
   return li;
@@ -211,15 +213,17 @@ async function handleFlowerClick(e) {
   const btn = e.target.closest("[data-like]");
   if (!btn) return;
 
-  const storyId = btn.getAttribute("data-story");
+  const storyPublicId = btn.getAttribute("data-story");
 
   try {
     const res = await fetch(
-      `/api/story/flower?id=${encodeURIComponent(storyId)}`,
+      `/api/story/${encodeURIComponent(storyPublicId)}/flower`,
       {
         method: "POST",
         credentials: "include",
-        headers: { "X-CSRF-Token": window.CSRF_TOKEN },
+        headers: {
+          "X-CSRF-Token": window.CSRF_TOKEN,
+        },
       }
     );
 

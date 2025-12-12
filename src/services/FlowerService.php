@@ -15,27 +15,33 @@ final class flowerService
     ) {}
 
     /**
-     * Adds or removes a flower for a story by a user.
+     * Toggle flower by story public UUID.
      * @return array{flowered:bool,count:int}
      * @throws DomainException 'story_not_found'
      */
-    public function toggleFlower(int $storyId, int $userId): array
+    public function toggleFlower(string $storyId, int $userId): array
     {
-        $story = $this->storyRepository->getById($storyId);
+        $story = $this->storyRepository->getStoryByPublicId($storyId);
         if (!$story) throw new DomainException('story_not_found');
 
-        return $this->flowerRepository->toggle($storyId, $userId);
+        return $this->flowerRepository->toggle((int)$story->id, $userId);
     }
 
     /** cheks if the user has already given a flower to the story */
-    public function hasFlower(int $storyId, int $userId): bool
+    public function hasFlower(string $storyId, int $userId): bool
     {
-        return $this->flowerRepository->hasFlower($storyId, $userId);
+        $story = $this->storyRepository->getStoryByPublicId($storyId);
+        if (!$story) throw new DomainException('story_not_found');
+
+        return $this->flowerRepository->hasFlower((int)$story->id, $userId);
     }
 
     /** Counts the story's flowers */
-    public function countForStory(int $storyId): int
+    public function countForStory(string $storyId): int
     {
-        return $this->flowerRepository->countForStory($storyId);
+        $story = $this->storyRepository->getStoryByPublicId($storyId);
+        if (!$story) throw new DomainException('story_not_found');
+
+        return $this->flowerRepository->countForStory((int)$story->id);
     }
 }

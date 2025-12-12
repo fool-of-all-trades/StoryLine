@@ -4,11 +4,11 @@ async function handleStoryLike(e) {
   const btn = e.target.closest("[data-like]");
   if (!btn) return;
 
-  const storyId = btn.getAttribute("data-story");
+  const storyPublicId = btn.getAttribute("data-story");
 
   try {
     const res = await fetch(
-      `/api/story/flower?id=${encodeURIComponent(storyId)}`,
+      `/api/story/${encodeURIComponent(storyPublicId)}/flower`,
       {
         method: "POST",
         credentials: "include",
