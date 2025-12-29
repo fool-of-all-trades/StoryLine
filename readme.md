@@ -6,37 +6,37 @@ A thousand stories.
 
 ## Dashboard
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/dashboard.png"/>
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/dashboard-mobile.png"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/dashboard.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/dashboard-mobile.jpg"/>
 
 ### Story
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/story.jpg"/>
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/story-mobile.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/story.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/story-mobile.jpg"/>
 
 ### User profile
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/profile.jpg"/>
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/profile-mobile.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/profile.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/profile-mobile.jpg"/>
 
 ### Login
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/login.jpg"/>
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/login-mobile.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/login.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/login-mobile.jpg"/>
 
 ## Register
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/register.jpg"/>
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/register-mobile.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/register.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/register-mobile.jpg"/>
 
 ### Password reset
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/password-forgot.jpg"/>
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/password-forgot-mobile.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/password-forgot.jpg"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/password-forgot-mobile.jpg"/>
 
 ### Database ERD
 
-<img src="https://github.com/fool-of-all-trades/StoryLine/screenshots/erd.png"/>
+<img src="https://github.com/fool-of-all-trades/StoryLine/blob/master/screenshots/erd.png"/>
 
 ## License
 
