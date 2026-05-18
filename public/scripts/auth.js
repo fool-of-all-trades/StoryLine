@@ -14,8 +14,15 @@ async function handleRegisterSubmit(e) {
   const passwordConfirm = form.password_confirm.value || "";
 
   // Front validation
+  if (!username || !email || !password || !passwordConfirm) {
+    return showMsg(regMsg, "Fill in all required fields.", "error");
+  }
+
   const usernameError = validateUsername(username);
   if (usernameError) return showMsg(regMsg, usernameError, "error");
+
+  const emailError = validateEmail(email);
+  if (emailError) return showMsg(regMsg, emailError, "error");
 
   const passwordError = validatePassword(password);
   if (passwordError) return showMsg(regMsg, passwordError, "error");
@@ -37,10 +44,13 @@ async function handleRegisterSubmit(e) {
       }),
     });
 
-    const data = await res.json();
+    const contentType = res.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await res.json()
+      : {};
 
     if (!res.ok || data.status === "error") {
-      const msg = userFriendlyMessage(data.code || data.error);
+      const msg = registrationFriendlyMessage(data.code || data.error);
       return showMsg(regMsg, msg, "error");
     }
 
@@ -99,7 +109,7 @@ async function handleLoginSubmit(e) {
 
     if (!res.ok || (data && (data.status === "error" || data.error))) {
       const code = data?.code || data?.error || "invalid_credentials";
-      const msg = userFriendlyMessage(code);
+      const msg = loginFriendlyMessage(code);
       return showMsg(loginMsg, msg, "error");
     }
 
@@ -288,11 +298,62 @@ function validatePassword(password) {
   return null;
 }
 
+function validateEmail(email) {
+  if (!email) {
+    return "Email is required.";
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "Enter a valid email address.";
+  }
+  return null;
+}
+
 function validateUsername(username) {
   if (username.length < 3) {
     return "Username must be at least 3 characters long.";
   }
   return null;
+}
+
+function registrationFriendlyMessage(code) {
+  const messages = {
+    "Username is already taken": "Username is already taken.",
+    username_taken: "Username is already taken.",
+    "Email is already in use": "Email is already registered.",
+    email_taken: "Email is already registered.",
+    "Invalid email address": "Enter a valid email address.",
+    invalid_email: "Enter a valid email address.",
+    "Invalid username format":
+      "Username can use letters, numbers, underscores, and dots.",
+    invalid_username:
+      "Username can use letters, numbers, underscores, and dots.",
+    "Passwords do not match": "Passwords do not match.",
+    password_mismatch: "Passwords do not match.",
+    password_required: "Password is required.",
+    password_too_short: "Password must be at least 8 characters long.",
+    password_too_weak:
+      "Password must contain a lowercase, uppercase, digit and special character.",
+    weak_password:
+      "Password must contain a lowercase, uppercase, digit and special character.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    internal_error: "Something went wrong. Please try again later.",
+  };
+
+  return messages[code] || "Something went wrong. Please try again later.";
+}
+
+function loginFriendlyMessage(code) {
+  const messages = {
+    invalid_credentials: "Invalid email or password.",
+    bad_credentials: "Invalid email or password.",
+    too_many_attempts: "Too many attempts. Please wait a bit.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    internal_error: "Something went wrong. Please try again later.",
+  };
+
+  return messages[code] || "Something went wrong. Please try again later.";
 }
 
 // ===== INITIALIZATION =====
