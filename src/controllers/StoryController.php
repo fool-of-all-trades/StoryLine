@@ -51,7 +51,19 @@ class StoryController extends BaseController
                 'limit' => $limit,
                 'total_for_day' => $totalForDay,
             ]);
+        } catch (DomainException $e) {
+            if ($e->getMessage() === 'invalid_date_format') {
+                $this->json(['error' => 'invalid_date_format'], 400);
+            }
+
+            if ($e->getMessage() === 'date_out_of_range') {
+                $this->json(['error' => 'date_out_of_range'], 400);
+            }
+
+            error_log('[StoryController] story_list_domain_error: ' . $e->getMessage());
+            $this->json(['error' => 'internal_error'], 500);
         } catch (Throwable $e) {
+            error_log('[StoryController] story_list_failed: ' . $e->getMessage());
             $this->json(['error' => 'internal_error'], 500);
         }
     }
@@ -129,8 +141,22 @@ class StoryController extends BaseController
                 'prompt_missing_in_content' => 400,
                 default => 500,
             };
-            $this->json(['error'=>$e->getMessage()], $code);
+            $safeError = match ($e->getMessage()) {
+                'no_prompt_today',
+                'already_submitted_today',
+                'quote_missing',
+                'too_many_words',
+                'prompt_missing_in_content' => $e->getMessage(),
+                default => 'internal_error',
+            };
+
+            if ($safeError === 'internal_error') {
+                error_log('[StoryController] story_create_domain_error: ' . $e->getMessage());
+            }
+
+            $this->json(['error'=>$safeError], $code);
         } catch (Throwable $e) {
+            error_log('[StoryController] story_create_failed: ' . $e->getMessage());
             $this->json(['error'=>'internal_error'], 500);
         }
     }

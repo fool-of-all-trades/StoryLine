@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Helpers\DateHelper;
 use DateTimeImmutable;
-use Exception;
+use DomainException;
 
 class QuotesApiController extends BaseController
 {
@@ -24,17 +25,15 @@ class QuotesApiController extends BaseController
         }
 
         // Quote choice is deterministic, based on the date
-        $startDate = new DateTimeImmutable('2025-01-01');
+        $startDate = new DateTimeImmutable(DateHelper::publicStartYmd());
 
-        $dateParam = $_GET['date'] ?? null;
-        if ($dateParam) {
-            try {
-                $targetDate = new DateTimeImmutable($dateParam);
-            } catch (Exception $e) {
-                $targetDate = new DateTimeImmutable('today');
-            }
-        } else {
-            $targetDate = new DateTimeImmutable('today');
+        try {
+            $targetYmd = DateHelper::normalizePublicYmd((string)($_GET['date'] ?? 'today'));
+            $targetDate = new DateTimeImmutable($targetYmd);
+        } catch (DomainException $e) {
+            $status = $e->getMessage() === 'date_out_of_range' ? 400 : 400;
+            $error = $e->getMessage() === 'date_out_of_range' ? 'date_out_of_range' : 'invalid_date_format';
+            $this->json(['error' => $error], $status);
         }
 
         $diffDays = (int)$startDate->diff($targetDate)->days;

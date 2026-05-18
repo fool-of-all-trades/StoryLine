@@ -42,7 +42,7 @@ final class QuoteService
     * */
     public function getOrEnsureForDate(string $dateInput): Quote
     {
-        $ymd = DateHelper::normalizeYmd($dateInput, false);
+        $ymd = DateHelper::normalizePublicYmd($dateInput);
 
         // check if quote for a given date exists in database and return it
         $existing = $this->repo->getByDate($ymd);

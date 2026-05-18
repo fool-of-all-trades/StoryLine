@@ -23,7 +23,7 @@ final class StoryService
      */
     public function listByDate(string $dateYmd, string $sort='new', int $page=1, int $limit=10): array
     {
-        $dateYmd = DateHelper::normalizeYmd($dateYmd, false);
+        $dateYmd = DateHelper::normalizePublicYmd($dateYmd);
 
         $sort   = \in_array($sort, ['top','new'], true) ? $sort : 'new';
         $page   = max(1, (int)$page);
@@ -35,7 +35,7 @@ final class StoryService
 
     public function countByDate(string $dateYmd): int
     {
-        $dateYmd = DateHelper::normalizeYmd($dateYmd, false);
+        $dateYmd = DateHelper::normalizePublicYmd($dateYmd);
 
         return $this->storyRepository->countOnDate($dateYmd);
     }
@@ -120,7 +120,8 @@ final class StoryService
             if (str_contains($msg, 'uq_story_user_per_day') || str_contains($msg, 'uq_story_device_per_day'))
                 throw new DomainException('already_submitted_today');
 
-            throw new DomainException('db_error: '.$msg);
+            error_log('[StoryService] add_today_story_failed: ' . $msg);
+            throw new DomainException('story_create_failed');
         }
     }
 

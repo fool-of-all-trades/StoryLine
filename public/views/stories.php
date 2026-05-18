@@ -4,6 +4,7 @@
   $pageStyles = ['stories'];
   $date = $_GET['date'] ?? 'today';
   $currentSort = $_GET['sort'] ?? 'new';
+  $publicStartDate = \App\Helpers\DateHelper::publicStartYmd();
   include __DIR__."/partials/header.php";
 ?>
 
@@ -37,6 +38,7 @@
           type="date"
           name="date"
           value="<?= $date === 'today' ? date('Y-m-d') : htmlspecialchars($date) ?>"
+          min="<?= htmlspecialchars($publicStartDate, ENT_QUOTES, 'UTF-8') ?>"
           max="<?= date('Y-m-d') ?>"
         >
       </label>
