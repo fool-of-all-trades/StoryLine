@@ -112,7 +112,10 @@ final class UserRepository
 
     public function findAvatarPathForUser(int $userId): string
     {
-        return (string)$this->pdo->query("SELECT avatar_path FROM users WHERE id = '$userId'")->fetchColumn();
+        $st = $this->pdo->prepare('SELECT avatar_path FROM users WHERE id = :id');
+        $st->execute([':id' => $userId]);
+
+        return (string)$st->fetchColumn();
     }
 
     // HELPERS FOR ADMIN PANEL
