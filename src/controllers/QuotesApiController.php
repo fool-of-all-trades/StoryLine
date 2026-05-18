@@ -15,7 +15,8 @@ class QuotesApiController extends BaseController
         // Load quotes from a local JSON file, error if file doesn't exist
         $path = getenv('QUOTES_LOCAL_PATH') ?: '/app/database/quotes.json';
         if (!is_file($path)) {
-            $this->json(['error'=>'quotes_file_missing','path'=>$path], 500);
+            error_log('[QuotesApiController] quotes_file_missing path=' . $path);
+            $this->json(['error'=>'internal_error'], 500);
         }
 
         // Read and parse JSON data, error if file is empty
@@ -44,7 +45,8 @@ class QuotesApiController extends BaseController
 
         // If by any means the quote object doesn't have a sentence, return error
         if (empty($row['sentence'])) {
-            $this->json(['error'=>'invalid_quote_entry','index'=>$index], 500);
+            error_log('[QuotesApiController] invalid_quote_entry index=' . $index);
+            $this->json(['error'=>'internal_error'], 500);
         }
 
         // Sends the quote data as JSON
