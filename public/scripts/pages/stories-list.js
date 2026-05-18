@@ -14,6 +14,21 @@ function getStoriesParams() {
   return { sort, date };
 }
 
+function isPublicUuid(value) {
+  return typeof value === "string" && /^[0-9a-fA-F-]{36}$/.test(value);
+}
+
+function safeCount(value) {
+  const count = Number(value);
+  return Number.isFinite(count) ? count : 0;
+}
+
+function setListMessage(list, message) {
+  const li = document.createElement("li");
+  li.textContent = message;
+  list.replaceChildren(li);
+}
+
 // Fetch quote for the selected date
 async function fetchQuote(date) {
   const endpoint =
@@ -41,8 +56,8 @@ async function loadQuoteForDate(date) {
 
     quoteTextEl.textContent = `"${quote.sentence}"`;
     quoteMetaEl.textContent =
-      [quote.source_book, quote.source_author].filter(Boolean).join(" — ") ||
-      "—";
+      [quote.source_book, quote.source_author].filter(Boolean).join(" \u2014 ") ||
+      "\u2014";
 
     if (quoteWrapper) {
       quoteWrapper.hidden = false;
@@ -52,26 +67,35 @@ async function loadQuoteForDate(date) {
   }
 }
 
-// Render author information
-function renderAuthor(story) {
-  // just plain text, no link to profile
+function appendAuthor(meta, story) {
+  meta.append("Author: ");
+
   if (story.is_anonymous) {
-    return "Author: Anonymous · ";
+    meta.append("Anonymous", " \u00b7 ");
+    return;
   }
 
-  // logged-in user, with link to profile
   if (story.user_public_id) {
-    const username = escapeHtml(story.username ?? "user");
-    return `Author: <a href="/user/${story.user_public_id}">${username}</a> · `;
+    const username = story.username ?? "user";
+
+    if (isPublicUuid(story.user_public_id)) {
+      const authorLink = document.createElement("a");
+      authorLink.href = `/user/${encodeURIComponent(story.user_public_id)}`;
+      authorLink.textContent = username;
+      meta.append(authorLink, " \u00b7 ");
+    } else {
+      meta.append(username, " \u00b7 ");
+    }
+
+    return;
   }
 
-  // logged-out user, no link to profile, but we have a nick he provided
   if (story.guest_name) {
-    return `Author: ${escapeHtml(story.guest_name)} · `;
+    meta.append(story.guest_name, " \u00b7 ");
+    return;
   }
 
-  // no author info at all
-  return "Author: Anonymous · ";
+  meta.append("Anonymous", " \u00b7 ");
 }
 
 // Render a single story item
@@ -79,20 +103,32 @@ function renderStoryItem(story) {
   const li = document.createElement("li");
   li.className = "story";
 
-  const title = story.title ? escapeHtml(story.title) : "(no title)";
-  const preview = escapeHtml(story.content).slice(0, 180);
-  const needsEllipsis = story.content.length > 180;
+  const storyId = story.story_public_id;
+  const hasStoryLink = isPublicUuid(storyId);
+  const title = document.createElement(hasStoryLink ? "a" : "span");
+  title.className = "title";
+  title.textContent = story.title || "(no title)";
 
-  li.innerHTML = `
-    <a href="/story/${story.story_public_id}" class="title">${title}</a>
-    <div class="meta">
-      ${renderAuthor(story)}
-      ${story.word_count ?? 0} words · <span data-count>${
-    story.flower_count ?? 0
-  }</span> 🌸
-    </div>
-    <p class="preview">${preview}${needsEllipsis ? "…" : ""}</p>
-  `;
+  if (hasStoryLink) {
+    title.href = `/story/${encodeURIComponent(storyId)}`;
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  appendAuthor(meta, story);
+
+  const count = document.createElement("span");
+  count.dataset.count = "";
+  count.textContent = String(safeCount(story.flower_count));
+  meta.append(`${safeCount(story.word_count)} words \u00b7 `, count, " \ud83c\udf38");
+
+  const preview = document.createElement("p");
+  preview.className = "preview";
+  const content = String(story.content ?? "");
+  preview.textContent =
+    content.slice(0, 180) + (content.length > 180 ? "\u2026" : "");
+
+  li.append(title, meta, preview);
 
   return li;
 }
@@ -102,7 +138,7 @@ async function loadStoriesPage(date, sort) {
   const list = document.querySelector("#stories-list");
   const loadMoreBtn = document.querySelector("[data-loadmore]");
 
-  if (loading || noMore) return;
+  if (!list || loading || noMore) return;
 
   loading = true;
 
@@ -120,7 +156,7 @@ async function loadStoriesPage(date, sort) {
     );
 
     if (!res.ok) {
-      // 401/403 → maybe redirect to login (or show a message)
+      // 401/403 -> maybe redirect to login (or show a message)
       if (res.status === 401 || res.status === 403) {
         location.href = "/login";
         return;
@@ -151,12 +187,12 @@ async function loadStoriesPage(date, sort) {
 
     // Clear list on first page
     if (page === 1) {
-      list.innerHTML = "";
+      list.replaceChildren();
     }
 
     // Handle empty results
     if (!items.length && page === 1) {
-      list.innerHTML = "<li>No stories for this day yet.</li>";
+      setListMessage(list, "No stories for this day yet.");
       noMore = true;
     } else {
       // Render stories
@@ -185,9 +221,7 @@ async function loadStoriesPage(date, sort) {
     }
   } catch (err) {
     console.error("Error loading stories:", err);
-    if (list) {
-      list.innerHTML = "<li>Failed to load stories. Please try again.</li>";
-    }
+    setListMessage(list, "Failed to load stories. Please try again.");
   } finally {
     loading = false;
   }

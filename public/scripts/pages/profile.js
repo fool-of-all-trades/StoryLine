@@ -34,7 +34,13 @@ async function loadUserProfile(userPid) {
 
     if (typeof total_words === "number" && wordsEl) {
       const label = total_words === 1 ? "word" : "words";
-      wordsEl.innerHTML = `You've written <strong>${total_words}</strong> ${label} all together!`;
+      const strong = document.createElement("strong");
+      strong.textContent = String(total_words);
+      wordsEl.replaceChildren(
+        "You've written ",
+        strong,
+        ` ${label} all together!`
+      );
     }
   } catch (e) {
     console.error("Failed to load user profile data", e);
@@ -42,6 +48,12 @@ async function loadUserProfile(userPid) {
       wordsEl.textContent = "Couldn't load your stats right now.";
     }
   }
+}
+
+function setStoryListMessage(listEl, message) {
+  const messageEl = document.createElement("p");
+  messageEl.textContent = message;
+  listEl.replaceChildren(messageEl);
 }
 
 // Load stories for a given page
@@ -61,7 +73,7 @@ async function loadStoriesPage(userPid, newPage) {
     if (!res.ok) {
       console.error("Profile stories error:", payload);
       if (listEl) {
-        listEl.innerHTML = "<p>Couldn't load your stories.</p>";
+        setStoryListMessage(listEl, "Couldn't load your stories.");
       }
       return;
     }
@@ -82,7 +94,7 @@ async function loadStoriesPage(userPid, newPage) {
   } catch (e) {
     console.error("Failed to load stories page", e);
     if (listEl) {
-      listEl.innerHTML = "<p>Couldn't load your stories.</p>";
+      setStoryListMessage(listEl, "Couldn't load your stories.");
     }
   }
 }
@@ -101,13 +113,24 @@ function updatePaginationArrows() {
   }
 }
 
+function isPublicUuid(value) {
+  return typeof value === "string" && /^[0-9a-fA-F-]{36}$/.test(value);
+}
+
+function safeCount(value) {
+  const count = Number(value);
+  return Number.isFinite(count) ? count : 0;
+}
+
 // Render story cards in the given container
 function renderStories(container, items) {
-  container.innerHTML = "";
+  container.replaceChildren();
 
   if (!items.length) {
-    container.innerHTML =
-      "<p>You haven't written any stories yet. Let's fix that!</p>";
+    setStoryListMessage(
+      container,
+      "You haven't written any stories yet. Let's fix that!"
+    );
     return;
   }
 
@@ -115,28 +138,42 @@ function renderStories(container, items) {
     const card = document.createElement("div");
     card.className = "book-card";
 
-    const title = item.title ? escapeHtml(item.title) : "(no title)";
     const createdAt = item.created_at
       ? new Date(item.created_at).toLocaleDateString()
       : "";
-    const words = item.word_count ?? 0;
-    const flowers = item.flower_count ?? 0;
+    const words = safeCount(item.word_count);
+    const flowers = safeCount(item.flower_count);
+    const storyId = item.story_public_id;
+    const hasStoryLink = isPublicUuid(storyId);
 
-    card.innerHTML = `
-      <a href="/story/${
-        item.story_public_id
-      }" class="book-card-title">${title}</a>
-      <ul class="book__meta book-card-meta" aria-label="Entry metadata">
-        <li>
-          <time>${createdAt}</time>
-        </li>
-        <li>${words ?? 0} words</li>
-        <li>
-          ${flowers ?? 0} <span aria-hidden="true">🌸</span>
-        </li>
-      </ul>
-    `;
+    const title = document.createElement(hasStoryLink ? "a" : "span");
+    title.className = "book-card-title";
+    title.textContent = item.title || "(no title)";
 
+    if (hasStoryLink) {
+      title.href = `/story/${encodeURIComponent(storyId)}`;
+    }
+
+    const meta = document.createElement("ul");
+    meta.className = "book__meta book-card-meta";
+    meta.setAttribute("aria-label", "Entry metadata");
+
+    const dateItem = document.createElement("li");
+    const time = document.createElement("time");
+    time.textContent = createdAt;
+    dateItem.appendChild(time);
+
+    const wordsItem = document.createElement("li");
+    wordsItem.textContent = `${words} words`;
+
+    const flowersItem = document.createElement("li");
+    const flowerIcon = document.createElement("span");
+    flowerIcon.setAttribute("aria-hidden", "true");
+    flowerIcon.textContent = "\ud83c\udf38";
+    flowersItem.append(String(flowers), " ", flowerIcon);
+
+    meta.append(dateItem, wordsItem, flowersItem);
+    card.append(title, meta);
     container.appendChild(card);
   });
 }
@@ -227,7 +264,7 @@ async function handleFavoriteQuoteSubmit(e) {
     const data = await res.json();
 
     if (res.ok) {
-      showMsg(msgEl, "Favorite quote saved ✨", "success");
+      showMsg(msgEl, "Favorite quote saved \u2728", "success");
     } else {
       const error = data?.error || "unknown_error";
       showMsg(msgEl, `Could not save favorite quote: ${error}`, "error");
