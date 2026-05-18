@@ -35,7 +35,7 @@ class UserController extends BaseController
             );
         }
 
-        $title = "StoryLine — " . htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8');
+        $title = "StoryLine — " . $user->username;
         
         $this->render('user', [
             'user' => $user,

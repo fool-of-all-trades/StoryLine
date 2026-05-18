@@ -95,12 +95,12 @@ class StoryController extends BaseController
             $this->notFound('Story not found');
         }
 
-        $title = htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
+        $title = $story->title ?? '(Untitled)';
         // include __DIR__ . '/../../public/views/story.php';
 
         $this->render('story', [
-        'title' => $title,
-        'story' => $story,
+            'title' => $title,
+            'story' => $story,
         ]);
     }
 
