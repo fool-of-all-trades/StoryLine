@@ -87,12 +87,12 @@ class StoryController extends BaseController
     public function viewByPublicId(array $params): void {
         $uuid = (string)($params['public_id'] ?? '');
         if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
-            http_response_code(404); echo 'Invalid story ID'; return;
+            $this->notFound('Story not found');
         }
 
         $story = $this->storyService->getStoryByPublicId($uuid);
         if (!$story) {
-            http_response_code(404); echo 'Story not found'; return;
+            $this->notFound('Story not found');
         }
 
         $title = htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');

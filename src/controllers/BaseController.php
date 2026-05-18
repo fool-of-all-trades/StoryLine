@@ -8,6 +8,8 @@ abstract class BaseController
         $templatePath = __DIR__ . '/../../public/views/' . $template . '.php';
         $fallback404  = __DIR__ . '/../../public/views/404.html';
 
+        ob_start();
+
         if (!empty($variables)) {
             extract($variables, EXTR_SKIP);
         }
@@ -52,8 +54,7 @@ abstract class BaseController
     protected function notFound(string $message): void
     {
         http_response_code(404);
-        echo $message;
-        $this->render('404.html');
+        $this->render('404');
         exit;
     }
 }
