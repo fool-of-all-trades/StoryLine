@@ -51,6 +51,9 @@ class QuoteController extends BaseController
 
         try {
             $quote = $this->quoteService->getByDate($date);
+            if (!$quote) {
+                $this->json(['error' => 'no_quote_for_date'], 404);
+            }
 
             $this->json($quote->toArray());
         } catch (DomainException $e) {

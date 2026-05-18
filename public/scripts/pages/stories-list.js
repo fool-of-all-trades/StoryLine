@@ -21,19 +21,7 @@ async function fetchQuote(date) {
       ? "/api/quote/today"
       : `/api/quote?date=${encodeURIComponent(date)}`;
 
-  let res = await fetch(endpoint, { credentials: "include" });
-
-  // Create quote if it doesn't exist
-  if (res.status === 404 || res.status === 500) {
-    await fetch(endpoint, {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-CSRF-Token": window.CSRF_TOKEN },
-    });
-    res = await fetch(endpoint, { credentials: "include" });
-  }
-
-  return res;
+  return fetch(endpoint, { credentials: "include" });
 }
 
 // Load and display quote for the current date
@@ -104,9 +92,6 @@ function renderStoryItem(story) {
   }</span> 🌸
     </div>
     <p class="preview">${preview}${needsEllipsis ? "…" : ""}</p>
-    <button class="like" data-like data-story="${
-      story.story_public_id
-    }">🌸 Flower</button>
   `;
 
   return li;

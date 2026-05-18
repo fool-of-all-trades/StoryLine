@@ -63,9 +63,7 @@ class Routing
         // API - Quotes
         self::get('api/quotes/random', [QuotesApiController::class, 'random']);
         self::get('api/quote/today', [QuoteController::class, 'today']);
-        self::post('api/quote/today', [QuoteController::class, 'ensureToday']);
         self::get('api/quote', [QuoteController::class, 'byDate']);
-        self::post('api/quote', [QuoteController::class, 'ensureByDate']);
 
         // API - User Profile Updates
         self::post('api/me/favorite-quote', [UserController::class, 'updateFavoriteQuote']);

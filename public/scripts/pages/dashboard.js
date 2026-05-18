@@ -3,26 +3,39 @@ async function loadTodaysQuote() {
   const quoteEl = document.querySelector("[data-quote]");
   if (!quoteEl) return;
 
-  // get today's quote
-  let response = await fetch("/api/quote/today", { credentials: "include" });
-
-  // fallback if not found in db, create it
-  if (response.status === 404) {
-    await fetch("/api/quote/today", {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-CSRF-Token": window.CSRF_TOKEN },
-    });
-    response = await fetch("/api/quote/today", { credentials: "include" });
-  }
+  const response = await fetch("/api/quote/today", { credentials: "include" });
+  if (!response.ok) return;
 
   const quote = await response.json();
 
-  document.querySelector("[data-date]").textContent =
-    quote.date || new Date().toISOString().slice(0, 10);
+  // document.querySelector("[data-date]").textContent =
+  //   quote.date || new Date().toISOString().slice(0, 10);
   document.querySelector("[data-quote]").textContent = `"${quote.sentence}"`;
-  document.querySelector("[data-meta]").textContent =
-    [quote.source_book, quote.source_author].filter(Boolean).join(" — ") || "—";
+
+  const metaEl = document.querySelector("[data-meta]");
+  metaEl.replaceChildren();
+
+  const book = quote.source_book?.trim();
+  const author = quote.source_author?.trim();
+
+  const bookP = document.createElement("p");
+  bookP.className = "meta-book";
+  bookP.textContent = `"${book}"` || "";
+
+  const authorP = document.createElement("p");
+  authorP.className = "meta-author";
+  authorP.textContent = author || "·";
+
+  metaEl.append(bookP, authorP);
+
+  if (book && author) {
+    const dot = document.createElement("span");
+    dot.className = "meta-dot";
+    dot.textContent = "·";
+    metaEl.append(bookP, dot, authorP);
+  } else {
+    metaEl.append(bookP || authorP);
+  }
 }
 
 // Count words in a string

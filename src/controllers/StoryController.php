@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\StoryService;
+use App\Services\QuoteService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
@@ -18,6 +19,12 @@ class StoryController extends BaseController
 
     public function storiesPage(): void
     {
+        try {
+            (new QuoteService())->getOrEnsureForDate((string)($_GET['date'] ?? 'today'));
+        } catch (Throwable $e) {
+            error_log('[StoryController] quote_ensure_failed');
+        }
+
         $this->render('stories');
     }
 

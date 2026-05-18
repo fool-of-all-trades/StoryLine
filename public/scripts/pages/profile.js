@@ -34,9 +34,7 @@ async function loadUserProfile(userPid) {
 
     if (typeof total_words === "number" && wordsEl) {
       const label = total_words === 1 ? "word" : "words";
-      wordsEl.innerHTML =
-        `You've written <strong>${total_words}</strong> ${label} all together!<br/>` +
-        `I'm proud of you.`;
+      wordsEl.innerHTML = `You've written <strong>${total_words}</strong> ${label} all together!`;
     }
   } catch (e) {
     console.error("Failed to load user profile data", e);
@@ -125,12 +123,18 @@ function renderStories(container, items) {
     const flowers = item.flower_count ?? 0;
 
     card.innerHTML = `
-      <a href="/story/${item.story_public_id}" class="book-card-title">${title}</a>
-      <div class="book-card-meta">
-        <span>${createdAt}</span> ·
-        <span>${words} words</span> ·
-        <span>${flowers} 🌸</span>
-      </div>
+      <a href="/story/${
+        item.story_public_id
+      }" class="book-card-title">${title}</a>
+      <ul class="book__meta book-card-meta" aria-label="Entry metadata">
+        <li>
+          <time>${createdAt}</time>
+        </li>
+        <li>${words ?? 0} words</li>
+        <li>
+          ${flowers ?? 0} <span aria-hidden="true">🌸</span>
+        </li>
+      </ul>
     `;
 
     container.appendChild(card);
@@ -167,7 +171,7 @@ function handleNextPage(userPid) {
 
 // Initialize user profile page
 function initUserProfilePage() {
-  const userMain = document.querySelector("main[data-user-public-id]");
+  const userMain = document.querySelector("div[data-user-public-id]");
   if (!userMain) return;
 
   const userPid = userMain.dataset.userPublicId;
