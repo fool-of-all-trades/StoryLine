@@ -110,7 +110,14 @@ class StoryController extends BaseController
     {
         Csrf::verify();
         
-        $userId = $_SESSION['user']['id'] ?? null; // null = anonymous
+        $userId = $_SESSION['user']['id'] ?? null;
+        if (!$userId) {
+            $this->json([
+                'error' => 'authentication_required',
+                'message' => 'Please log in to publish your story.',
+            ], 401);
+        }
+
         $title = $_POST['title']   ?? null;
         $content = trim($_POST['content'] ?? '');
         $anonymous = !empty($_POST['anonymous']);

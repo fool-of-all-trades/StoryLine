@@ -112,10 +112,13 @@ async function handleStorySubmit(e) {
     } else {
       if (storyMsg) {
         storyMsg.textContent =
-          data.error || "Something went wrong while saving your story.";
+          storySubmitMessage(data) ||
+          "Something went wrong while saving your story.";
         storyMsg.classList.add("error");
       } else {
-        alert("Error: " + (data.error || "unknown"));
+        alert(
+          storySubmitMessage(data) || "Something went wrong while saving your story."
+        );
       }
     }
   } catch (err) {
@@ -127,6 +130,26 @@ async function handleStorySubmit(e) {
       alert("Network error");
     }
   }
+}
+
+function storySubmitMessage(data) {
+  const code = data?.error;
+  const messages = {
+    authentication_required:
+      "Please log in or create an account to publish your story.",
+    unauthorized: "Please log in or create an account to publish your story.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    empty_content: "Your story can't be empty.",
+    already_submitted_today: "You've already published a story today.",
+    prompt_missing_in_content:
+      "Your story needs to include today's quote.",
+    quote_missing: "Your story needs to include today's quote.",
+    too_many_words: "Your story is too long.",
+    internal_error: "Something went wrong while saving your story.",
+  };
+
+  return messages[code] || data?.message || null;
 }
 
 // Initialize word counter
