@@ -1,11 +1,13 @@
 <?php
   $title = "StoryLine — Stories Of The Day";
   $pageScripts = ['pages/stories-list'];
+  $pageStyles = ['stories'];
   $date = $_GET['date'] ?? 'today';
   $currentSort = $_GET['sort'] ?? 'new';
   include __DIR__."/partials/header.php";
 ?>
 
+<div class="stories-content">
 <header class="list-header">
   <h1>Stories — <?= htmlspecialchars($date) ?></h1>
 
@@ -52,7 +54,10 @@
 <div class="pagination">
   <button class="btn" data-loadmore>Load more</button>
 </div>
+</div>
 
-  </main>
+  </div>
+
+  <div class="backdrop" hidden></div>
 </body>
 </html>

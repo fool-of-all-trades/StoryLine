@@ -21,64 +21,108 @@ if (empty($_COOKIE['device_token'])) {
 }
 ?>
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="csrf-token" content="<?= htmlspecialchars(App\Security\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="csrf-token"
+      content="<?= htmlspecialchars(App\Security\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>"
+    />
 
-  <title><?= $title ?? 'StoryLine' ?></title>
+    <title><?= $title ?? 'StoryLine' ?></title>
 
-  <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/main.css" />
 
-  <!-- global scripts -->
-  <script defer src="/scripts/csrf.js"></script>
-  <script defer src="/scripts/utils.js"></script>
+    <?php
+    // $pageStyles is set in a view file to include page-specific CSS files
+    if (!empty($pageStyles) && is_array($pageStyles)):
+      foreach ($pageStyles as $style):
+    ?>
+      <link
+        rel="stylesheet"
+        href="/styles/<?= htmlspecialchars($style, ENT_QUOTES, 'UTF-8') ?>.css"
+      />
+    <?php
+      endforeach;
+    endif;
+    ?>
 
-  <!-- only for admin charts -->
-  <?php if (!empty($includeCharts)): ?>
+    <!-- global scripts -->
+    <script defer src="/scripts/csrf.js"></script>
+    <script defer src="/scripts/utils.js"></script>
+    <script defer src="/scripts/nav.js"></script>
+
+    <!-- only for admin charts -->
+    <?php if (!empty($includeCharts)): ?>
     <script defer src="/scripts/chart.js"></script>
-  <?php endif; ?>
+    <?php endif; ?>
 
-  <?php
-  // $pageScripts is set in a view file to include page-specific JS files
-  if (!empty($pageScripts) && is_array($pageScripts)): 
-    foreach ($pageScripts as $script):
-  ?>
-      <script defer src="/scripts/<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>.js"></script>
-  <?php
+    <?php
+    // $pageScripts is set in a view file to include page-specific JS files
+    if (!empty($pageScripts) && is_array($pageScripts)): 
+        foreach ($pageScripts as $script):
+    ?>
+    <script
+      defer
+      src="/scripts/<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>.js"
+    ></script>
+    <?php
     endforeach;
   endif;
   ?>
-</head>
-<body>
-  <nav class="nav">
-    <a href="/dashboard" class="logo">StoryLine</a>
-    <div class="spacer"></div>
-    <a href="/stories/today">Stories</a>
+  </head>
+  <body>
+    <button class="hamburger" aria-controls="nav" aria-expanded="false">
+      ☰
+    </button>
 
-    <?php $current_user = current_user(); ?>
+    <div class="parent">
+      <nav class="div1 nav">
+        <a id="storyline-icon" class="tip" data-tip="Dashboard" href="/dashboard" class="logo">
+          <div aria-hidden="true"></div>
+          <span class="nav-label">Dashboard</span>
+        </a>
+        <div class="spacer"></div>
+        <a id="stories-icon" class="tip" data-tip="Stories" href="/stories/today">
+          <div aria-hidden="true"></div>
+          <span class="nav-label">Stories</span>
+        </a>
 
-    <?php if (is_logged_in()): ?>
+        <?php $current_user = current_user(); ?>
 
-      <a href="/user/<?= htmlspecialchars($current_user['public_id'], ENT_QUOTES, 'UTF-8') ?>">My profile</a>
+        <?php if (is_logged_in()): ?>
 
-      <?php if (is_admin()): ?>
-        <a href="/admin">Admin</a>
-      <?php endif; ?>
+        <a id="my-profile-link" class="tip" data-tip="Profile"
+          href="/user/<?= htmlspecialchars($current_user['public_id'], ENT_QUOTES, 'UTF-8') ?>"
+          >
+          <div aria-hidden="true"></div>
+          <span class="nav-label">Profile</span>
+          </a
+        >
 
-      <form method="post" action="/logout">
-        <?= App\Security\Csrf::inputField() ?>
-        <button class="linklike">Logout (<?= htmlspecialchars($current_user['username'], ENT_QUOTES, 'UTF-8') ?>)</button>
-      </form>
+        <?php if (is_admin()): ?>
+        <a id="admin-icon" class="tip" data-tip="Admin" href="/admin">
+          <div aria-hidden="true"></div>
+          <span class="nav-label">Admin</span>
+        </a>
+        <?php endif; ?>
 
-    <?php else: ?>
+        <form method="post" action="/logout">
+          <?= App\Security\Csrf::inputField() ?>
+          <button id="logout-icon" class="tip" data-tip="Logout" class="linklike">
+            <div aria-hidden="true"></div>
+            <span class="nav-label">Logout</span>
+          </button>
+        </form>
 
-  <a href="/login">Login</a>
+        <?php else: ?>
 
-<?php endif; ?>
+        <a id="login-icon" class="tip" data-tip="Login" href="/login">
+          <div aria-hidden="true"></div>
+          <span class="nav-label">Login</span>
+        </a>
 
-
-  </nav>
-  <main class="container">
+        <?php endif; ?>
+      </nav>

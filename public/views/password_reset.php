@@ -1,12 +1,15 @@
 <?php
     $title = "Set new password";
     $pageScripts = ['auth'];
+    $pageStyles = ['login'];
     include __DIR__."/partials/header.php";
     use App\Security\Csrf;
 
     $token = htmlspecialchars($_GET['token'] ?? '', ENT_QUOTES, 'UTF-8');
 ?>
 
+<div class="auth-content">
+      <div class="auth-content-div">
             <h1>Reset your password</h1>
 
             <form id="reset-form" method="post" action="/password/reset" class="form">
@@ -29,6 +32,8 @@
                 <p id="reset-message" class="form-message"></p>
             </form>
 
-        </main>
+                </div>
+        </div>
+    <div class="backdrop" hidden></div>
     </body>
 </html>

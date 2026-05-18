@@ -1,10 +1,12 @@
 <?php
 $title = "Reset password";
 $pageScripts = ['auth'];
+  $pageStyles = ['login'];
 include __DIR__."/partials/header.php";
 use App\Security\Csrf;
 ?>
-
+<div class="auth-content">
+      <div class="auth-content-div">
             <h1>Forgot Password</h1>
 
             <form id="forgot-form" method="post" action="/password/forgot" class="form">
@@ -20,6 +22,8 @@ use App\Security\Csrf;
                 <p id="forgot-message" class="form-message"></p>
             </form>
 
-        </main>
+                </div>
+        </div>
+    <div class="backdrop" hidden></div>
     </body>
 </html>
