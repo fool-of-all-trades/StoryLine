@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\UserService;
 use App\Services\StoryService;
+use App\Services\AuthService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
@@ -13,10 +14,12 @@ class UserController extends BaseController
 {
     private StoryService $storyService;
     private UserService $userService;
+    private AuthService $authService;
 
     public function __construct() {
         $this->storyService = new StoryService();
         $this->userService = new UserService();
+        $this->authService = auth_service();
     }
 
     public function profileByPublicId(array $params): void
@@ -189,21 +192,38 @@ class UserController extends BaseController
         $currentUser = current_user();
         if (!$currentUser) {
             http_response_code(401);
-            echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['error' => 'authentication_required'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        $password = $_POST['password'] ?? '';
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? ($_POST['password'] ?? '');
+        $newPasswordConfirm = $_POST['password_confirm'] ?? '';
 
         try {
-            $this->userService->changePassword((int)$currentUser['id'], $password);
+            $this->authService->changePassword($currentPassword, $newPassword, $newPasswordConfirm);
             http_response_code(200);
             echo json_encode(['status' => 'ok'], JSON_UNESCAPED_UNICODE);
         } catch (DomainException $e) {
             $code = $e->getMessage();
-            http_response_code(422);
-            echo json_encode(['error' => $code], JSON_UNESCAPED_UNICODE);
+            $status = match ($code) {
+                'authentication_required' => 401,
+                'too_many_requests' => 429,
+                'internal_error' => 500,
+                default => 422,
+            };
+
+            $clientCode = in_array($code, [
+                'password_required',
+                'password_too_short',
+                'password_too_weak',
+                'password_too_long',
+            ], true) ? 'invalid_password' : $code;
+
+            http_response_code($status);
+            echo json_encode(['error' => $clientCode], JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
+            error_log('[UserController] password_change_failed: ' . get_class($e));
             http_response_code(500);
             echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
         }

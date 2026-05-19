@@ -23,7 +23,10 @@ async function handleStoryLike(e) {
     if (res.ok) {
       const countElement = storyFull.querySelector("[data-count]");
       countElement.textContent = data.count;
-    } else if (data?.error === "unauthorized") {
+    } else if (
+      data?.error === "authentication_required" ||
+      data?.error === "unauthorized"
+    ) {
       location.href = "/login";
     } else {
       alert(`Error: ${data.error || "unknown"}`);

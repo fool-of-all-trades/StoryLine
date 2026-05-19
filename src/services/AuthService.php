@@ -11,6 +11,7 @@ use Delight\Auth\DuplicateUsernameException;
 use Delight\Auth\EmailNotVerifiedException;
 use Delight\Auth\InvalidEmailException;
 use Delight\Auth\InvalidPasswordException;
+use Delight\Auth\NotLoggedInException;
 use Delight\Auth\Role as DelightRole;
 use Delight\Auth\SecondFactorRequiredException;
 use Delight\Auth\TooManyRequestsException;
@@ -171,6 +172,38 @@ final class AuthService
         $this->auth = null;
     }
 
+    /**
+     * Changes the currently logged-in user's password via delight-im/auth.
+     *
+     * @throws DomainException
+     */
+    public function changePassword(string $currentPassword, string $newPassword, string $newPasswordConfirm): void
+    {
+        if ($newPassword !== $newPasswordConfirm) {
+            throw new DomainException('password_mismatch');
+        }
+
+        $this->assertStrongPassword($newPassword);
+
+        $auth = $this->auth();
+        if (!$auth || !$auth->isLoggedIn()) {
+            throw new DomainException('authentication_required');
+        }
+
+        try {
+            $auth->changePassword($currentPassword, $newPassword);
+        } catch (NotLoggedInException $e) {
+            throw new DomainException('authentication_required');
+        } catch (InvalidPasswordException $e) {
+            throw new DomainException('invalid_current_password');
+        } catch (TooManyRequestsException $e) {
+            throw new DomainException('too_many_requests');
+        } catch (Throwable $e) {
+            error_log('[AuthService] password_change_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
     public function isLoggedIn(): bool
     {
         try {
@@ -297,6 +330,10 @@ final class AuthService
 
         if (mb_strlen($password) < 8) {
             throw new DomainException('password_too_short');
+        }
+
+        if (strlen($password) > 2048) {
+            throw new DomainException('password_too_long');
         }
 
         $hasLower = preg_match('/[a-z]/', $password);

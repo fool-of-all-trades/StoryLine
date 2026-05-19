@@ -54,8 +54,18 @@
         <?= \App\Security\Csrf::inputField() ?>
 
         <label>
-          Password*
-          <input id="passwordInput" type="password" name="password" minlength="8" required>
+          Current password*
+          <input type="password" name="current_password" required>
+        </label>
+
+        <label>
+          New password*
+          <input id="passwordInput" type="password" name="new_password" minlength="8" required>
+        </label>
+
+        <label>
+          Confirm new password*
+          <input type="password" name="password_confirm" minlength="8" required>
         </label>
 
         <label class="inline">

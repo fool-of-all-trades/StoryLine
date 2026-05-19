@@ -253,7 +253,10 @@ async function handleFlowerClick(e) {
       if (countEl) {
         countEl.textContent = data.count;
       }
-    } else if (data?.error === "unauthorized") {
+    } else if (
+      data?.error === "authentication_required" ||
+      data?.error === "unauthorized"
+    ) {
       location.href = "/login";
     } else {
       alert(`Error: ${data.error || "unknown"}`);

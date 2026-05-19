@@ -129,7 +129,7 @@ function initLoginForm() {
 
 // ===== PASSWORD CHANGE FORM =====
 
-function handlePasswordChangeSubmit(e) {
+async function handlePasswordChangeSubmit(e) {
   e.preventDefault();
 
   const passwordChangeMsg = document.querySelector("#password-message");
@@ -137,14 +137,59 @@ function handlePasswordChangeSubmit(e) {
 
   showMsg(passwordChangeMsg, "", null);
 
-  const password = form.password.value || "";
-  const passwordError = validatePassword(password);
+  const currentPassword = form.current_password?.value || "";
+  const newPassword = form.new_password?.value || "";
+  const passwordConfirm = form.password_confirm?.value || "";
+
+  if (!currentPassword) {
+    return showMsg(passwordChangeMsg, "Enter your current password.", "error");
+  }
+
+  const passwordError = validatePassword(newPassword);
 
   if (passwordError) {
     return showMsg(passwordChangeMsg, passwordError, "error");
   }
 
-  form.submit();
+  if (newPassword !== passwordConfirm) {
+    return showMsg(passwordChangeMsg, "Passwords do not match.", "error");
+  }
+
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch(form.action || "/api/me/password", {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+      headers: {
+        "X-CSRF-Token": window.CSRF_TOKEN || "",
+        Accept: "application/json",
+      },
+    });
+
+    const contentType = res.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await res.json()
+      : {};
+
+    if (!res.ok || data.status === "error" || data.error) {
+      return showMsg(
+        passwordChangeMsg,
+        passwordChangeFriendlyMessage(data.error || data.code),
+        "error"
+      );
+    }
+
+    form.reset();
+    showMsg(passwordChangeMsg, "Password changed successfully.", "success");
+  } catch (err) {
+    showMsg(
+      passwordChangeMsg,
+      "Something went wrong. Please try again later.",
+      "error"
+    );
+  }
 }
 
 function initPasswordChangeForm() {
@@ -348,6 +393,22 @@ function loginFriendlyMessage(code) {
     invalid_credentials: "Invalid email or password.",
     bad_credentials: "Invalid email or password.",
     too_many_attempts: "Too many attempts. Please wait a bit.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    internal_error: "Something went wrong. Please try again later.",
+  };
+
+  return messages[code] || "Something went wrong. Please try again later.";
+}
+
+function passwordChangeFriendlyMessage(code) {
+  const messages = {
+    authentication_required: "Please log in again to change your password.",
+    invalid_current_password: "Current password is incorrect.",
+    invalid_password:
+      "New password must contain a lowercase, uppercase, digit and special character.",
+    password_mismatch: "Passwords do not match.",
+    too_many_requests: "Too many attempts. Please wait a bit.",
     csrf_failed: "Please refresh the page and try again.",
     invalid_csrf: "Please refresh the page and try again.",
     internal_error: "Something went wrong. Please try again later.",

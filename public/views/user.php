@@ -1,7 +1,7 @@
 <?php
 /** @var \App\Models\User $user */
 $title = "StoryLine — User Panel";
-$pageScripts = ['pages/profile', 'edit-modal'];
+$pageScripts = ['pages/profile', 'edit-modal', 'auth'];
 $pageStyles = ['user'];
 include __DIR__."/partials/header.php";
 
