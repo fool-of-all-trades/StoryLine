@@ -56,7 +56,9 @@ class UserController extends BaseController
         }
 
         try {
-            $data = $this->storyService->getProfileDataForUser($user->id);
+            $currentUser = current_user();
+            $isOwnProfile = $currentUser && (int)$currentUser['id'] === $user->id;
+            $data = $this->storyService->getProfileDataForUser($user->id, $isOwnProfile);
 
             $this->json([
                 'user'   => [
@@ -93,7 +95,10 @@ class UserController extends BaseController
             // how many stories to skip
             $offset = ($page - 1) * $limit;
 
-            $storiesPayload = $this->storyService->getStoresForUser($userPrivateID, $limit, $offset);
+            $currentUser = current_user();
+            $isOwnProfile = $currentUser && (int)$currentUser['id'] === $userPrivateID;
+
+            $storiesPayload = $this->storyService->getStoresForUser($userPrivateID, $limit, $offset, $isOwnProfile);
 
             $this->json([
                 'page' => $page,

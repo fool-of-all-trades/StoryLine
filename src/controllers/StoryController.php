@@ -110,7 +110,8 @@ class StoryController extends BaseController
     {
         Csrf::verify();
         
-        $userId = $_SESSION['user']['id'] ?? null;
+        $currentUser = current_user();
+        $userId = isset($currentUser['id']) ? (int)$currentUser['id'] : null;
         if (!$userId) {
             $this->json([
                 'error' => 'authentication_required',
@@ -121,26 +122,19 @@ class StoryController extends BaseController
         $title = $_POST['title']   ?? null;
         $content = trim($_POST['content'] ?? '');
         $anonymous = !empty($_POST['anonymous']);
-        $guestName = $_POST['guest_name'] ?? null;
 
         if ($content === '') {
             $this->json(['error'=>'empty_content'], 400);
         }
 
-        // device token (cookie) – identification for anonymous users, cuz one story per day is allowed
-        $deviceToken = $_COOKIE['device_token'] ?? null;
 
-        // hash IP
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        $salt = getenv('APP_IP_SALT') ?: 'change-me';
-        $ipHash = $ip ? hash('sha256', $ip . '|' . $salt) : null;
 
         try {
-            $publicId = $this->storyService->addTodayStory($userId, $title, $content, $anonymous, 
-                                                $guestName, $deviceToken, $ipHash);
+            $publicId = $this->storyService->addTodayStory($userId, $title, $content, $anonymous);
             $this->json(['public_id'=>$publicId], 201);
         } catch (DomainException $e) {
             $code = match ($e->getMessage()) {
+                'authentication_required' => 401,
                 'no_prompt_today' => 400,
                 'already_submitted_today'=> 409,
                 'quote_missing' => 400,
@@ -149,6 +143,7 @@ class StoryController extends BaseController
                 default => 500,
             };
             $safeError = match ($e->getMessage()) {
+                'authentication_required',
                 'no_prompt_today',
                 'already_submitted_today',
                 'quote_missing',

@@ -39,7 +39,7 @@ final class Story
             ipHash: $row['ip_hash'] ?? null,
             title: $row['title'] ?? null,
             content: (string)$row['content'],
-            guestName: (string)$row['guest_name'] ?? null,
+            guestName: $row['guest_name'] ?? null,
             isAnonymous: (bool)$row['is_anonymous'],
             wordCount: (int)($row['word_count'] ?? 0),
             createdAt: new DateTimeImmutable((string)$row['created_at']),

@@ -93,24 +93,46 @@ spl_autoload_register(function (string $class) use ($base) {
 });
 
 // Helpers
+function auth_service(): \App\Services\AuthService {
+    static $service = null;
+
+    if (!$service instanceof \App\Services\AuthService) {
+        $service = new \App\Services\AuthService();
+    }
+
+    return $service;
+}
+
+function current_auth_user(): ?array {
+    return auth_service()->currentUser();
+}
+
+function current_profile(): ?array {
+    $user = current_auth_user();
+
+    return is_array($user['profile'] ?? null) ? $user['profile'] : null;
+}
+
 function current_user(): ?array {
-    return $_SESSION['user'] ?? null;
+    return current_auth_user();
 }
 
 function is_logged_in(): bool {
-    return isset($_SESSION['user']) && is_array($_SESSION['user']) && isset($_SESSION['user']['id']);
+    return current_auth_user() !== null;
 }
 
 function is_admin(): bool {
-    return (($_SESSION['user']['role'] ?? 'user') === 'admin');
+    $authUser = current_auth_user();
+    return $authUser
+        && ((bool)($authUser['is_admin'] ?? false) || (($authUser['role'] ?? 'user') === 'admin'));
 }
 
 function require_login(): void {
-  if (!isset($_SESSION['user'])) { http_response_code(401); exit('Unauthorized'); }
+  if (!is_logged_in()) { http_response_code(401); exit('Unauthorized'); }
 }
 
 function require_role(array $roles): void {
   require_login();
-  $r = $_SESSION['user']['role'] ?? 'user';
+  $r = current_user()['role'] ?? 'user';
   if (!in_array($r, $roles, true)) { http_response_code(403); exit('Forbidden'); }
 }

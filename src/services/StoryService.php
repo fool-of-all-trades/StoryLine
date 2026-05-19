@@ -55,36 +55,11 @@ final class StoryService
      * @throws DomainException 'no_prompt_today'|'already_submitted_today'|'quote_missing'|'too_many_words'|'db_error'
      */
     public function addTodayStory(
-        ?int $userId,
+        int $userId,
         ?string $title,
         string $content,
-        bool $anonymous,
-        ?string $guestName = null,
-        ?string $deviceToken = null,
-        ?string $ipHash = null
+        bool $anonymous
     ): string {
-
-        $isAnonymous = (bool)$anonymous;
-
-        // Guest nick logic:
-        // - if user logged in -> ignore guestName, there won't be any
-        // - if guest + anon -> null guestName (complete anon)
-        // - if guest + not anon -> use guestName (trimmed to 60 chars)
-        $finalGuestName = null;
-
-        if ($userId === null) {
-            $rawGuest = trim((string)$guestName);
-
-            if (!$isAnonymous && $rawGuest !== '') {
-                // guest + not anonymous -> use guestName
-                $finalGuestName = mb_substr($rawGuest, 0, 60);
-            }
-            // guest + anonymous -> finalGuestName stays null
-        } else {
-            // logged in user -> ignore guestName
-            $finalGuestName = null;
-        }
-
         // Get or create today's quote prompt
         $prompt = $this->quoteService->getOrEnsureToday();
         if (!$prompt) {
@@ -96,12 +71,12 @@ final class StoryService
             id: 0,
             quoteId: $prompt->id,
             userId: $userId,
-            deviceToken: $deviceToken,
-            ipHash: $ipHash,
+            deviceToken: null,
+            ipHash: null,
             title: $title ?: null,
             content: $content,
             isAnonymous: !empty($anonymous) && $anonymous !== '0',
-            guestName: $finalGuestName
+            guestName: null
         );
 
         // try to add the story in transaction to database
@@ -117,8 +92,10 @@ final class StoryService
                 throw new DomainException('prompt_missing_in_content');
             if (str_contains($msg, 'Only one story per prompt'))
                 throw new DomainException('already_submitted_today');
-            if (str_contains($msg, 'uq_story_user_per_day') || str_contains($msg, 'uq_story_device_per_day'))
+            if (str_contains($msg, 'uq_story_user_per_day'))
                 throw new DomainException('already_submitted_today');
+            if (str_contains($msg, 'Story owner is required'))
+                throw new DomainException('authentication_required');
 
             error_log('[StoryService] add_today_story_failed: ' . $msg);
             throw new DomainException('story_create_failed');
@@ -129,10 +106,10 @@ final class StoryService
      * Returns profile data for a given user.
      * @return array{items: array, total_stories: int, total_words: int}
      */
-    public function getProfileDataForUser(int $userId): array
+    public function getProfileDataForUser(int $userId, bool $includePrivate = false): array
     {
-        $totalWords = $this->storyRepository->totalWordsByUser($userId);
-        $totalStories = $this->storyRepository->totalStoriesByUser($userId);
+        $totalWords = $this->storyRepository->totalWordsByUser($userId, $includePrivate);
+        $totalStories = $this->storyRepository->totalStoriesByUser($userId, $includePrivate);
 
         return [
             'total_words' => $totalWords,
@@ -140,9 +117,9 @@ final class StoryService
         ];
     }
 
-    public function getStoresForUser(int $userId, int $limit = 8, int $offset = 0): array
+    public function getStoresForUser(int $userId, int $limit = 8, int $offset = 0, bool $includePrivate = false): array
     {
-        $stories = $this->storyRepository->listByUser($userId, $limit, $offset);
+        $stories = $this->storyRepository->listByUser($userId, $limit, $offset, $includePrivate);
 
         return [
             'items' => array_map(fn(Story $s) => $s->toArray(), $stories),

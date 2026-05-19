@@ -33,15 +33,6 @@
             ></textarea>
 
             <div class="story-bottom-div">
-              <?php if (!$current_user) : ?>
-              <input
-                type="text"
-                id="guest-name"
-                name="guest_name"
-                placeholder="Your name (optional)"
-                maxlength="60"
-              />
-              <?php endif; ?>
               <label class="pretty-check">
                 <input type="checkbox" name="anonymous" value="1" />
                 <span class="box" aria-hidden="true"></span>
