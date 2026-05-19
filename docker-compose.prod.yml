@@ -25,6 +25,7 @@ services:
       DB_USER: "${POSTGRES_USER:?set POSTGRES_USER}"
       DB_PASS: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
       APP_IP_SALT: "${APP_IP_SALT:?set APP_IP_SALT}"
+      PUBLIC_LAUNCH_DATE: "${PUBLIC_LAUNCH_DATE:-2026-05-15}"
       APP_LOG_PATH: /app/var/log/app.log
       QUOTES_LOCAL_PATH: /app/database/quotes.json
     volumes:

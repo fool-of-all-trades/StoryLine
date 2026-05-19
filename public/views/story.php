@@ -1,6 +1,6 @@
 <?php
 /** @var \App\Models\Story $story */
-  $title = "StoryLine — " . htmlspecialchars($story->title ?? '(Untitled)', ENT_QUOTES, 'UTF-8');
+  $title = "StoryLine — " . ($story->title ?? '(Untitled)');
   $pageScripts = ['pages/story'];
   $pageStyles = ['story'];
   include __DIR__ . "/partials/header.php";

@@ -31,7 +31,7 @@ if (empty($_COOKIE['device_token'])) {
       content="<?= htmlspecialchars(App\Security\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>"
     />
 
-    <title><?= $title ?? 'StoryLine' ?></title>
+    <title><?= htmlspecialchars((string)($title ?? 'StoryLine'), ENT_QUOTES, 'UTF-8') ?></title>
 
     <link rel="stylesheet" href="/styles/main.css" />
 
