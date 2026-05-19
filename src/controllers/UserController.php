@@ -198,7 +198,7 @@ class UserController extends BaseController
 
         $currentPassword = $_POST['current_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? ($_POST['password'] ?? '');
-        $newPasswordConfirm = $_POST['password_confirm'] ?? '';
+        $newPasswordConfirm = $_POST['confirm_password'] ?? ($_POST['password_confirm'] ?? '');
 
         try {
             $this->authService->changePassword($currentPassword, $newPassword, $newPasswordConfirm);
@@ -328,8 +328,14 @@ class UserController extends BaseController
             return;
         }
 
-        // Save path to DB
-        $this->userService->changeAvatar((int)$currentUser['id'], $relativePath);
+        try {
+            $this->userService->changeAvatar((int)$currentUser['id'], $relativePath);
+        } catch (Throwable $e) {
+            error_log('[UserController] avatar_update_failed: ' . get_class($e));
+            http_response_code(500);
+            echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
         http_response_code(200);
         echo json_encode([

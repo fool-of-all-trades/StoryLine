@@ -4,79 +4,15 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Repository\UserRepository;
-use App\Models\Role;
 use App\Models\User;
 use DomainException;
+use PDOException;
 
 final class UserService
 {
     public function __construct(
         private UserRepository $userRepository = new UserRepository()
     ) {}
-
-    /**
-     * @return array{id:int,username:string,role:string,created_at:string}
-     * @throws DomainException 'bad_credentials'
-     */
-    public function login(string $identifier, string $password): array
-    {
-        $identifier = trim(mb_strtolower($identifier));
-        if ($identifier === '' || $password === '') {
-            throw new DomainException('bad_credentials');
-        }
-
-        // Does it look like an email (contains '@')?
-        if (str_contains($identifier, '@')) {
-            $user = $this->userRepository->findByEmail($identifier);
-        } else {
-            $user = $this->userRepository->findByUsername($identifier);
-        }
-
-        if (!$user || !$user->verifyPassword($password)) {
-            throw new DomainException('bad_credentials');
-        }
-
-        // session will be handled by controller (here we just return the payload for session)
-        return $user->toArray();
-    }
-
-    /**
-     * @return User
-     * @throws DomainException 'invalid_username'|'invalid_email'|'password_mismatch'|'weak_password'|'username_taken'|'email_taken'
-     */
-    public function register(string $username, string $email, string $password, string $passwordConfirm): User
-    {
-        $username = trim($username);
-        $email = trim($email);
-
-        if (!preg_match('/^[A-Za-z0-9_.]{3,30}$/', $username)) {
-            throw new DomainException('Invalid username format');
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new DomainException('Invalid email address');
-        }
-
-        if ($password !== $passwordConfirm) {
-            throw new DomainException('Passwords do not match');
-        }
-
-        if ($this->userRepository->findByUsername($username)) {
-            throw new DomainException('Username is already taken');
-        }
-        
-        if ($this->userRepository->findByEmail($email)) {
-            throw new DomainException('Email is already in use');
-        }
-
-        // Validate password strength
-        $this->assertStrongPassword($password);
-
-        // Password hashing, default for now is bcrypt, but if it changes in the future, then it will update to the stronger one
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        return $this->userRepository->create($username, $email, $hash, Role::User);
-    }
 
     public function findById(int $id): ?User
     {
@@ -135,60 +71,52 @@ final class UserService
             throw new DomainException('username_too_long');
         }
 
-        if (!preg_match('/^[A-Za-z0-9_]+$/u', $username)) {
+        if (!preg_match('/^[A-Za-z0-9_.]+$/u', $username)) {
             throw new DomainException('username_invalid_chars');
         }
 
-        if($this->userRepository->findByUsername($username)) {
+        $existingUser = $this->userRepository->findByUsername($username);
+        if ($existingUser && $existingUser->id !== $userId) {
             throw new DomainException('username_taken');
         }
 
         $username = $username !== '' ? $username : null;
 
-        $this->userRepository->updateUsername($userId, $username);
+        try {
+            $this->userRepository->updateUsername($userId, $username);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                throw new DomainException('username_taken');
+            }
+
+            throw $e;
+        }
     }
 
-    public function changePassword(int $userId, ?string $password): void
+    public function findAvatarPathForUser(int $userId): ?string
     {
-        $password = trim((string)$password);
+        $path = $this->userRepository->findAvatarPathForUser($userId);
 
-        if ($password === '') {
-            throw new DomainException('password_required');
-        }
-
-        // validate password strength
-        $this->assertStrongPassword($password);
-
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        if ($hash === false) {
-            throw new DomainException('password_hash_error');
-        }
-
-        $this->userRepository->updatePassword($userId, $hash);
+        return $path !== '' ? $path : null;
     }
 
-    // helpter method to validate password strength
-    private function assertStrongPassword(string $password): void
+    public function updateAvatarPath(int $userId, ?string $path): void
     {
-        $password = trim($password);
+        $this->userRepository->updateAvatar($userId, $path);
+    }
 
-        if ($password === '') {
-            throw new DomainException('password_required');
+    public function deleteAvatarFileIfCustom(?string $avatarPath): void
+    {
+        if (!$avatarPath || $avatarPath === 'default-avatar.jpg' || $avatarPath === '/uploads/avatars/default-avatar.jpg') {
+            return;
         }
 
-        if (mb_strlen($password) < 8) {
-            throw new DomainException('password_too_short');
-        }
+        $fullPath = realpath(__DIR__ . '/../../public' . $avatarPath);
+        $allowedDir = realpath(__DIR__ . '/../../public/uploads/avatars');
+        $allowedPrefix = $allowedDir ? rtrim($allowedDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : null;
 
-        // at least one lowercase, one uppercase, one digit, one special character
-        $hasLower   = preg_match('/[a-z]/', $password);
-        $hasUpper   = preg_match('/[A-Z]/', $password);
-        $hasDigit   = preg_match('/\d/', $password);
-        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
-
-        if (!$hasLower || !$hasUpper || !$hasDigit || !$hasSpecial) {
-            throw new DomainException('password_too_weak');
+        if ($fullPath && $allowedPrefix && str_starts_with($fullPath, $allowedPrefix) && is_file($fullPath)) {
+            unlink($fullPath);
         }
     }
 
@@ -197,20 +125,15 @@ final class UserService
         if ($path === null) {
             $path = 'default-avatar.jpg';
         }
-        else{
-            // delete old avatar file if the user had a custom one
-            $oldAvatarPath = $this->userRepository->findAvatarPathForUser($userId);
-            if ($oldAvatarPath !== 'default-avatar.jpg') {
-                // Validate the path is within uploads/avatars
-                $fullPath = realpath(__DIR__ .'/../../public' . $oldAvatarPath);
-                $allowedDir = realpath(__DIR__ .'/../../public/uploads/avatars');
-                
-                if ($fullPath && $allowedDir && str_starts_with($fullPath, $allowedDir) && file_exists($fullPath)) {
-                    unlink($fullPath);
-                }
-            }
+
+        $oldAvatarPath = $this->findAvatarPathForUser($userId);
+        try {
+            $this->updateAvatarPath($userId, $path);
+        } catch (\Throwable $e) {
+            $this->deleteAvatarFileIfCustom($path);
+            throw $e;
         }
 
-        $this->userRepository->updateAvatar($userId, $path);
+        $this->deleteAvatarFileIfCustom($oldAvatarPath);
     }
 }

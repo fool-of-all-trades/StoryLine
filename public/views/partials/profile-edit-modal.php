@@ -65,7 +65,7 @@
 
         <label>
           Confirm new password*
-          <input type="password" name="password_confirm" minlength="8" required>
+          <input type="password" name="confirm_password" minlength="8" required>
         </label>
 
         <label class="inline">

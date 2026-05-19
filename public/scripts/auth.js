@@ -137,12 +137,23 @@ async function handlePasswordChangeSubmit(e) {
 
   showMsg(passwordChangeMsg, "", null);
 
-  const currentPassword = form.current_password?.value || "";
-  const newPassword = form.new_password?.value || "";
-  const passwordConfirm = form.password_confirm?.value || "";
+  const formData = new FormData(form);
+  const currentPassword = String(formData.get("current_password") || "");
+  const newPassword = String(formData.get("new_password") || "");
+  const passwordConfirm = String(
+    formData.get("confirm_password") || formData.get("password_confirm") || ""
+  );
 
   if (!currentPassword) {
     return showMsg(passwordChangeMsg, "Enter your current password.", "error");
+  }
+
+  if (!newPassword) {
+    return showMsg(passwordChangeMsg, "Enter a new password.", "error");
+  }
+
+  if (!passwordConfirm) {
+    return showMsg(passwordChangeMsg, "Confirm your new password.", "error");
   }
 
   const passwordError = validatePassword(newPassword);
@@ -154,8 +165,6 @@ async function handlePasswordChangeSubmit(e) {
   if (newPassword !== passwordConfirm) {
     return showMsg(passwordChangeMsg, "Passwords do not match.", "error");
   }
-
-  const formData = new FormData(form);
 
   try {
     const res = await fetch(form.action || "/api/me/password", {
@@ -251,7 +260,7 @@ async function handleForgotPasswordSubmit(e) {
       msg.textContent = "If this email exists, a reset link was sent.";
       msg.style.color = "green";
     } else {
-      msg.textContent = data.error || "Unknown error";
+      msg.textContent = data.message || passwordResetFriendlyMessage(data.error);
       msg.style.color = "red";
     }
   } catch (err) {
@@ -294,7 +303,7 @@ async function handleResetPasswordSubmit(e) {
       setTimeout(() => (window.location.href = "/login"), 1500);
     } else {
       msg.style.color = "red";
-      msg.textContent = data.error || "Unknown error";
+      msg.textContent = data.message || passwordResetFriendlyMessage(data.error);
     }
   } catch (err) {
     msg.style.color = "red";
@@ -409,6 +418,17 @@ function passwordChangeFriendlyMessage(code) {
       "New password must contain a lowercase, uppercase, digit and special character.",
     password_mismatch: "Passwords do not match.",
     too_many_requests: "Too many attempts. Please wait a bit.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    internal_error: "Something went wrong. Please try again later.",
+  };
+
+  return messages[code] || "Something went wrong. Please try again later.";
+}
+
+function passwordResetFriendlyMessage(code) {
+  const messages = {
+    password_reset_disabled: "Password reset is temporarily unavailable.",
     csrf_failed: "Please refresh the page and try again.",
     invalid_csrf: "Please refresh the page and try again.",
     internal_error: "Something went wrong. Please try again later.",

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Models\User;
-use App\Models\Role;
 use PDO;
 
 final class UserRepository
@@ -71,23 +70,6 @@ final class UserRepository
         return $row ? User::fromArray($row) : null;
     }
 
-    public function create(string $username, string $email, string $passwordHash, Role $role = Role::User): User {
-        // It's just a one statement, so no need for transaction here, pdo treats it as such under the hood anyway
-
-        $sql = "INSERT INTO users (username, email, password_hash, role)
-                VALUES (:username, :email, :password_hash, :role)
-                RETURNING *";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':username' => $username,
-            ':email' => $email,
-            ':password_hash' => $passwordHash,
-            ':role' => $role->value,
-        ]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return User::fromArray($row);
-    }
-
     public function updateFavoriteQuote(int $userId, ?string $sentence, ?string $book, ?string $author): void
     {
         $sql = 'UPDATE user_profiles
@@ -111,15 +93,6 @@ final class UserRepository
         $st->execute([
             ':id' => $userId,
             ':u'  => $username
-        ]);
-    }
-
-    public function updatePassword(int $userId, string $hash): void
-    {
-        $st = $this->pdo->prepare('UPDATE users SET password_hash = :ph WHERE id = :id');
-        $st->execute([
-            ':id' => $userId,
-            ':ph'  => $hash
         ]);
     }
 
