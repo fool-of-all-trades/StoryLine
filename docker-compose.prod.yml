@@ -18,6 +18,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+    working_dir: /app
     environment:
       DB_HOST: db
       DB_PORT: "5432"
