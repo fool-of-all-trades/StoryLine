@@ -118,6 +118,12 @@ class StoryController extends BaseController
                 'message' => 'Please log in to publish your story.',
             ], 401);
         }
+        if (empty($currentUser['verified'])) {
+            $this->json([
+                'error' => 'email_not_verified',
+                'message' => 'Please verify your email before publishing.',
+            ], 403);
+        }
 
         $title = $_POST['title']   ?? null;
         $content = trim($_POST['content'] ?? '');

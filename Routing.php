@@ -48,6 +48,7 @@ class Routing
         self::post('logout', [AuthController::class, 'logout']);
         self::get('register', [AuthController::class, 'registerPage']);
         self::post('register', [AuthController::class, 'register']);
+        self::get('verify-email', [AuthController::class, 'verifyEmail']);
 
         // Password Reset
         self::get('password/forgot', [PasswordResetController::class, 'passwordForgotPage']);

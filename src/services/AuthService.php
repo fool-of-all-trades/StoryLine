@@ -41,8 +41,6 @@ final class AuthService
 
     /**
      * Registers a local account and creates the app-owned public profile.
-     * Email verification is intentionally disabled in this phase by passing no
-     * confirmation callback to delight-im/auth, so new users are verified now.
      *
      * @throws DomainException
      */
@@ -69,10 +67,25 @@ final class AuthService
             throw new DomainException('username_taken');
         }
 
+        $mail = $this->mail ??= new MailService();
+        try {
+            $mail->assertConfigured();
+        } catch (Throwable $e) {
+            error_log('[AuthService] verification_mail_unavailable: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+
         try {
             Database::begin();
 
-            $userId = $auth->registerWithUniqueUsername($email, $password, $displayName);
+            $userId = $auth->registerWithUniqueUsername(
+                $email,
+                $password,
+                $displayName,
+                function (string $selector, string $token) use ($mail, $email): void {
+                    $mail->sendEmailVerification($email, $this->emailVerificationUrl($selector, $token));
+                }
+            );
             $profile = $profiles->createForUser($userId, $displayName);
 
             Database::commit();
@@ -83,7 +96,7 @@ final class AuthService
                 'username' => $profile['display_name'] ?? $displayName,
                 'public_id' => $profile['public_id'] ?? null,
                 'role' => 'user',
-                'verified' => true,
+                'verified' => false,
                 'profile' => $profile,
             ];
         } catch (UserAlreadyExistsException $e) {
@@ -161,6 +174,45 @@ final class AuthService
             throw new DomainException('too_many_attempts');
         } catch (Throwable $e) {
             error_log('[AuthService] login_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
+    /**
+     * Confirms a package-backed email verification selector/token pair.
+     *
+     * @throws DomainException
+     */
+    public function confirmEmail(string $selector, string $token): ?array
+    {
+        $selector = trim($selector);
+        $token = trim($token);
+
+        if ($selector === '' || $token === '') {
+            throw new DomainException('invalid_or_expired_token');
+        }
+
+        $auth = $this->auth();
+        if (!$auth) {
+            throw new DomainException('internal_error');
+        }
+
+        try {
+            $auth->confirmEmailAndSignIn($selector, $token);
+
+            return $this->currentUser();
+        } catch (
+            InvalidSelectorTokenPairException |
+            TokenExpiredException |
+            UserAlreadyExistsException $e
+        ) {
+            throw new DomainException('invalid_or_expired_token');
+        } catch (SecondFactorRequiredException $e) {
+            throw new DomainException('second_factor_required');
+        } catch (TooManyRequestsException $e) {
+            throw new DomainException('too_many_requests');
+        } catch (Throwable $e) {
+            error_log('[AuthService] email_confirmation_failed: ' . get_class($e));
             throw new DomainException('internal_error');
         }
     }
@@ -437,6 +489,13 @@ final class AuthService
         $baseUrl = rtrim((string)(getenv('APP_BASE_URL') ?: 'http://localhost:8081'), '/');
 
         return $baseUrl . '/password/reset?selector=' . rawurlencode($selector) . '&token=' . rawurlencode($token);
+    }
+
+    private function emailVerificationUrl(string $selector, string $token): string
+    {
+        $baseUrl = rtrim((string)(getenv('APP_BASE_URL') ?: 'http://localhost:8081'), '/');
+
+        return $baseUrl . '/verify-email?selector=' . rawurlencode($selector) . '&token=' . rawurlencode($token);
     }
 
     private function envInt(string $key, int $default): int

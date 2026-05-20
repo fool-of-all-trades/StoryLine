@@ -30,6 +30,18 @@ final class MailService
         );
     }
 
+    public function sendEmailVerification(string $to, string $verificationUrl): void
+    {
+        $this->send(
+            $to,
+            'Verify your StoryLine email',
+            "Welcome to StoryLine.\r\n\r\n"
+            . "Open this link to verify your email address:\r\n"
+            . $verificationUrl . "\r\n\r\n"
+            . "If you did not create this account, you can ignore this email.\r\n"
+        );
+    }
+
     private function send(string $to, string $subject, string $body): void
     {
         $this->assertConfigured();

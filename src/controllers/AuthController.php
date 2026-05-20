@@ -86,6 +86,10 @@ class AuthController extends BaseController
                 $this->json(['error' => 'internal_error'], 500);
             }
 
+            if ($code === 'email_not_verified') {
+                $this->json(['error' => 'email_not_verified'], 403);
+            }
+
             $this->json(['error' => 'invalid_credentials'], 401);
         } catch (Throwable $e) {
             error_log('[AuthController] login_failed: ' . get_class($e));
@@ -132,7 +136,7 @@ class AuthController extends BaseController
             $this->authService->register($username, $email, $password, $passwordConfirm);
             $this->json([
                 'status' => 'success',
-                'message' => 'Registration successful',
+                'message' => 'Account created. Please check your email to verify your account.',
             ], 200);
         } catch (DomainException $e) {
             if ($e->getMessage() === 'too_many_attempts') {
@@ -145,12 +149,57 @@ class AuthController extends BaseController
             $this->json([
                 'status' => 'error',
                 'code'   => $e->getMessage()
-            ], 400);
+            ], $e->getMessage() === 'internal_error' ? 500 : 400);
         } catch (Throwable $e) {
             $this->json([
                 'status' => 'error',
                 'code'   => 'internal_error',
             ], 500);
+        }
+    }
+
+    public function verifyEmail(): void
+    {
+        $selector = (string)($_GET['selector'] ?? '');
+        $token = (string)($_GET['token'] ?? '');
+
+        try {
+            $payload = $this->authService->confirmEmail($selector, $token);
+            session_regenerate_id(true);
+            Csrf::regenerate();
+
+            if ($payload) {
+                $_SESSION['user'] = $payload;
+            }
+
+            $this->render('email_verification', [
+                'status' => 'success',
+                'message' => 'Your email has been verified. You can now publish stories.',
+            ]);
+        } catch (DomainException $e) {
+            $safeCode = match ($e->getMessage()) {
+                'invalid_or_expired_token',
+                'too_many_requests',
+                'second_factor_required' => $e->getMessage(),
+                default => 'internal_error',
+            };
+            http_response_code(match ($safeCode) {
+                'too_many_requests' => 429,
+                'internal_error' => 500,
+                default => 400,
+            });
+
+            $this->render('email_verification', [
+                'status' => 'error',
+                'code' => $safeCode,
+            ]);
+        } catch (Throwable $e) {
+            error_log('[AuthController] verify_email_failed: ' . get_class($e));
+            http_response_code(500);
+            $this->render('email_verification', [
+                'status' => 'error',
+                'code' => 'internal_error',
+            ]);
         }
     }
 }

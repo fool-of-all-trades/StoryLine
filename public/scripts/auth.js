@@ -54,8 +54,12 @@ async function handleRegisterSubmit(e) {
       return showMsg(regMsg, msg, "error");
     }
 
-    showMsg(regMsg, "Registration successful! Redirecting...", "success");
-    setTimeout(() => (window.location = "/login"), 1000);
+    showMsg(
+      regMsg,
+      data.message || "Account created. Please check your email to verify your account.",
+      "success"
+    );
+    setTimeout(() => (window.location = "/login"), 2500);
   } catch (err) {
     showMsg(regMsg, "Something went wrong. Please try again later.", "error");
   }
@@ -425,6 +429,7 @@ function loginFriendlyMessage(code) {
     invalid_credentials: "Invalid email or password.",
     bad_credentials: "Invalid email or password.",
     too_many_attempts: "Too many attempts. Please wait a bit.",
+    email_not_verified: "Please verify your email before logging in.",
     csrf_failed: "Please refresh the page and try again.",
     invalid_csrf: "Please refresh the page and try again.",
     internal_error: "Something went wrong. Please try again later.",

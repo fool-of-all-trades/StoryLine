@@ -137,6 +137,7 @@ function storySubmitMessage(data) {
   const messages = {
     authentication_required:
       "Please log in or create an account to publish your story.",
+    email_not_verified: "Please verify your email before publishing.",
     unauthorized: "Please log in or create an account to publish your story.",
     csrf_failed: "Please refresh the page and try again.",
     invalid_csrf: "Please refresh the page and try again.",
