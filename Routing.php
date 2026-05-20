@@ -1,6 +1,7 @@
 <?php
 
 use App\Controllers\{
+    AccountSettingsController,
     UserController,
     AuthController,
     StoryController,
@@ -67,11 +68,11 @@ class Routing
         self::get('api/quote', [QuoteController::class, 'byDate']);
 
         // API - User Profile Updates
-        self::post('api/me/favorite-quote', [UserController::class, 'updateFavoriteQuote']);
-        self::post('api/me/username', [UserController::class, 'updateUsername']);
-        self::post('api/me/password', [UserController::class, 'updatePassword']);
-        self::post('api/me/avatar', [UserController::class, 'updateAvatar']);
-        self::post('api/me/delete-account', [UserController::class, 'deleteAccount']);
+        self::post('api/me/favorite-quote', [AccountSettingsController::class, 'updateFavoriteQuote']);
+        self::post('api/me/username', [AccountSettingsController::class, 'updateUsername']);
+        self::post('api/me/password', [AccountSettingsController::class, 'updatePassword']);
+        self::post('api/me/avatar', [AccountSettingsController::class, 'updateAvatar']);
+        self::post('api/me/delete-account', [AccountSettingsController::class, 'deleteAccount']);
     }
 
     // Execute a route handler
