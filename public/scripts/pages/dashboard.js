@@ -51,7 +51,6 @@ async function handleStorySubmit(e) {
   const storyForm = e.target;
   const storyMsg = document.querySelector("#story-message");
   const storyTextarea = document.querySelector("#story-textarea");
-  const guestNameInput = document.querySelector("#guest-name");
 
   // Clear previous messages
   if (storyMsg) {
@@ -79,18 +78,6 @@ async function handleStorySubmit(e) {
       storyMsg.classList.add("error");
     }
     return;
-  }
-
-  // Validate guest name
-  if (guestNameInput) {
-    const guestName = guestNameInput.value.trim();
-    if (guestName.length > 60) {
-      if (storyMsg) {
-        storyMsg.textContent = "Your name is too long (max 60 characters).";
-        storyMsg.classList.add("error");
-      }
-      return;
-    }
   }
 
   // Submit form

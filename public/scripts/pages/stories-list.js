@@ -90,11 +90,6 @@ function appendAuthor(meta, story) {
     return;
   }
 
-  if (story.guest_name) {
-    meta.append(story.guest_name, " \u00b7 ");
-    return;
-  }
-
   meta.append("Anonymous", " \u00b7 ");
 }
 

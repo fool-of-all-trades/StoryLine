@@ -71,12 +71,9 @@ final class StoryService
             id: 0,
             quoteId: $prompt->id,
             userId: $userId,
-            deviceToken: null,
-            ipHash: null,
             title: $title ?: null,
             content: $content,
-            isAnonymous: !empty($anonymous) && $anonymous !== '0',
-            guestName: null
+            isAnonymous: !empty($anonymous) && $anonymous !== '0'
         );
 
         // try to add the story in transaction to database

@@ -21,7 +21,6 @@
               >
             </div>  
 
-            <!-- render author username or guest name or anonymous -->
             <div class="author-name">
               <p>
                 <?php if ($story->isAnonymous): ?>
@@ -30,8 +29,6 @@
                   <a href="/user/<?= htmlspecialchars($story->user_public_id) ?>">
                     <?= htmlspecialchars($story->username ?? 'user') ?>
                   </a>
-                <?php elseif (!empty($story->guestName)): ?>
-                  <?= htmlspecialchars($story->guestName) ?>
                 <?php else: ?>
                   Anonymous
                 <?php endif; ?>

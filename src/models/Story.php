@@ -9,12 +9,9 @@ final class Story
     public function __construct(
         public int $id,
         public int $quoteId,
-        public ?int $userId,                     // null = anonimuous
-        public ?string $deviceToken,             // anon user identification
-        public ?string $ipHash,                  // hash(IP+salt) anty-spam
+        public ?int $userId,
         public ?string $title,
         public string $content,
-        public ?string $guestName,
         public bool $isAnonymous = false,
         public int $wordCount = 0,
         public ?string $username = null,
@@ -35,11 +32,8 @@ final class Story
             id: (int)$row['id'],
             quoteId: (int)$row['prompt_id'],
             userId: isset($row['user_id']) ? (int)$row['user_id'] : null,
-            deviceToken: $row['device_token'] ?? null,
-            ipHash: $row['ip_hash'] ?? null,
             title: $row['title'] ?? null,
             content: (string)$row['content'],
-            guestName: $row['guest_name'] ?? null,
             isAnonymous: (bool)$row['is_anonymous'],
             wordCount: (int)($row['word_count'] ?? 0),
             createdAt: new DateTimeImmutable((string)$row['created_at']),
@@ -57,12 +51,9 @@ final class Story
             'id' => $this->id,
             'prompt_id' => $this->quoteId,
             'user_id' => $this->userId,
-            'device_token' => $this->deviceToken,
-            'ip_hash' => $this->ipHash,
             'title' => $this->title,
             'content' => $this->content,
             'is_anonymous' => $this->isAnonymous,
-            'guest_name' => $this->guestName,
             'word_count' => $this->wordCount,
             'created_at' => $this->createdAt->format('c'),
             'username' => $this->username,
