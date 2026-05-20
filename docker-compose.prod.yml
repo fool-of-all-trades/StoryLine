@@ -38,6 +38,8 @@ services:
       MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:?set MAIL_FROM_ADDRESS}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-StoryLine}"
       MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
+      PASSWORD_RESET_EXPIRES_SECONDS: "${PASSWORD_RESET_EXPIRES_SECONDS:-600}"
+      PASSWORD_RESET_MAX_OPEN_REQUESTS: "${PASSWORD_RESET_MAX_OPEN_REQUESTS:-2}"
     volumes:
       - uploads-data:/app/public/uploads
       - var-data:/app/var

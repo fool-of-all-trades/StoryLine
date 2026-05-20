@@ -238,9 +238,12 @@ final class AuthService
         }
 
         try {
+            $expiresAfter = $this->envInt('PASSWORD_RESET_EXPIRES_SECONDS', 600);
+            $maxOpenRequests = $this->envInt('PASSWORD_RESET_MAX_OPEN_REQUESTS', 2);
+
             $auth->forgotPassword($email, function (string $selector, string $token) use ($mail, $email): void {
                 $mail->sendPasswordReset($email, $this->passwordResetUrl($selector, $token));
-            });
+            }, $expiresAfter, $maxOpenRequests);
         } catch (
             InvalidEmailException |
             EmailNotVerifiedException |
@@ -434,6 +437,18 @@ final class AuthService
         $baseUrl = rtrim((string)(getenv('APP_BASE_URL') ?: 'http://localhost:8081'), '/');
 
         return $baseUrl . '/password/reset?selector=' . rawurlencode($selector) . '&token=' . rawurlencode($token);
+    }
+
+    private function envInt(string $key, int $default): int
+    {
+        $value = getenv($key);
+        if ($value === false || trim((string)$value) === '') {
+            return $default;
+        }
+
+        $intValue = (int)$value;
+
+        return $intValue > 0 ? $intValue : $default;
     }
 
     private function assertValidDisplayName(string $displayName): void
