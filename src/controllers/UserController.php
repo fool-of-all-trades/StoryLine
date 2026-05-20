@@ -7,6 +7,7 @@ use App\Services\UserService;
 use App\Services\StoryService;
 use App\Services\AuthService;
 use App\Services\AccountDeletionService;
+use App\Services\AvatarService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
@@ -17,12 +18,14 @@ class UserController extends BaseController
     private UserService $userService;
     private AuthService $authService;
     private AccountDeletionService $accountDeletionService;
+    private AvatarService $avatarService;
 
     public function __construct() {
         $this->storyService = new StoryService();
         $this->userService = new UserService();
         $this->authService = auth_service();
         $this->accountDeletionService = new AccountDeletionService($this->authService);
+        $this->avatarService = new AvatarService();
     }
 
     public function profileByPublicId(array $params): void
@@ -244,95 +247,24 @@ class UserController extends BaseController
             return;
         }
 
-        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+        if (!isset($_FILES['avatar'])) {
             http_response_code(400);
             echo json_encode(['error' => 'upload_failed'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        $file = $_FILES['avatar'];
-
-        // It's just a profile picture, so limit size to 2MB
-        if ($file['size'] > 2 * 1024 * 1024) {
-            http_response_code(422);
-            echo json_encode(['error' => 'avatar_too_large'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        // Validation, cuz I don't trust the client
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime  = $finfo->file($file['tmp_name']) ?: 'application/octet-stream';
-
-        $allowed = [
-            'image/jpeg' => 'jpg',
-            'image/png'  => 'png',
-            'image/gif'  => 'gif',
-            'image/webp' => 'webp',
-        ];
-
-        if (!isset($allowed[$mime])) {
-            http_response_code(422);
-            echo json_encode(['error' => 'avatar_invalid_type'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        // Validate dimensions, no dimensions? that's not a photo
-        list($width, $height) = @getimagesize($file['tmp_name']);
-        if (!$width || !$height || $width > 4000 || $height > 4000) {
-            http_response_code(422);
-            echo json_encode(['error' => 'avatar_invalid_dimensions'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        $ext = $allowed[$mime];
-
-        $publicId = $currentUser['public_id']; // make sure it's the current user
-        $fileName = $publicId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
-
-        $relativePath = '/uploads/avatars/' . $fileName;
-        $targetDir    = __DIR__ . '/../../public/uploads/avatars';
-        $targetPath   = $targetDir . '/' . $fileName;
-
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0775, true);
-        }
-
-        // Re-encode image to strip malicious content
         try {
-            switch ($mime) {
-                case 'image/jpeg':
-                    $img = imagecreatefromjpeg($file['tmp_name']);
-                    if (!$img) throw new \Exception('Invalid JPEG');
-                    imagejpeg($img, $targetPath, 85);
-                    imagedestroy($img);
-                    break;
-                case 'image/png':
-                    $img = imagecreatefrompng($file['tmp_name']);
-                    if (!$img) throw new \Exception('Invalid PNG');
-                    imagepng($img, $targetPath, 8);
-                    imagedestroy($img);
-                    break;
-                case 'image/gif':
-                    $img = imagecreatefromgif($file['tmp_name']);
-                    if (!$img) throw new \Exception('Invalid GIF');
-                    imagegif($img, $targetPath);
-                    imagedestroy($img);
-                    break;
-                case 'image/webp':
-                    $img = imagecreatefromwebp($file['tmp_name']);
-                    if (!$img) throw new \Exception('Invalid WebP');
-                    imagewebp($img, $targetPath, 85);
-                    imagedestroy($img);
-                    break;
-            }
-        } catch (\Exception $e) {
-            http_response_code(422);
-            echo json_encode(['error' => 'avatar_processing_failed'], JSON_UNESCAPED_UNICODE);
+            $relativePath = $this->avatarService->updateAvatar(
+                (int)$currentUser['id'],
+                (string)$currentUser['public_id'],
+                $_FILES['avatar']
+            );
+        } catch (DomainException $e) {
+            $code = $e->getMessage();
+            $status = $code === 'upload_failed' ? 400 : 422;
+            http_response_code($status);
+            echo json_encode(['error' => $code], JSON_UNESCAPED_UNICODE);
             return;
-        }
-
-        try {
-            $this->userService->changeAvatar((int)$currentUser['id'], $relativePath);
         } catch (Throwable $e) {
             error_log('[UserController] avatar_update_failed: ' . get_class($e));
             http_response_code(500);
