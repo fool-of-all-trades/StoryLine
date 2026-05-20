@@ -10,7 +10,6 @@ final class User
     public function __construct(
         public int $id,
         public string $username,
-        public string $passwordHash,
         public string $public_id,
         public string $email,
         public Role $role = Role::User,
@@ -25,7 +24,6 @@ final class User
         return new self(
             id: (int)$row['id'],
             username: (string)$row['username'],
-            passwordHash: (string)$row['password_hash'],
             public_id: $row['public_id'] ?? '',
             email: $row['email'] ?? null,
             role: Role::fromString((string)($row['role'] ?? 'user')),
@@ -49,5 +47,4 @@ final class User
     }
 
     public function isAdmin(): bool { return $this->role === Role::Admin; }
-    public function verifyPassword(string $plain): bool { return password_verify($plain, $this->passwordHash); }
 }

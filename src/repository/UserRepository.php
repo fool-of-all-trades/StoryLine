@@ -18,7 +18,6 @@ final class UserRepository
             SELECT
                 u.id,
                 up.display_name AS username,
-                u.password AS password_hash,
                 up.public_id,
                 u.email,
                 CASE WHEN (u.roles_mask & 1) = 1 THEN 'admin' ELSE 'user' END AS role,
