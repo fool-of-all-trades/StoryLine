@@ -85,6 +85,7 @@ async function handleLoginSubmit(e) {
   const identifier = (form.identifier.value || "").trim();
   const password = form.password.value || "";
   const redirect = form.redirect?.value || "/dashboard";
+  const remember = form.remember?.checked ? "1" : "0";
 
   if (!identifier || !password) {
     return showMsg(loginMsg, "Fill in login/e-mail and password.", "error");
@@ -100,6 +101,7 @@ async function handleLoginSubmit(e) {
       body: new URLSearchParams({
         identifier,
         password,
+        remember,
         csrf: form.csrf?.value || "",
         redirect,
       }),

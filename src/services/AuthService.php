@@ -26,6 +26,8 @@ use Throwable;
 
 final class AuthService
 {
+    private const REMEMBER_ME_DURATION_SECONDS = 60 * 60 * 24 * 30;
+
     private ?Auth $auth = null;
     private bool $authUnavailable = false;
 
@@ -132,7 +134,7 @@ final class AuthService
     /**
      * @throws DomainException
      */
-    public function login(string $identifier, string $password): array
+    public function login(string $identifier, string $password, bool $remember = false): array
     {
         $identifier = trim($identifier);
 
@@ -146,10 +148,12 @@ final class AuthService
         }
 
         try {
+            $rememberDuration = $remember ? self::REMEMBER_ME_DURATION_SECONDS : null;
+
             if (str_contains($identifier, '@')) {
-                $auth->login($identifier, $password);
+                $auth->login($identifier, $password, $rememberDuration);
             } else {
-                $auth->loginWithUsername($identifier, $password);
+                $auth->loginWithUsername($identifier, $password, $rememberDuration);
             }
 
             $user = $this->currentUser();

@@ -60,9 +60,10 @@ class AuthController extends BaseController
 
         $identifier = trim((string)($_POST['identifier'] ?? ($_POST['username'] ?? '')));
         $password = (string)($_POST['password'] ?? '');
+        $remember = in_array((string)($_POST['remember'] ?? ''), ['1', 'true', 'on', 'yes'], true);
 
         try {
-            $payload = $this->authService->login($identifier, $password);
+            $payload = $this->authService->login($identifier, $password, $remember);
 
             session_regenerate_id(true);
             Csrf::regenerate();

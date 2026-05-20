@@ -18,6 +18,11 @@
               <input id="passwordInput" type="password" name="password" required></input>
             </label>
             </br>
+            <label>
+              <input type="checkbox" name="remember" value="1">
+              Remember me on this device
+            </label>
+            <p class="form-help">Only use this on your own device.</p>
             <!-- <input id="togglePasswordVisibilityCheckbox" type="checkbox">Show -->
 
             <button type="submit" class="btn primary">Login</button>
