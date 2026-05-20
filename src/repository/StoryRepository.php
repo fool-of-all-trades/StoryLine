@@ -20,11 +20,16 @@ final class StoryRepository
         $sql = <<<SQL
             SELECT
                 s.*,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.avatar_path
+                END AS avatar_path,
                 s.score AS flower_count,
                 dp."date" AS prompt_date,
                 dp.sentence AS prompt_sentence
             FROM vw_public_stories_with_score s
             LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
+            LEFT JOIN user_profiles up ON up.user_id = s.user_id
             WHERE s.id = :id
             LIMIT 1
         SQL;
@@ -39,11 +44,16 @@ final class StoryRepository
         $sql = <<<SQL
             SELECT
                 s.*,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.avatar_path
+                END AS avatar_path,
                 s.score AS flower_count,
                 dp."date" AS prompt_date,
                 dp.sentence AS prompt_sentence
             FROM vw_public_stories_with_score s
             LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
+            LEFT JOIN user_profiles up ON up.user_id = s.user_id
             WHERE s.story_public_id = :uuid
             LIMIT 1
         SQL;

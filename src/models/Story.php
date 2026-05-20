@@ -16,6 +16,7 @@ final class Story
         public int $wordCount = 0,
         public ?string $username = null,
         public ?string $user_public_id = null,
+        public ?string $avatar_path = null,
         public ?string $story_public_id = null,
         public ?int $flower_count = null,
         public ?string $prompt_date = null,
@@ -39,6 +40,7 @@ final class Story
             createdAt: new DateTimeImmutable((string)$row['created_at']),
             username: $row['username'] ?? null, // can be anonymous, like da hackers
             user_public_id: $row['user_public_id'] ?? null,
+            avatar_path: $row['avatar_path'] ?? null,
             story_public_id: $row['story_public_id'] ?? null,
             flower_count: $row['flower_count'] ?? 0, 
             prompt_date: $row['prompt_date'] ?? null, 
@@ -58,6 +60,7 @@ final class Story
             'created_at' => $this->createdAt->format('c'),
             'username' => $this->username,
             'user_public_id' => $this->user_public_id,
+            'avatar_path' => $this->avatar_path,
             'story_public_id' => $this->story_public_id,
             'flower_count' => (int)($this->flower_count ?? 0),
             'prompt_date' => $this->prompt_date,

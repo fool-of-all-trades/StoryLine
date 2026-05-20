@@ -8,6 +8,18 @@
   function esc(string $s): string {
       return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
   }
+
+  $defaultAvatar = '/uploads/avatars/default-avatar.jpg';
+  $canShowAuthor = !$story->isAnonymous && !empty($story->user_public_id);
+  $avatarPath = $defaultAvatar;
+
+  if ($canShowAuthor && !empty($story->avatar_path) && str_starts_with($story->avatar_path, '/uploads/avatars/')) {
+      $avatarPath = $story->avatar_path;
+  }
+
+  $avatarAlt = $canShowAuthor
+      ? 'Avatar of ' . ($story->username ?? 'user')
+      : 'Avatar of anonymous author';
 ?>
 
         <article class="story-full" data-story-uuid="<?= htmlspecialchars($story->story_public_id ?? '') ?>">
@@ -15,22 +27,20 @@
           <div class="author-badge">
             <div class="author-avatar">
               <img
-                src="/uploads/avatars/default-avatar.jpg"
-                alt="Avatar of someone"
+                src="<?= esc($avatarPath) ?>"
+                alt="<?= esc($avatarAlt) ?>"
                 class="avatar"
               >
             </div>  
 
             <div class="author-name">
               <p>
-                <?php if ($story->isAnonymous): ?>
+                <?php if (!$canShowAuthor): ?>
                   Anonymous
-                <?php elseif ($story->user_public_id): ?>
+                <?php else: ?>
                   <a href="/user/<?= htmlspecialchars($story->user_public_id) ?>">
                     <?= htmlspecialchars($story->username ?? 'user') ?>
                   </a>
-                <?php else: ?>
-                  Anonymous
                 <?php endif; ?>
               </p>
             </div>
