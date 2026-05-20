@@ -217,24 +217,15 @@ final class StoryRepository
     public function topOfDay(string $date): ?array {
         $sql = "SELECT
                     s.id,
-                    s.public_id AS story_public_id,
+                    s.story_public_id,
                     s.title,
                     s.created_at,
-                    u.username,
-                    u.public_id AS user_public_id,
-                    COUNT(f.id) AS flowers
-                FROM stories s
-                LEFT JOIN users   u ON u.id = s.user_id
-                LEFT JOIN flowers f ON f.story_id = s.id
-                WHERE s.created_at::date = :d 
-                GROUP BY
-                    s.id,
-                    s.public_id,
-                    s.title,
-                    s.created_at,
-                    u.username,
-                    u.public_id
-                ORDER BY flowers DESC, s.created_at DESC
+                    s.username,
+                    s.user_public_id,
+                    s.score AS flowers
+                FROM vw_public_stories_with_score s
+                WHERE s.created_at::date = :d
+                ORDER BY s.score DESC, s.created_at DESC
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);

@@ -122,9 +122,9 @@ final class UserRepository
     {
         $bucket = $bucket === 'day' ? 'day' : 'month';
 
-        $sql = "SELECT date_trunc('$bucket', created_at)::date AS bucket, COUNT(*)::int AS cnt
+        $sql = "SELECT date_trunc('$bucket', to_timestamp(registered))::date AS bucket, COUNT(*)::int AS cnt
                 FROM users
-                WHERE created_at >= (CURRENT_DATE - CAST(:interval AS interval))
+                WHERE to_timestamp(registered) >= (CURRENT_DATE - CAST(:interval AS interval))
                 GROUP BY 1
                 ORDER BY 1";
 

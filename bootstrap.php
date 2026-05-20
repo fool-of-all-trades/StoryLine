@@ -122,17 +122,24 @@ function is_logged_in(): bool {
 }
 
 function is_admin(): bool {
-    $authUser = current_auth_user();
-    return $authUser
-        && ((bool)($authUser['is_admin'] ?? false) || (($authUser['role'] ?? 'user') === 'admin'));
+    return auth_service()->hasRole(\Delight\Auth\Role::ADMIN);
 }
 
 function require_login(): void {
   if (!is_logged_in()) { http_response_code(401); exit('Unauthorized'); }
 }
 
-function require_role(array $roles): void {
+function require_role(string|array $roles): void {
   require_login();
-  $r = current_user()['role'] ?? 'user';
-  if (!in_array($r, $roles, true)) { http_response_code(403); exit('Forbidden'); }
+
+  $roles = is_array($roles) ? $roles : [$roles];
+
+  foreach ($roles as $role) {
+    if ($role === 'admin' && is_admin()) {
+      return;
+    }
+  }
+
+  http_response_code(403);
+  exit('Forbidden');
 }
