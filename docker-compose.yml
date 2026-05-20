@@ -59,6 +59,8 @@ services:
     ports:
       - "8025:8025" # Web UI
       - "1025:1025" # SMTP
+    networks:
+      - pg-network
 
 networks:
   pg-network:

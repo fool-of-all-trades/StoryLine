@@ -5,16 +5,22 @@
     include __DIR__."/partials/header.php";
     use App\Security\Csrf;
 
-    $token = htmlspecialchars($_GET['token'] ?? '', ENT_QUOTES, 'UTF-8');
+    $selector = htmlspecialchars($selector ?? ($_GET['selector'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $token = htmlspecialchars($token ?? ($_GET['token'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $resetError = $resetError ?? null;
 ?>
 
 <div class="auth-content">
       <div class="auth-content-div">
             <h1>Reset your password</h1>
 
+            <?php if ($resetError): ?>
+                <p id="reset-message" class="form-message error">This reset link is invalid or has expired.</p>
+            <?php else: ?>
             <form id="reset-form" method="post" action="/password/reset" class="form">
                 <?= Csrf::inputField() ?>
 
+                <input type="hidden" name="selector" value="<?= $selector ?>">
                 <input type="hidden" name="token" value="<?= $token ?>">
 
                 <label>
@@ -31,6 +37,7 @@
 
                 <p id="reset-message" class="form-message"></p>
             </form>
+            <?php endif; ?>
 
                 </div>
         </div>

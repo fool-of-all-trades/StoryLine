@@ -29,6 +29,15 @@ services:
       PUBLIC_LAUNCH_DATE: "${PUBLIC_LAUNCH_DATE:-2026-05-15}"
       APP_LOG_PATH: /app/var/log/app.log
       QUOTES_LOCAL_PATH: /app/database/quotes.json
+      APP_ENV: "${APP_ENV:-production}"
+      APP_BASE_URL: "${APP_BASE_URL:?set APP_BASE_URL}"
+      MAIL_HOST: "${MAIL_HOST:?set MAIL_HOST}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:?set MAIL_FROM_ADDRESS}"
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-StoryLine}"
+      MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
     volumes:
       - uploads-data:/app/public/uploads
       - var-data:/app/var

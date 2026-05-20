@@ -11,9 +11,12 @@ use Delight\Auth\DuplicateUsernameException;
 use Delight\Auth\EmailNotVerifiedException;
 use Delight\Auth\InvalidEmailException;
 use Delight\Auth\InvalidPasswordException;
+use Delight\Auth\InvalidSelectorTokenPairException;
 use Delight\Auth\NotLoggedInException;
+use Delight\Auth\ResetDisabledException;
 use Delight\Auth\Role as DelightRole;
 use Delight\Auth\SecondFactorRequiredException;
+use Delight\Auth\TokenExpiredException;
 use Delight\Auth\TooManyRequestsException;
 use Delight\Auth\UnknownUsernameException;
 use Delight\Auth\UserAlreadyExistsException;
@@ -27,7 +30,8 @@ final class AuthService
     private bool $authUnavailable = false;
 
     public function __construct(
-        private ?ProfileRepository $profiles = null
+        private ?ProfileRepository $profiles = null,
+        private ?MailService $mail = null
     ) {}
 
     public function isAvailable(): bool
@@ -204,6 +208,116 @@ final class AuthService
         }
     }
 
+    /**
+     * Starts a package-backed password reset request.
+     * Expected account-state failures are intentionally swallowed so callers can
+     * return the same response for existing and non-existing accounts.
+     *
+     * @throws DomainException
+     */
+    public function requestPasswordReset(string $email): void
+    {
+        $email = trim($email);
+
+        if ($email === '') {
+            throw new DomainException('email_required');
+        }
+
+        $auth = $this->auth();
+        if (!$auth) {
+            throw new DomainException('internal_error');
+        }
+
+        $mail = $this->mail ??= new MailService();
+
+        try {
+            $mail->assertConfigured();
+        } catch (Throwable $e) {
+            error_log('[AuthService] password_reset_mail_unavailable: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+
+        try {
+            $auth->forgotPassword($email, function (string $selector, string $token) use ($mail, $email): void {
+                $mail->sendPasswordReset($email, $this->passwordResetUrl($selector, $token));
+            });
+        } catch (
+            InvalidEmailException |
+            EmailNotVerifiedException |
+            ResetDisabledException |
+            TooManyRequestsException $e
+        ) {
+            return;
+        } catch (Throwable $e) {
+            error_log('[AuthService] password_reset_request_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
+    /**
+     * @throws DomainException
+     */
+    public function assertCanResetPassword(string $selector, string $token): void
+    {
+        $auth = $this->auth();
+        if (!$auth) {
+            throw new DomainException('internal_error');
+        }
+
+        try {
+            $auth->canResetPasswordOrThrow($selector, $token);
+        } catch (
+            InvalidSelectorTokenPairException |
+            TokenExpiredException |
+            ResetDisabledException $e
+        ) {
+            throw new DomainException('invalid_or_expired_token');
+        } catch (TooManyRequestsException $e) {
+            throw new DomainException('too_many_requests');
+        } catch (Throwable $e) {
+            error_log('[AuthService] password_reset_check_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
+    /**
+     * @throws DomainException
+     */
+    public function resetPassword(string $selector, string $token, string $password, string $passwordConfirm): void
+    {
+        if ($password !== $passwordConfirm) {
+            throw new DomainException('password_mismatch');
+        }
+
+        try {
+            $this->assertStrongPassword($password);
+        } catch (DomainException $e) {
+            throw new DomainException('invalid_password');
+        }
+
+        $auth = $this->auth();
+        if (!$auth) {
+            throw new DomainException('internal_error');
+        }
+
+        try {
+            $auth->resetPassword($selector, $token, $password);
+        } catch (
+            InvalidSelectorTokenPairException |
+            TokenExpiredException |
+            ResetDisabledException $e
+        ) {
+            throw new DomainException('invalid_or_expired_token');
+        } catch (InvalidPasswordException $e) {
+            throw new DomainException('invalid_password');
+        } catch (TooManyRequestsException $e) {
+            throw new DomainException('too_many_requests');
+        } catch (Throwable $e) {
+            error_log('[AuthService] password_reset_finish_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
     public function isLoggedIn(): bool
     {
         try {
@@ -313,6 +427,13 @@ final class AuthService
             error_log('[AuthService] verified_lookup_unavailable: ' . get_class($e));
             return false;
         }
+    }
+
+    private function passwordResetUrl(string $selector, string $token): string
+    {
+        $baseUrl = rtrim((string)(getenv('APP_BASE_URL') ?: 'http://localhost:8081'), '/');
+
+        return $baseUrl . '/password/reset?selector=' . rawurlencode($selector) . '&token=' . rawurlencode($token);
     }
 
     private function assertValidDisplayName(string $displayName): void

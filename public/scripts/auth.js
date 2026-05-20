@@ -287,6 +287,29 @@ async function handleResetPasswordSubmit(e) {
   msg.textContent = "";
 
   const formData = new FormData(form);
+  const selector = String(formData.get("selector") || "");
+  const token = String(formData.get("token") || "");
+  const password = String(formData.get("password") || "");
+  const passwordConfirm = String(formData.get("password_confirm") || "");
+
+  if (!selector || !token) {
+    msg.style.color = "red";
+    msg.textContent = passwordResetFriendlyMessage("invalid_or_expired_token");
+    return;
+  }
+
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    msg.style.color = "red";
+    msg.textContent = passwordResetFriendlyMessage("invalid_password");
+    return;
+  }
+
+  if (password !== passwordConfirm) {
+    msg.style.color = "red";
+    msg.textContent = passwordResetFriendlyMessage("password_mismatch");
+    return;
+  }
 
   try {
     const res = await fetch("/password/reset", {
@@ -428,7 +451,18 @@ function passwordChangeFriendlyMessage(code) {
 
 function passwordResetFriendlyMessage(code) {
   const messages = {
-    password_reset_disabled: "Password reset is temporarily unavailable.",
+    email_required: "Enter your email address.",
+    invalid_or_expired_token: "This reset link is invalid or has expired.",
+    invalid_password:
+      "Password is too weak. Use at least 8 characters, including an uppercase letter, a number, and a special character.",
+    password_required: "Enter a new password.",
+    password_too_short:
+      "Password is too weak. Use at least 8 characters, including an uppercase letter, a number, and a special character.",
+    password_too_weak:
+      "Password is too weak. Use at least 8 characters, including an uppercase letter, a number, and a special character.",
+    password_too_long: "Password is too long.",
+    password_mismatch: "Passwords do not match.",
+    too_many_requests: "Too many attempts. Please wait a bit.",
     csrf_failed: "Please refresh the page and try again.",
     invalid_csrf: "Please refresh the page and try again.",
     internal_error: "Something went wrong. Please try again later.",
