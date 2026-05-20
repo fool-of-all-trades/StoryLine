@@ -128,41 +128,41 @@ final class AvatarService
                     if (!$img || !imagejpeg($img, $targetPath, 85)) {
                         throw new DomainException('avatar_processing_failed');
                     }
-                    imagedestroy($img);
+                    unset($img);
                     break;
                 case 'image/png':
                     $img = imagecreatefrompng($tmpPath);
                     if (!$img || !imagepng($img, $targetPath, 8)) {
                         throw new DomainException('avatar_processing_failed');
                     }
-                    imagedestroy($img);
+                    unset($img);
                     break;
                 case 'image/gif':
                     $img = imagecreatefromgif($tmpPath);
                     if (!$img || !imagegif($img, $targetPath)) {
                         throw new DomainException('avatar_processing_failed');
                     }
-                    imagedestroy($img);
+                    unset($img);
                     break;
                 case 'image/webp':
                     $img = imagecreatefromwebp($tmpPath);
                     if (!$img || !imagewebp($img, $targetPath, 85)) {
                         throw new DomainException('avatar_processing_failed');
                     }
-                    imagedestroy($img);
+                    unset($img);
                     break;
                 default:
                     throw new DomainException('avatar_invalid_type');
             }
         } catch (DomainException $e) {
             if (isset($img) && $img) {
-                imagedestroy($img);
+                unset($img);
             }
 
             throw $e;
         } catch (Throwable $e) {
             if (isset($img) && $img) {
-                imagedestroy($img);
+                unset($img);
             }
 
             throw new DomainException('avatar_processing_failed');
