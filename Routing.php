@@ -71,6 +71,7 @@ class Routing
         self::post('api/me/username', [UserController::class, 'updateUsername']);
         self::post('api/me/password', [UserController::class, 'updatePassword']);
         self::post('api/me/avatar', [UserController::class, 'updateAvatar']);
+        self::post('api/me/delete-account', [UserController::class, 'deleteAccount']);
     }
 
     // Execute a route handler

@@ -18,6 +18,7 @@ use Delight\Auth\Role as DelightRole;
 use Delight\Auth\SecondFactorRequiredException;
 use Delight\Auth\TokenExpiredException;
 use Delight\Auth\TooManyRequestsException;
+use Delight\Auth\UnknownIdException;
 use Delight\Auth\UnknownUsernameException;
 use Delight\Auth\UserAlreadyExistsException;
 use DomainException;
@@ -227,6 +228,71 @@ final class AuthService
             $this->auth()?->logOut();
         } catch (Throwable $e) {
             error_log('[AuthService] logout_failed: ' . get_class($e));
+        }
+
+        $this->auth = null;
+    }
+
+    /**
+     * Confirms the current password before dangerous account actions.
+     *
+     * @throws DomainException
+     */
+    public function reconfirmPassword(string $password): void
+    {
+        if ($password === '') {
+            throw new DomainException('current_password_required');
+        }
+
+        $auth = $this->auth();
+        if (!$auth || !$auth->isLoggedIn()) {
+            throw new DomainException('authentication_required');
+        }
+
+        try {
+            if (!$auth->reconfirmPassword($password)) {
+                throw new DomainException('invalid_current_password');
+            }
+        } catch (DomainException $e) {
+            throw $e;
+        } catch (NotLoggedInException $e) {
+            throw new DomainException('authentication_required');
+        } catch (TooManyRequestsException $e) {
+            throw new DomainException('too_many_requests');
+        } catch (Throwable $e) {
+            error_log('[AuthService] password_reconfirm_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
+    /**
+     * Deletes an auth user from the package users table.
+     *
+     * @throws DomainException
+     */
+    public function deleteUserById(int $userId): void
+    {
+        $auth = $this->auth();
+        if (!$auth) {
+            throw new DomainException('internal_error');
+        }
+
+        try {
+            $auth->admin()->deleteUserById($userId);
+        } catch (UnknownIdException $e) {
+            throw new DomainException('account_not_found');
+        } catch (Throwable $e) {
+            error_log('[AuthService] delete_user_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+    }
+
+    public function destroySession(): void
+    {
+        try {
+            $this->auth()?->destroySession();
+        } catch (Throwable $e) {
+            error_log('[AuthService] destroy_session_failed: ' . get_class($e));
         }
 
         $this->auth = null;

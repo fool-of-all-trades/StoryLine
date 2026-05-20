@@ -214,6 +214,70 @@ function initPasswordChangeForm() {
   passwordChangeForm.addEventListener("submit", handlePasswordChangeSubmit);
 }
 
+// ===== ACCOUNT DELETION FORM =====
+
+async function handleAccountDeletionSubmit(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const msg = document.querySelector("#delete-account-message");
+  showMsg(msg, "", null);
+
+  const formData = new FormData(form);
+  const mode = String(formData.get("mode") || "");
+  const currentPassword = String(formData.get("current_password") || "");
+  const confirmation = String(formData.get("confirmation") || "");
+
+  if (!["delete_all", "orphan_public"].includes(mode)) {
+    return showMsg(msg, accountDeletionFriendlyMessage("invalid_delete_mode"), "error");
+  }
+
+  if (!currentPassword) {
+    return showMsg(msg, accountDeletionFriendlyMessage("current_password_required"), "error");
+  }
+
+  if (!confirmation) {
+    return showMsg(msg, accountDeletionFriendlyMessage("confirmation_required"), "error");
+  }
+
+  try {
+    const res = await fetch(form.action || "/api/me/delete-account", {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+      headers: {
+        "X-CSRF-Token": window.CSRF_TOKEN || "",
+        Accept: "application/json",
+      },
+    });
+
+    const contentType = res.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await res.json()
+      : {};
+
+    if (!res.ok || data.status === "error" || data.error) {
+      return showMsg(
+        msg,
+        accountDeletionFriendlyMessage(data.error || data.code),
+        "error"
+      );
+    }
+
+    showMsg(msg, "Your account has been deleted.", "success");
+    setTimeout(() => (window.location.href = "/"), 900);
+  } catch (err) {
+    showMsg(msg, "Something went wrong. Please try again later.", "error");
+  }
+}
+
+function initAccountDeletionForm() {
+  const form = document.querySelector("#delete-account-form");
+  if (!form) return;
+
+  form.addEventListener("submit", handleAccountDeletionSubmit);
+}
+
 // ===== USERNAME CHANGE FORM =====
 
 function handleUsernameChangeSubmit(e) {
@@ -456,6 +520,23 @@ function passwordChangeFriendlyMessage(code) {
   return messages[code] || "Something went wrong. Please try again later.";
 }
 
+function accountDeletionFriendlyMessage(code) {
+  const messages = {
+    authentication_required: "Please log in again before deleting your account.",
+    current_password_required: "Enter your current password.",
+    invalid_current_password: "Current password is incorrect.",
+    invalid_delete_mode: "Choose how your stories should be handled.",
+    confirmation_required: "Type the required confirmation phrase exactly.",
+    cannot_delete_last_admin: "This is the last admin account and cannot be deleted.",
+    too_many_requests: "Too many attempts. Please wait a bit.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    internal_error: "Something went wrong. Please try again later.",
+  };
+
+  return messages[code] || "Something went wrong. Please try again later.";
+}
+
 function passwordResetFriendlyMessage(code) {
   const messages = {
     email_required: "Enter your email address.",
@@ -482,6 +563,7 @@ function passwordResetFriendlyMessage(code) {
 initRegisterForm();
 initLoginForm();
 initPasswordChangeForm();
+initAccountDeletionForm();
 initUsernameChangeForm();
 initForgotPasswordForm();
 initResetPasswordForm();

@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Services\UserService;
 use App\Services\StoryService;
 use App\Services\AuthService;
+use App\Services\AccountDeletionService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
@@ -15,11 +16,13 @@ class UserController extends BaseController
     private StoryService $storyService;
     private UserService $userService;
     private AuthService $authService;
+    private AccountDeletionService $accountDeletionService;
 
     public function __construct() {
         $this->storyService = new StoryService();
         $this->userService = new UserService();
         $this->authService = auth_service();
+        $this->accountDeletionService = new AccountDeletionService($this->authService);
     }
 
     public function profileByPublicId(array $params): void
@@ -342,6 +345,65 @@ class UserController extends BaseController
             'status' => 'ok',
             'avatar_url' => $relativePath,
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function deleteAccount(): void
+    {
+        Csrf::verify();
+        header('Content-Type: application/json; charset=utf-8');
+
+        $currentUser = current_user();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['error' => 'authentication_required'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $mode = (string)($_POST['mode'] ?? '');
+        $currentPassword = (string)($_POST['current_password'] ?? '');
+        $confirmation = (string)($_POST['confirmation'] ?? '');
+
+        try {
+            $this->accountDeletionService->deleteAccount(
+                (int)$currentUser['id'],
+                $currentPassword,
+                $mode,
+                $confirmation
+            );
+
+            http_response_code(200);
+            echo json_encode(['status' => 'ok'], JSON_UNESCAPED_UNICODE);
+        } catch (DomainException $e) {
+            $code = $e->getMessage();
+            $status = match ($code) {
+                'authentication_required' => 401,
+                'cannot_delete_last_admin' => 403,
+                'too_many_requests' => 429,
+                'internal_error' => 500,
+                default => 422,
+            };
+
+            $safeError = in_array($code, [
+                'authentication_required',
+                'current_password_required',
+                'invalid_current_password',
+                'invalid_delete_mode',
+                'confirmation_required',
+                'cannot_delete_last_admin',
+                'too_many_requests',
+            ], true) ? $code : 'internal_error';
+
+            if ($safeError === 'internal_error') {
+                error_log('[UserController] delete_account_domain_error: ' . $code);
+            }
+
+            http_response_code($status);
+            echo json_encode(['error' => $safeError], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            error_log('[UserController] delete_account_failed: ' . get_class($e));
+            http_response_code(500);
+            echo json_encode(['error' => 'internal_error'], JSON_UNESCAPED_UNICODE);
+        }
     }
 
 }
