@@ -82,6 +82,15 @@ async function handleStorySubmit(e) {
 
   // Submit form
   const formData = new FormData(storyForm);
+  const storyMode = formData.get("story_mode") || "public";
+  const visibility = storyMode === "private" ? "private" : "public";
+  formData.set("visibility", visibility);
+
+  if (storyMode === "anonymous") {
+    formData.set("anonymous", "1");
+  } else {
+    formData.delete("anonymous");
+  }
 
   try {
     const res = await fetch("/api/story", {
@@ -94,8 +103,11 @@ async function handleStorySubmit(e) {
     const data = await res.json();
 
     if (res.ok) {
-      // redirect to the list of today's stories
-      location.href = "/stories?date=today&sort=new";
+      if (visibility === "private" && data?.public_id) {
+        location.href = `/story/${encodeURIComponent(data.public_id)}`;
+      } else {
+        location.href = "/stories?date=today&sort=new";
+      }
     } else {
       if (storyMsg) {
         storyMsg.textContent =
@@ -134,6 +146,7 @@ function storySubmitMessage(data) {
       "Your story needs to include today's quote.",
     quote_missing: "Your story needs to include today's quote.",
     too_many_words: "Your story is too long.",
+    invalid_visibility: "Please choose Public, Anonymous, or Private.",
     internal_error: "Something went wrong while saving your story.",
   };
 

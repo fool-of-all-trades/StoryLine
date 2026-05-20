@@ -13,6 +13,7 @@ final class Story
         public ?string $title,
         public string $content,
         public bool $isAnonymous = false,
+        public string $visibility = 'public',
         public int $wordCount = 0,
         public ?string $username = null,
         public ?string $user_public_id = null,
@@ -36,6 +37,7 @@ final class Story
             title: $row['title'] ?? null,
             content: (string)$row['content'],
             isAnonymous: (bool)$row['is_anonymous'],
+            visibility: (string)($row['visibility'] ?? 'public'),
             wordCount: (int)($row['word_count'] ?? 0),
             createdAt: new DateTimeImmutable((string)$row['created_at']),
             username: $row['username'] ?? null, // can be anonymous, like da hackers
@@ -56,6 +58,7 @@ final class Story
             'title' => $this->title,
             'content' => $this->content,
             'is_anonymous' => $this->isAnonymous,
+            'visibility' => $this->visibility,
             'word_count' => $this->wordCount,
             'created_at' => $this->createdAt->format('c'),
             'username' => $this->username,

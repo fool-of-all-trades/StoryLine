@@ -50,6 +50,11 @@ final class StoryService
         return $this->storyRepository->getStoryByPublicId($uuid);
     }
 
+    public function getStoryByPublicIdForViewer(string $uuid, ?int $viewerUserId = null): ?Story
+    {
+        return $this->storyRepository->getStoryByPublicIdForViewer($uuid, $viewerUserId);
+    }
+
     /**
      * Add a story for today's prompt.
      * @throws DomainException 'no_prompt_today'|'already_submitted_today'|'quote_missing'|'too_many_words'|'db_error'
@@ -58,8 +63,16 @@ final class StoryService
         int $userId,
         ?string $title,
         string $content,
-        bool $anonymous
+        bool $anonymous,
+        string $visibility = 'public'
     ): string {
+        if (!in_array($visibility, ['public', 'private'], true)) {
+            throw new DomainException('invalid_visibility');
+        }
+        if ($visibility === 'private') {
+            $anonymous = false;
+        }
+
         // Get or create today's quote prompt
         $prompt = $this->quoteService->getOrEnsureToday();
         if (!$prompt) {
@@ -73,7 +86,8 @@ final class StoryService
             userId: $userId,
             title: $title ?: null,
             content: $content,
-            isAnonymous: !empty($anonymous) && $anonymous !== '0'
+            isAnonymous: !empty($anonymous) && $anonymous !== '0',
+            visibility: $visibility
         );
 
         // try to add the story in transaction to database

@@ -90,7 +90,9 @@ class StoryController extends BaseController
             $this->notFound('Story not found');
         }
 
-        $story = $this->storyService->getStoryByPublicId($uuid);
+        $currentUser = current_user();
+        $viewerUserId = isset($currentUser['id']) ? (int)$currentUser['id'] : null;
+        $story = $this->storyService->getStoryByPublicIdForViewer($uuid, $viewerUserId);
         if (!$story) {
             $this->notFound('Story not found');
         }
@@ -128,6 +130,12 @@ class StoryController extends BaseController
         $title = $_POST['title']   ?? null;
         $content = trim($_POST['content'] ?? '');
         $anonymous = !empty($_POST['anonymous']);
+        $visibility = (string)($_POST['visibility'] ?? 'public');
+        $storyMode = (string)($_POST['story_mode'] ?? '');
+        if (in_array($storyMode, ['public', 'anonymous', 'private'], true)) {
+            $visibility = $storyMode === 'private' ? 'private' : 'public';
+            $anonymous = $storyMode === 'anonymous';
+        }
 
         if ($content === '') {
             $this->json(['error'=>'empty_content'], 400);
@@ -136,12 +144,13 @@ class StoryController extends BaseController
 
 
         try {
-            $publicId = $this->storyService->addTodayStory($userId, $title, $content, $anonymous);
+            $publicId = $this->storyService->addTodayStory($userId, $title, $content, $anonymous, $visibility);
             $this->json(['public_id'=>$publicId], 201);
         } catch (DomainException $e) {
             $code = match ($e->getMessage()) {
                 'authentication_required' => 401,
                 'no_prompt_today' => 400,
+                'invalid_visibility' => 400,
                 'already_submitted_today'=> 409,
                 'quote_missing' => 400,
                 'too_many_words' => 400,
@@ -151,6 +160,7 @@ class StoryController extends BaseController
             $safeError = match ($e->getMessage()) {
                 'authentication_required',
                 'no_prompt_today',
+                'invalid_visibility',
                 'already_submitted_today',
                 'quote_missing',
                 'too_many_words',

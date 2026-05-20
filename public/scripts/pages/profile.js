@@ -158,6 +158,18 @@ function renderStories(container, items) {
     meta.className = "book__meta book-card-meta";
     meta.setAttribute("aria-label", "Entry metadata");
 
+    if (item.visibility === "private") {
+      const visibilityItem = document.createElement("li");
+      visibilityItem.textContent = "Private";
+      meta.appendChild(visibilityItem);
+    }
+
+    if (item.is_anonymous) {
+      const anonymousItem = document.createElement("li");
+      anonymousItem.textContent = "Anonymous";
+      meta.appendChild(anonymousItem);
+    }
+
     const dateItem = document.createElement("li");
     const time = document.createElement("time");
     time.textContent = createdAt;

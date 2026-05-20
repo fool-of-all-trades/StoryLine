@@ -33,11 +33,21 @@
             ></textarea>
 
             <div class="story-bottom-div">
-              <label class="pretty-check">
-                <input type="checkbox" name="anonymous" value="1" />
-                <span class="box" aria-hidden="true"></span>
-                <span class="text">Anonymous</span>
-              </label>
+              <fieldset class="story-visibility">
+                <legend>Publish as</legend>
+                <label>
+                  <input type="radio" name="story_mode" value="public" checked />
+                  Public
+                </label>
+                <label>
+                  <input type="radio" name="story_mode" value="anonymous" />
+                  Anonymous
+                </label>
+                <label>
+                  <input type="radio" name="story_mode" value="private" />
+                  Private
+                </label>
+              </fieldset>
             </div>
             <br />
             <p id="story-message" class="form-message"></p>

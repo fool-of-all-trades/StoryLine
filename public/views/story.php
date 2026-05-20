@@ -10,6 +10,7 @@
   }
 
   $defaultAvatar = '/uploads/avatars/default-avatar.jpg';
+  $isPrivate = ($story->visibility ?? 'public') === 'private';
   $canShowAuthor = !$story->isAnonymous && !empty($story->user_public_id);
   $avatarPath = $defaultAvatar;
 
@@ -49,21 +50,26 @@
           <div class="content story-content">
             <div>
               <h1><?= htmlspecialchars($story->title ?? '(Untitled)') ?></h1>
+              <?php if ($isPrivate): ?>
+                <p class="story-visibility-label">Private story</p>
+              <?php endif; ?>
               <p><?= nl2br(htmlspecialchars($story->content)) ?></p>
             </div>
             <p id="story-date"><?= htmlspecialchars($story->createdAt->format('Y-m-d')) ?></p>
           </div>
 
-          <button
-            class="story-flower-count"
-            type="button"
-            data-like
-            data-story="<?= esc($story->story_public_id) ?>"
-            aria-pressed="false"
-          >
-            <div class="flower-emoji" aria-hidden="true"></div>
-            <span class="flower-count"><span data-count><?= (int)($story->flower_count ?? 0) ?></span></span>
-          </button>
+          <?php if (!$isPrivate): ?>
+            <button
+              class="story-flower-count"
+              type="button"
+              data-like
+              data-story="<?= esc($story->story_public_id ?? '') ?>"
+              aria-pressed="false"
+            >
+              <div class="flower-emoji" aria-hidden="true"></div>
+              <span class="flower-count"><span data-count><?= (int)($story->flower_count ?? 0) ?></span></span>
+            </button>
+          <?php endif; ?>
         </article>
       </div>
 

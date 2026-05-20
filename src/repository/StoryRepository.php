@@ -31,6 +31,7 @@ final class StoryRepository
             LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
             LEFT JOIN user_profiles up ON up.user_id = s.user_id
             WHERE s.id = :id
+              AND s.visibility = 'public'
             LIMIT 1
         SQL;
 
@@ -55,11 +56,46 @@ final class StoryRepository
             LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
             LEFT JOIN user_profiles up ON up.user_id = s.user_id
             WHERE s.story_public_id = :uuid
+              AND s.visibility = 'public'
             LIMIT 1
         SQL;
 
         $st = $this->pdo->prepare($sql);
         $st->execute([':uuid' => $uuid]);
+        $row = $st->fetch();
+        return $row ? Story::fromArray($row) : null;
+    }
+
+    public function getStoryByPublicIdForViewer(string $uuid, ?int $viewerUserId = null): ?Story {
+        $sql = <<<SQL
+            SELECT
+                s.*,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.avatar_path
+                END AS avatar_path,
+                s.score AS flower_count,
+                dp."date" AS prompt_date,
+                dp.sentence AS prompt_sentence
+            FROM vw_stories_with_score s
+            LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
+            LEFT JOIN user_profiles up ON up.user_id = s.user_id
+            WHERE s.story_public_id = :uuid
+              AND (
+                s.visibility = 'public'
+                OR s.user_id = COALESCE(:viewer_user_id, -1)
+              )
+            LIMIT 1
+        SQL;
+
+        $st = $this->pdo->prepare($sql);
+        $st->bindValue(':uuid', $uuid);
+        if ($viewerUserId !== null) {
+            $st->bindValue(':viewer_user_id', $viewerUserId, PDO::PARAM_INT);
+        } else {
+            $st->bindValue(':viewer_user_id', null, PDO::PARAM_NULL);
+        }
+        $st->execute();
         $row = $st->fetch();
         return $row ? Story::fromArray($row) : null;
     }
@@ -80,7 +116,7 @@ final class StoryRepository
                 ':t'   => $s->title,
                 ':c'   => $s->content,
                 ':anon'=> $s->isAnonymous ? 't' : 'f',
-                ':visibility' => 'public',
+                ':visibility' => $s->visibility,
             ]);
 
             $publicId = (string)$st->fetchColumn();
@@ -115,6 +151,7 @@ final class StoryRepository
             FROM vw_public_stories_with_score s
             JOIN daily_prompt dp
                 ON dp.id = s.prompt_id AND dp."date" = :d
+            WHERE s.visibility = 'public'
             ORDER BY $order
             LIMIT :limit OFFSET :offset
         SQL;
@@ -217,6 +254,7 @@ final class StoryRepository
             SELECT COUNT(*)::int
             FROM vw_public_stories_with_score s
             JOIN daily_prompt dp ON dp.id = s.prompt_id AND dp."date" = :d
+            WHERE s.visibility = 'public'
         SQL;
 
         $stmt = $this->pdo->prepare($sql);
@@ -235,6 +273,7 @@ final class StoryRepository
                     s.score AS flowers
                 FROM vw_public_stories_with_score s
                 WHERE s.created_at::date = :d
+                  AND s.visibility = 'public'
                 ORDER BY s.score DESC, s.created_at DESC
                 LIMIT 1";
 
