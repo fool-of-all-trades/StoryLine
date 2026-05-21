@@ -2,6 +2,7 @@ let page = 1;
 const limit = 8;
 let totalStories = 0;
 let currentItems = [];
+let isOwnProfile = false;
 
 // Load user profile stats (without stories list)
 async function loadUserProfile(userPid) {
@@ -122,6 +123,68 @@ function safeCount(value) {
   return Number.isFinite(count) ? count : 0;
 }
 
+function storyMode(item) {
+  if (item.visibility === "private") return "private";
+  return item.is_anonymous ? "anonymous" : "public";
+}
+
+function storyManagementFriendlyMessage(code) {
+  const messages = {
+    authentication_required: "Please log in again.",
+    story_not_found: "Story not found.",
+    forbidden: "You can only manage your own stories.",
+    invalid_visibility: "Choose Public, Anonymous, or Private.",
+    csrf_failed: "Please refresh the page and try again.",
+    invalid_csrf: "Please refresh the page and try again.",
+    internal_error: "Something went wrong. Please try again later.",
+  };
+
+  return messages[code] || "Something went wrong. Please try again later.";
+}
+
+function createStoryManagementControls(item) {
+  const storyId = item.story_public_id;
+  if (!isPublicUuid(storyId)) return null;
+
+  const controls = document.createElement("div");
+  controls.className = "story-owner-controls";
+  controls.dataset.storyId = storyId;
+
+  const label = document.createElement("label");
+  label.textContent = "Visibility";
+
+  const select = document.createElement("select");
+  select.dataset.storyVisibilitySelect = "";
+
+  ["public", "anonymous", "private"].forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+    option.selected = storyMode(item) === value;
+    select.appendChild(option);
+  });
+  label.appendChild(select);
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = "btn secondary";
+  save.dataset.storyVisibilitySave = "";
+  save.textContent = "Save";
+
+  const del = document.createElement("button");
+  del.type = "button";
+  del.className = "btn secondary";
+  del.dataset.storyDelete = "";
+  del.textContent = "Delete";
+
+  const msg = document.createElement("p");
+  msg.className = "form-message";
+  msg.dataset.storyManagementMessage = "";
+
+  controls.append(label, save, del, msg);
+  return controls;
+}
+
 // Render story cards in the given container
 function renderStories(container, items) {
   container.replaceChildren();
@@ -186,6 +249,14 @@ function renderStories(container, items) {
 
     meta.append(dateItem, wordsItem, flowersItem);
     card.append(title, meta);
+
+    if (isOwnProfile) {
+      const controls = createStoryManagementControls(item);
+      if (controls) {
+        card.appendChild(controls);
+      }
+    }
+
     container.appendChild(card);
   });
 }
@@ -224,6 +295,7 @@ function initUserProfilePage() {
   if (!userMain) return;
 
   const userPid = userMain.dataset.userPublicId;
+  isOwnProfile = userMain.dataset.ownProfile === "1";
   const searchInput = document.querySelector("#user-stories-search");
   const leftButton = document.querySelector(".left-arrow");
   const rightButton = document.querySelector(".right-arrow");
@@ -248,6 +320,122 @@ function initUserProfilePage() {
   }
   if (rightButton) {
     rightButton.addEventListener("click", () => handleNextPage(userPid));
+  }
+
+  if (listEl) {
+    listEl.addEventListener("click", (e) => handleStoryManagementClick(e, userPid));
+  }
+}
+
+function setStoryManagementMessage(controls, text, type) {
+  const msg = controls?.querySelector("[data-story-management-message]");
+  showMsg(msg, text, type);
+}
+
+async function handleStoryManagementClick(e, userPid) {
+  const saveBtn = e.target.closest("[data-story-visibility-save]");
+  const deleteBtn = e.target.closest("[data-story-delete]");
+  if (!saveBtn && !deleteBtn) return;
+
+  const controls = e.target.closest(".story-owner-controls");
+  const storyPublicId = controls?.dataset.storyId;
+  if (!isPublicUuid(storyPublicId)) {
+    return;
+  }
+
+  if (saveBtn) {
+    await saveStoryVisibility(controls, storyPublicId, userPid);
+  } else if (deleteBtn) {
+    await deleteStory(controls, storyPublicId, userPid);
+  }
+}
+
+async function saveStoryVisibility(controls, storyPublicId, userPid) {
+  const select = controls.querySelector("[data-story-visibility-select]");
+  const mode = select?.value || "";
+  setStoryManagementMessage(controls, "", null);
+
+  try {
+    const formData = new FormData();
+    formData.set("mode", mode);
+
+    const res = await fetch(
+      `/api/story/${encodeURIComponent(storyPublicId)}/visibility`,
+      {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers: {
+          "X-CSRF-Token": window.CSRF_TOKEN || "",
+          Accept: "application/json",
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      return setStoryManagementMessage(
+        controls,
+        storyManagementFriendlyMessage(data.error),
+        "error"
+      );
+    }
+
+    const item = currentItems.find((story) => story.story_public_id === storyPublicId);
+    if (item) {
+      item.visibility = data.visibility;
+      item.is_anonymous = Boolean(data.is_anonymous);
+    }
+    renderStories(document.querySelector("#user-stories-list"), currentItems);
+    loadUserProfile(userPid);
+  } catch (err) {
+    console.error("Story visibility error:", err);
+    setStoryManagementMessage(
+      controls,
+      storyManagementFriendlyMessage("internal_error"),
+      "error"
+    );
+  }
+}
+
+async function deleteStory(controls, storyPublicId, userPid) {
+  if (!confirm("Delete this story permanently?")) {
+    return;
+  }
+
+  setStoryManagementMessage(controls, "", null);
+
+  try {
+    const res = await fetch(`/api/story/${encodeURIComponent(storyPublicId)}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        "X-CSRF-Token": window.CSRF_TOKEN || "",
+        Accept: "application/json",
+      },
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      return setStoryManagementMessage(
+        controls,
+        storyManagementFriendlyMessage(data.error),
+        "error"
+      );
+    }
+
+    currentItems = currentItems.filter((story) => story.story_public_id !== storyPublicId);
+    totalStories = Math.max(0, totalStories - 1);
+    renderStories(document.querySelector("#user-stories-list"), currentItems);
+    updatePaginationArrows();
+    loadUserProfile(userPid);
+  } catch (err) {
+    console.error("Story delete error:", err);
+    setStoryManagementMessage(
+      controls,
+      storyManagementFriendlyMessage("internal_error"),
+      "error"
+    );
   }
 }
 

@@ -55,6 +55,66 @@ final class StoryService
         return $this->storyRepository->getStoryByPublicIdForViewer($uuid, $viewerUserId);
     }
 
+    public function changeVisibilityForOwner(int $userId, string $uuid, string $mode): array
+    {
+        $mode = strtolower(trim($mode));
+        [$visibility, $isAnonymous] = match ($mode) {
+            'public' => ['public', false],
+            'anonymous' => ['public', true],
+            'private' => ['private', false],
+            default => throw new DomainException('invalid_visibility'),
+        };
+
+        $story = $this->storyRepository->findOwnershipByPublicId($uuid);
+        if (!$story) {
+            throw new DomainException('story_not_found');
+        }
+
+        if (empty($story['user_id']) || (int)$story['user_id'] !== $userId) {
+            throw new DomainException('forbidden');
+        }
+
+        try {
+            $updated = $this->storyRepository->updateVisibilityForOwner($uuid, $userId, $visibility, $isAnonymous);
+        } catch (Throwable $e) {
+            error_log('[StoryService] update_visibility_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+
+        if (!$updated) {
+            throw new DomainException('story_not_found');
+        }
+
+        return [
+            'mode' => $mode,
+            'visibility' => $visibility,
+            'is_anonymous' => $isAnonymous,
+        ];
+    }
+
+    public function deleteOwnStory(int $userId, string $uuid): void
+    {
+        $story = $this->storyRepository->findOwnershipByPublicId($uuid);
+        if (!$story) {
+            throw new DomainException('story_not_found');
+        }
+
+        if (empty($story['user_id']) || (int)$story['user_id'] !== $userId) {
+            throw new DomainException('forbidden');
+        }
+
+        try {
+            $deleted = $this->storyRepository->deleteForOwner($uuid, $userId);
+        } catch (Throwable $e) {
+            error_log('[StoryService] delete_story_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+
+        if (!$deleted) {
+            throw new DomainException('story_not_found');
+        }
+    }
+
     /**
      * Add a story for today's prompt.
      * @throws DomainException 'no_prompt_today'|'already_submitted_today'|'quote_missing'|'too_many_words'|'db_error'

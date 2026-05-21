@@ -136,6 +136,58 @@ final class StoryRepository
         }
     }
 
+    public function findOwnershipByPublicId(string $uuid): ?array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT id, user_id, visibility, is_anonymous
+             FROM stories
+             WHERE public_id = :uuid
+             LIMIT 1'
+        );
+        $st->execute([':uuid' => $uuid]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    public function updateVisibilityForOwner(
+        string $uuid,
+        int $ownerId,
+        string $visibility,
+        bool $isAnonymous
+    ): bool {
+        $st = $this->pdo->prepare(
+            'UPDATE stories
+             SET visibility = :visibility,
+                 is_anonymous = :is_anonymous
+             WHERE public_id = :uuid
+               AND user_id = :owner_id'
+        );
+        $st->execute([
+            ':uuid' => $uuid,
+            ':owner_id' => $ownerId,
+            ':visibility' => $visibility,
+            ':is_anonymous' => $isAnonymous ? 't' : 'f',
+        ]);
+
+        return $st->rowCount() > 0;
+    }
+
+    public function deleteForOwner(string $uuid, int $ownerId): bool
+    {
+        $st = $this->pdo->prepare(
+            'DELETE FROM stories
+             WHERE public_id = :uuid
+               AND user_id = :owner_id'
+        );
+        $st->execute([
+            ':uuid' => $uuid,
+            ':owner_id' => $ownerId,
+        ]);
+
+        return $st->rowCount() > 0;
+    }
+
     /** List of stories for a given date (YYYY-MM-DD) with sorting and pagination */
     public function listByDate(string $dateYmd, string $sort='new', int $limit=10, int $offset=0): array
     {

@@ -11,6 +11,9 @@
 
   $defaultAvatar = '/uploads/avatars/default-avatar.jpg';
   $isPrivate = ($story->visibility ?? 'public') === 'private';
+  $currentUser = current_user();
+  $isOwner = $currentUser && $story->userId !== null && (int)$currentUser['id'] === (int)$story->userId;
+  $storyMode = $isPrivate ? 'private' : ($story->isAnonymous ? 'anonymous' : 'public');
   $canShowAuthor = !$story->isAnonymous && !empty($story->user_public_id);
   $avatarPath = $defaultAvatar;
 
@@ -69,6 +72,27 @@
               <div class="flower-emoji" aria-hidden="true"></div>
               <span class="flower-count"><span data-count><?= (int)($story->flower_count ?? 0) ?></span></span>
             </button>
+          <?php endif; ?>
+
+          <?php if ($isOwner): ?>
+            <section
+              class="story-owner-controls"
+              data-owner-story-controls
+              data-story-id="<?= esc($story->story_public_id ?? '') ?>"
+              data-owner-public-id="<?= esc($currentUser['public_id'] ?? '') ?>"
+            >
+              <label>
+                Visibility
+                <select data-story-visibility-select>
+                  <option value="public" <?= $storyMode === 'public' ? 'selected' : '' ?>>Public</option>
+                  <option value="anonymous" <?= $storyMode === 'anonymous' ? 'selected' : '' ?>>Anonymous</option>
+                  <option value="private" <?= $storyMode === 'private' ? 'selected' : '' ?>>Private</option>
+                </select>
+              </label>
+              <button type="button" class="btn secondary" data-story-visibility-save>Save visibility</button>
+              <button type="button" class="btn secondary" data-story-delete>Delete story</button>
+              <p class="form-message" data-story-management-message></p>
+            </section>
           <?php endif; ?>
         </article>
       </div>

@@ -178,4 +178,94 @@ class StoryController extends BaseController
             $this->json(['error'=>'internal_error'], 500);
         }
     }
+
+    public function updateVisibility(array $params): void
+    {
+        Csrf::verify();
+
+        $uuid = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
+            $this->json(['error' => 'story_not_found'], 404);
+        }
+
+        $currentUser = current_user();
+        $userId = isset($currentUser['id']) ? (int)$currentUser['id'] : null;
+        if (!$userId) {
+            $this->json(['error' => 'authentication_required'], 401);
+        }
+
+        $mode = (string)($_POST['mode'] ?? $_POST['story_mode'] ?? '');
+        if ($mode === '') {
+            $visibility = (string)($_POST['visibility'] ?? '');
+            $isAnonymous = !empty($_POST['anonymous']) || !empty($_POST['is_anonymous']);
+            if ($visibility === 'private') {
+                $mode = 'private';
+            } elseif ($visibility === 'public' && $isAnonymous) {
+                $mode = 'anonymous';
+            } elseif ($visibility === 'public') {
+                $mode = 'public';
+            }
+        }
+
+        try {
+            $result = $this->storyService->changeVisibilityForOwner($userId, $uuid, $mode);
+            $this->json(['status' => 'ok'] + $result);
+        } catch (DomainException $e) {
+            $this->jsonStoryManagementError($e);
+        } catch (Throwable $e) {
+            error_log('[StoryController] story_visibility_failed: ' . get_class($e));
+            $this->json(['error' => 'internal_error'], 500);
+        }
+    }
+
+    public function deleteByPublicId(array $params): void
+    {
+        Csrf::verify();
+
+        $uuid = (string)($params['public_id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
+            $this->json(['error' => 'story_not_found'], 404);
+        }
+
+        $currentUser = current_user();
+        $userId = isset($currentUser['id']) ? (int)$currentUser['id'] : null;
+        if (!$userId) {
+            $this->json(['error' => 'authentication_required'], 401);
+        }
+
+        try {
+            $this->storyService->deleteOwnStory($userId, $uuid);
+            $this->json(['status' => 'ok']);
+        } catch (DomainException $e) {
+            $this->jsonStoryManagementError($e);
+        } catch (Throwable $e) {
+            error_log('[StoryController] story_delete_failed: ' . get_class($e));
+            $this->json(['error' => 'internal_error'], 500);
+        }
+    }
+
+    private function jsonStoryManagementError(DomainException $e): void
+    {
+        $code = $e->getMessage();
+        $status = match ($code) {
+            'authentication_required' => 401,
+            'story_not_found' => 404,
+            'forbidden' => 403,
+            'invalid_visibility' => 400,
+            default => 500,
+        };
+
+        $safeError = in_array($code, [
+            'authentication_required',
+            'story_not_found',
+            'forbidden',
+            'invalid_visibility',
+        ], true) ? $code : 'internal_error';
+
+        if ($safeError === 'internal_error') {
+            error_log('[StoryController] story_management_domain_error: ' . $code);
+        }
+
+        $this->json(['error' => $safeError], $status);
+    }
 }

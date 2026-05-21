@@ -163,6 +163,20 @@ class Routing
                 'handler' => [FlowerController::class, 'count'],
                 'params'  => fn($m) => ['public_id' => $m[1]],
             ],
+            // POST /api/story/{public_id}/visibility
+            [
+                'pattern' => '#^api/story/([0-9a-fA-F-]{36})/visibility$#',
+                'method'  => 'POST',
+                'handler' => [StoryController::class, 'updateVisibility'],
+                'params'  => fn($m) => ['public_id' => $m[1]],
+            ],
+            // DELETE /api/story/{public_id}
+            [
+                'pattern' => '#^api/story/([0-9a-fA-F-]{36})$#',
+                'method'  => 'DELETE',
+                'handler' => [StoryController::class, 'deleteByPublicId'],
+                'params'  => fn($m) => ['public_id' => $m[1]],
+            ],
         ];
 
         foreach ($dynamicRoutes as $route) {
