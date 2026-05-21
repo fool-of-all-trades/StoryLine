@@ -54,8 +54,18 @@
         <?= \App\Security\Csrf::inputField() ?>
 
         <label>
-          Password*
-          <input id="passwordInput" type="password" name="password" minlength="8" required>
+          Current password*
+          <input type="password" name="current_password" required>
+        </label>
+
+        <label>
+          New password*
+          <input id="passwordInput" type="password" name="new_password" minlength="8" required>
+        </label>
+
+        <label>
+          Confirm new password*
+          <input type="password" name="confirm_password" minlength="8" required>
         </label>
 
         <label class="inline">
@@ -90,6 +100,39 @@
 
         <button type="submit" class="btn secondary">Save favorite quote</button>
         <p id="favorite-quote-message" class="form-message"></p>
+      </form>
+
+      <!-- Danger zone -->
+      <form id="delete-account-form" method="post" action="/api/me/delete-account" class="delete-account-form">
+        <?= \App\Security\Csrf::inputField() ?>
+
+        <h3>Danger zone</h3>
+        <p>
+          Account deletion is permanent. Choose whether to remove your stories or keep your public stories without your name.
+        </p>
+
+        <label>
+          <input type="radio" name="mode" value="delete_all" required>
+          Delete my account and all my stories.
+        </label>
+
+        <label>
+          <input type="radio" name="mode" value="orphan_public" required>
+          Delete my account, delete private stories, and keep public stories unattributed.
+        </label>
+
+        <label>
+          Current password*
+          <input type="password" name="current_password" required>
+        </label>
+
+        <label>
+          Type DELETE MY ACCOUNT to confirm. Admin accounts must type DELETE ADMIN ACCOUNT.
+          <input type="text" name="confirmation" autocomplete="off" required>
+        </label>
+
+        <button type="submit" class="btn secondary">Delete account</button>
+        <p id="delete-account-message" class="form-message"></p>
       </form>
     </div>
   </div>

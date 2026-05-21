@@ -50,39 +50,87 @@ final class StoryService
         return $this->storyRepository->getStoryByPublicId($uuid);
     }
 
+    public function getStoryByPublicIdForViewer(string $uuid, ?int $viewerUserId = null): ?Story
+    {
+        return $this->storyRepository->getStoryByPublicIdForViewer($uuid, $viewerUserId);
+    }
+
+    public function changeVisibilityForOwner(int $userId, string $uuid, string $mode): array
+    {
+        $mode = strtolower(trim($mode));
+        [$visibility, $isAnonymous] = match ($mode) {
+            'public' => ['public', false],
+            'anonymous' => ['public', true],
+            'private' => ['private', false],
+            default => throw new DomainException('invalid_visibility'),
+        };
+
+        $story = $this->storyRepository->findOwnershipByPublicId($uuid);
+        if (!$story) {
+            throw new DomainException('story_not_found');
+        }
+
+        if (empty($story['user_id']) || (int)$story['user_id'] !== $userId) {
+            throw new DomainException('forbidden');
+        }
+
+        try {
+            $updated = $this->storyRepository->updateVisibilityForOwner($uuid, $userId, $visibility, $isAnonymous);
+        } catch (Throwable $e) {
+            error_log('[StoryService] update_visibility_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+
+        if (!$updated) {
+            throw new DomainException('story_not_found');
+        }
+
+        return [
+            'mode' => $mode,
+            'visibility' => $visibility,
+            'is_anonymous' => $isAnonymous,
+        ];
+    }
+
+    public function deleteOwnStory(int $userId, string $uuid): void
+    {
+        $story = $this->storyRepository->findOwnershipByPublicId($uuid);
+        if (!$story) {
+            throw new DomainException('story_not_found');
+        }
+
+        if (empty($story['user_id']) || (int)$story['user_id'] !== $userId) {
+            throw new DomainException('forbidden');
+        }
+
+        try {
+            $deleted = $this->storyRepository->deleteForOwner($uuid, $userId);
+        } catch (Throwable $e) {
+            error_log('[StoryService] delete_story_failed: ' . get_class($e));
+            throw new DomainException('internal_error');
+        }
+
+        if (!$deleted) {
+            throw new DomainException('story_not_found');
+        }
+    }
+
     /**
      * Add a story for today's prompt.
      * @throws DomainException 'no_prompt_today'|'already_submitted_today'|'quote_missing'|'too_many_words'|'db_error'
      */
     public function addTodayStory(
-        ?int $userId,
+        int $userId,
         ?string $title,
         string $content,
         bool $anonymous,
-        ?string $guestName = null,
-        ?string $deviceToken = null,
-        ?string $ipHash = null
+        string $visibility = 'public'
     ): string {
-
-        $isAnonymous = (bool)$anonymous;
-
-        // Guest nick logic:
-        // - if user logged in -> ignore guestName, there won't be any
-        // - if guest + anon -> null guestName (complete anon)
-        // - if guest + not anon -> use guestName (trimmed to 60 chars)
-        $finalGuestName = null;
-
-        if ($userId === null) {
-            $rawGuest = trim((string)$guestName);
-
-            if (!$isAnonymous && $rawGuest !== '') {
-                // guest + not anonymous -> use guestName
-                $finalGuestName = mb_substr($rawGuest, 0, 60);
-            }
-            // guest + anonymous -> finalGuestName stays null
-        } else {
-            // logged in user -> ignore guestName
-            $finalGuestName = null;
+        if (!in_array($visibility, ['public', 'private'], true)) {
+            throw new DomainException('invalid_visibility');
+        }
+        if ($visibility === 'private') {
+            $anonymous = false;
         }
 
         // Get or create today's quote prompt
@@ -96,12 +144,10 @@ final class StoryService
             id: 0,
             quoteId: $prompt->id,
             userId: $userId,
-            deviceToken: $deviceToken,
-            ipHash: $ipHash,
             title: $title ?: null,
             content: $content,
             isAnonymous: !empty($anonymous) && $anonymous !== '0',
-            guestName: $finalGuestName
+            visibility: $visibility
         );
 
         // try to add the story in transaction to database
@@ -117,8 +163,10 @@ final class StoryService
                 throw new DomainException('prompt_missing_in_content');
             if (str_contains($msg, 'Only one story per prompt'))
                 throw new DomainException('already_submitted_today');
-            if (str_contains($msg, 'uq_story_user_per_day') || str_contains($msg, 'uq_story_device_per_day'))
+            if (str_contains($msg, 'uq_story_user_per_day'))
                 throw new DomainException('already_submitted_today');
+            if (str_contains($msg, 'Story owner is required'))
+                throw new DomainException('authentication_required');
 
             error_log('[StoryService] add_today_story_failed: ' . $msg);
             throw new DomainException('story_create_failed');
@@ -129,10 +177,10 @@ final class StoryService
      * Returns profile data for a given user.
      * @return array{items: array, total_stories: int, total_words: int}
      */
-    public function getProfileDataForUser(int $userId): array
+    public function getProfileDataForUser(int $userId, bool $includePrivate = false): array
     {
-        $totalWords = $this->storyRepository->totalWordsByUser($userId);
-        $totalStories = $this->storyRepository->totalStoriesByUser($userId);
+        $totalWords = $this->storyRepository->totalWordsByUser($userId, $includePrivate);
+        $totalStories = $this->storyRepository->totalStoriesByUser($userId, $includePrivate);
 
         return [
             'total_words' => $totalWords,
@@ -140,9 +188,9 @@ final class StoryService
         ];
     }
 
-    public function getStoresForUser(int $userId, int $limit = 8, int $offset = 0): array
+    public function getStoresForUser(int $userId, int $limit = 8, int $offset = 0, bool $includePrivate = false): array
     {
-        $stories = $this->storyRepository->listByUser($userId, $limit, $offset);
+        $stories = $this->storyRepository->listByUser($userId, $limit, $offset, $includePrivate);
 
         return [
             'items' => array_map(fn(Story $s) => $s->toArray(), $stories),

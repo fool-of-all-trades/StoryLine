@@ -188,19 +188,6 @@
   flex-wrap: wrap;
 }
 
-#guest-name {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 2px solid rgba(120, 130, 255, 0.55);
-  background: rgba(255, 255, 255, 0.85);
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-#guest-name:focus {
-  border-color: rgba(120, 130, 255, 0.9);
-  box-shadow: 0 0 0 4px rgba(120, 130, 255, 0.18);
-}
-
 .pretty-check {
   display: inline-flex;
   align-items: center;

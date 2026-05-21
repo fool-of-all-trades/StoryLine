@@ -17,7 +17,25 @@ final class StoryRepository
     }
 
     public function getById(int $id): ?Story {
-        $st = $this->pdo->prepare('SELECT * FROM stories WHERE id = :id');
+        $sql = <<<SQL
+            SELECT
+                s.*,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.avatar_path
+                END AS avatar_path,
+                s.score AS flower_count,
+                dp."date" AS prompt_date,
+                dp.sentence AS prompt_sentence
+            FROM vw_public_stories_with_score s
+            LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
+            LEFT JOIN user_profiles up ON up.user_id = s.user_id
+            WHERE s.id = :id
+              AND s.visibility = 'public'
+            LIMIT 1
+        SQL;
+
+        $st = $this->pdo->prepare($sql);
         $st->execute(['id'=>$id]);
         $row = $st->fetch();
         return $row ? Story::fromArray($row) : null;
@@ -27,21 +45,18 @@ final class StoryRepository
         $sql = <<<SQL
             SELECT
                 s.*,
-                s.public_id AS story_public_id,
-                COALESCE(f.cnt,0)::int AS flower_count,
-                u.username AS username,
-                u.public_id AS user_public_id,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.avatar_path
+                END AS avatar_path,
+                s.score AS flower_count,
                 dp."date" AS prompt_date,
                 dp.sentence AS prompt_sentence
-            FROM stories s
-            LEFT JOIN users u ON u.id = s.user_id
+            FROM vw_public_stories_with_score s
             LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
-            LEFT JOIN (
-                SELECT story_id, COUNT(*) AS cnt
-                FROM flowers
-                GROUP BY story_id
-            ) f ON f.story_id = s.id
-            WHERE s.public_id = :uuid
+            LEFT JOIN user_profiles up ON up.user_id = s.user_id
+            WHERE s.story_public_id = :uuid
+              AND s.visibility = 'public'
             LIMIT 1
         SQL;
 
@@ -51,29 +66,57 @@ final class StoryRepository
         return $row ? Story::fromArray($row) : null;
     }
 
+    public function getStoryByPublicIdForViewer(string $uuid, ?int $viewerUserId = null): ?Story {
+        $sql = <<<SQL
+            SELECT
+                s.*,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.avatar_path
+                END AS avatar_path,
+                s.score AS flower_count,
+                dp."date" AS prompt_date,
+                dp.sentence AS prompt_sentence
+            FROM vw_stories_with_score s
+            LEFT JOIN daily_prompt dp ON dp.id = s.prompt_id
+            LEFT JOIN user_profiles up ON up.user_id = s.user_id
+            WHERE s.story_public_id = :uuid
+              AND (
+                s.visibility = 'public'
+                OR s.user_id = COALESCE(:viewer_user_id, -1)
+              )
+            LIMIT 1
+        SQL;
 
-    /**
-     * Creates the story in a transaction.
-     * Limit of 1 story per prompt per (user/device/ip).
-     * Plus (optionally) validation of word_count <= 500 (triggers in DB will enforce this anyway).
-     */
+        $st = $this->pdo->prepare($sql);
+        $st->bindValue(':uuid', $uuid);
+        if ($viewerUserId !== null) {
+            $st->bindValue(':viewer_user_id', $viewerUserId, PDO::PARAM_INT);
+        } else {
+            $st->bindValue(':viewer_user_id', null, PDO::PARAM_NULL);
+        }
+        $st->execute();
+        $row = $st->fetch();
+        return $row ? Story::fromArray($row) : null;
+    }
+
+
+    /** Creates a logged-in user's story in a transaction. */
     public function create(Story $s): string{
         try {
             Database::begin();
 
-            $sql = 'INSERT INTO stories (prompt_id, user_id, device_token, guest_name, ip_hash, title, content, is_anonymous)
-                    VALUES (:p, :u, :dt, :gn, :ip, :t, :c, :anon)
+            $sql = 'INSERT INTO stories (prompt_id, user_id, title, content, is_anonymous, visibility)
+                    VALUES (:p, :u, :t, :c, :anon, :visibility)
                     RETURNING public_id';
             $st = $this->pdo->prepare($sql);
             $st->execute([
                 ':p'   => $s->quoteId,
                 ':u'   => $s->userId,
-                ':dt'  => $s->deviceToken,
-                ':gn'  => $s->guestName,
-                ':ip'  => $s->ipHash,
                 ':t'   => $s->title,
                 ':c'   => $s->content,
                 ':anon'=> $s->isAnonymous ? 't' : 'f',
+                ':visibility' => $s->visibility,
             ]);
 
             $publicId = (string)$st->fetchColumn();
@@ -93,6 +136,58 @@ final class StoryRepository
         }
     }
 
+    public function findOwnershipByPublicId(string $uuid): ?array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT id, user_id, visibility, is_anonymous
+             FROM stories
+             WHERE public_id = :uuid
+             LIMIT 1'
+        );
+        $st->execute([':uuid' => $uuid]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    public function updateVisibilityForOwner(
+        string $uuid,
+        int $ownerId,
+        string $visibility,
+        bool $isAnonymous
+    ): bool {
+        $st = $this->pdo->prepare(
+            'UPDATE stories
+             SET visibility = :visibility,
+                 is_anonymous = :is_anonymous
+             WHERE public_id = :uuid
+               AND user_id = :owner_id'
+        );
+        $st->execute([
+            ':uuid' => $uuid,
+            ':owner_id' => $ownerId,
+            ':visibility' => $visibility,
+            ':is_anonymous' => $isAnonymous ? 't' : 'f',
+        ]);
+
+        return $st->rowCount() > 0;
+    }
+
+    public function deleteForOwner(string $uuid, int $ownerId): bool
+    {
+        $st = $this->pdo->prepare(
+            'DELETE FROM stories
+             WHERE public_id = :uuid
+               AND user_id = :owner_id'
+        );
+        $st->execute([
+            ':uuid' => $uuid,
+            ':owner_id' => $ownerId,
+        ]);
+
+        return $st->rowCount() > 0;
+    }
+
     /** List of stories for a given date (YYYY-MM-DD) with sorting and pagination */
     public function listByDate(string $dateYmd, string $sort='new', int $limit=10, int $offset=0): array
     {
@@ -104,20 +199,11 @@ final class StoryRepository
         $sql = <<<SQL
             SELECT
                 s.*,
-                COALESCE(f.cnt,0) AS flower_count,
-                u.username AS username,
-                u.public_id AS user_public_id,
-                s.public_id AS story_public_id
-            FROM stories s
+                s.score AS flower_count
+            FROM vw_public_stories_with_score s
             JOIN daily_prompt dp
                 ON dp.id = s.prompt_id AND dp."date" = :d
-            LEFT JOIN (
-                SELECT story_id, COUNT(*)::int AS cnt
-                FROM flowers
-                GROUP BY story_id
-            ) f ON f.story_id = s.id
-            LEFT JOIN users u
-                ON u.id = s.user_id
+            WHERE s.visibility = 'public'
             ORDER BY $order
             LIMIT :limit OFFSET :offset
         SQL;
@@ -135,14 +221,24 @@ final class StoryRepository
     /**
      * Stories by user – for user profile panel, with pagination
      */
-    public function listByUser(int $userId, int $limit = 8, int $offset = 0): array
+    public function listByUser(int $userId, int $limit = 8, int $offset = 0, bool $includePrivate = false): array
     {
+        $visibilityWhere = $includePrivate
+            ? ''
+            : "AND s.visibility = 'public' AND s.is_anonymous = FALSE";
+
         $sql = <<<SQL
             SELECT
                 s.*,
                 COALESCE(f.cnt,0)::int AS flower_count,
-                u.username AS username,
-                u.public_id AS user_public_id,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.display_name
+                END AS username,
+                CASE
+                    WHEN s.is_anonymous OR s.user_id IS NULL THEN NULL
+                    ELSE up.public_id
+                END AS user_public_id,
                 s.public_id AS story_public_id
             FROM stories s
             LEFT JOIN (
@@ -150,9 +246,10 @@ final class StoryRepository
                 FROM flowers
                 GROUP BY story_id
             ) f ON f.story_id = s.id
-            LEFT JOIN users u
-                ON u.id = s.user_id
+            LEFT JOIN user_profiles up
+                ON up.user_id = s.user_id
             WHERE s.user_id = :uid
+            $visibilityWhere
             ORDER BY s.created_at DESC
             LIMIT :limit OFFSET :offset
         SQL;
@@ -170,9 +267,15 @@ final class StoryRepository
     /**
      * total number of words written by a user
      */
-    public function totalWordsByUser(int $userId): int
+    public function totalWordsByUser(int $userId, bool $includePrivate = false): int
     {
-        $st = $this->pdo->prepare('SELECT COALESCE(SUM(word_count),0)::int FROM stories WHERE user_id = :uid');
+        $visibilityWhere = $includePrivate
+            ? ''
+            : "AND visibility = 'public' AND is_anonymous = FALSE";
+
+        $st = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(word_count),0)::int FROM stories WHERE user_id = :uid $visibilityWhere"
+        );
         $st->execute([':uid' => $userId]);
         return (int)$st->fetchColumn();
     }
@@ -180,9 +283,15 @@ final class StoryRepository
     /**
      * total number of stories written by a user
      */
-    public function totalStoriesByUser(int $userId): int
+    public function totalStoriesByUser(int $userId, bool $includePrivate = false): int
     {
-        $st = $this->pdo->prepare('SELECT COUNT(*)::int FROM stories WHERE user_id = :uid');
+        $visibilityWhere = $includePrivate
+            ? ''
+            : "AND visibility = 'public' AND is_anonymous = FALSE";
+
+        $st = $this->pdo->prepare(
+            "SELECT COUNT(*)::int FROM stories WHERE user_id = :uid $visibilityWhere"
+        );
         $st->execute([':uid' => $userId]);
         return (int)$st->fetchColumn();
     }
@@ -193,7 +302,14 @@ final class StoryRepository
     }
 
     public function countOnDate(string $date): int {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM stories WHERE created_at::date = :d");
+        $sql = <<<SQL
+            SELECT COUNT(*)::int
+            FROM vw_public_stories_with_score s
+            JOIN daily_prompt dp ON dp.id = s.prompt_id AND dp."date" = :d
+            WHERE s.visibility = 'public'
+        SQL;
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':d'=>$date]);
         return (int)$stmt->fetchColumn();
     }
@@ -201,24 +317,16 @@ final class StoryRepository
     public function topOfDay(string $date): ?array {
         $sql = "SELECT
                     s.id,
-                    s.public_id AS story_public_id,
+                    s.story_public_id,
                     s.title,
                     s.created_at,
-                    u.username,
-                    u.public_id AS user_public_id,
-                    COUNT(f.id) AS flowers
-                FROM stories s
-                LEFT JOIN users   u ON u.id = s.user_id
-                LEFT JOIN flowers f ON f.story_id = s.id
-                WHERE s.created_at::date = :d 
-                GROUP BY
-                    s.id,
-                    s.public_id,
-                    s.title,
-                    s.created_at,
-                    u.username,
-                    u.public_id
-                ORDER BY flowers DESC, s.created_at DESC
+                    s.username,
+                    s.user_public_id,
+                    s.score AS flowers
+                FROM vw_public_stories_with_score s
+                WHERE s.created_at::date = :d
+                  AND s.visibility = 'public'
+                ORDER BY s.score DESC, s.created_at DESC
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);

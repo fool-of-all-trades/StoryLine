@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\AdminService;
+use Throwable;
 
 class AdminController extends BaseController
 {
@@ -11,17 +12,21 @@ class AdminController extends BaseController
     public function index(): void
     {
         if (!is_admin()) {
-            http_response_code(403);
-            echo 'Forbidden';
-            return;
+            $this->notFound('Not found');
         }
 
         $date  = $_GET['date'] ?? 'today';
 
         $service = new AdminService();
 
-        // $stats will be visible in admin.php
-        $stats   = $service->getDashboardData($date);
+        try {
+            $stats = $service->getDashboardData($date);
+        } catch (Throwable $e) {
+            error_log('[AdminController] dashboard_failed: ' . get_class($e));
+            http_response_code(500);
+            echo 'Admin dashboard is temporarily unavailable.';
+            return;
+        }
 
         $title = "StoryLine — Admin";
         

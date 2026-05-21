@@ -1,14 +1,18 @@
 <?php
 /** @var \App\Models\User $user */
 $title = "StoryLine — User Panel";
-$pageScripts = ['pages/profile', 'edit-modal'];
+$pageScripts = ['pages/profile', 'edit-modal', 'auth'];
 $pageStyles = ['user'];
 include __DIR__."/partials/header.php";
 
 $sessionUser = current_user();
 $isOwnProfile = $sessionUser && ($sessionUser['public_id'] === $user->public_id);
 ?>
-      <div class="profile-content" data-user-public-id="<?= htmlspecialchars($user->public_id, ENT_QUOTES, 'UTF-8') ?>">
+      <div
+        class="profile-content"
+        data-user-public-id="<?= htmlspecialchars($user->public_id, ENT_QUOTES, 'UTF-8') ?>"
+        data-own-profile="<?= $isOwnProfile ? '1' : '0' ?>"
+      >
         <div class="user-avatar">
           <?php
             $avatar = $user->avatar_path ?? '/uploads/avatars/default-avatar.jpg';

@@ -1,6 +1,7 @@
 <?php
 
 use App\Controllers\{
+    AccountSettingsController,
     UserController,
     AuthController,
     StoryController,
@@ -48,6 +49,7 @@ class Routing
         self::post('logout', [AuthController::class, 'logout']);
         self::get('register', [AuthController::class, 'registerPage']);
         self::post('register', [AuthController::class, 'register']);
+        self::get('verify-email', [AuthController::class, 'verifyEmail']);
 
         // Password Reset
         self::get('password/forgot', [PasswordResetController::class, 'passwordForgotPage']);
@@ -66,10 +68,11 @@ class Routing
         self::get('api/quote', [QuoteController::class, 'byDate']);
 
         // API - User Profile Updates
-        self::post('api/me/favorite-quote', [UserController::class, 'updateFavoriteQuote']);
-        self::post('api/me/username', [UserController::class, 'updateUsername']);
-        self::post('api/me/password', [UserController::class, 'updatePassword']);
-        self::post('api/me/avatar', [UserController::class, 'updateAvatar']);
+        self::post('api/me/favorite-quote', [AccountSettingsController::class, 'updateFavoriteQuote']);
+        self::post('api/me/username', [AccountSettingsController::class, 'updateUsername']);
+        self::post('api/me/password', [AccountSettingsController::class, 'updatePassword']);
+        self::post('api/me/avatar', [AccountSettingsController::class, 'updateAvatar']);
+        self::post('api/me/delete-account', [AccountSettingsController::class, 'deleteAccount']);
     }
 
     // Execute a route handler
@@ -158,6 +161,20 @@ class Routing
                 'pattern' => '#^api/story/([0-9a-fA-F-]{36})/flowers$#',
                 'method'  => 'GET',
                 'handler' => [FlowerController::class, 'count'],
+                'params'  => fn($m) => ['public_id' => $m[1]],
+            ],
+            // POST /api/story/{public_id}/visibility
+            [
+                'pattern' => '#^api/story/([0-9a-fA-F-]{36})/visibility$#',
+                'method'  => 'POST',
+                'handler' => [StoryController::class, 'updateVisibility'],
+                'params'  => fn($m) => ['public_id' => $m[1]],
+            ],
+            // DELETE /api/story/{public_id}
+            [
+                'pattern' => '#^api/story/([0-9a-fA-F-]{36})$#',
+                'method'  => 'DELETE',
+                'handler' => [StoryController::class, 'deleteByPublicId'],
                 'params'  => fn($m) => ['public_id' => $m[1]],
             ],
         ];

@@ -3,22 +3,18 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Services\UserService;
-use App\Services\PasswordResetService;
 use App\Security\Csrf;
-
+use App\Services\AuthService;
 use DomainException;
-
 use Throwable;
 
 class PasswordResetController extends BaseController
 {
-    private UserService $userService;
-    private PasswordResetService $resetService;
+    private AuthService $authService;
 
-    public function __construct() {
-        $this->userService = new UserService();
-        $this->resetService = new PasswordResetService();
+    public function __construct()
+    {
+        $this->authService = auth_service();
     }
 
     public function passwordForgotPage(): void
@@ -28,45 +24,45 @@ class PasswordResetController extends BaseController
 
     public function passwordResetPage(): void
     {
-        $this->render('password_reset');
+        $selector = (string)($_GET['selector'] ?? '');
+        $token = (string)($_GET['token'] ?? '');
+        $resetError = null;
+
+        if ($selector === '' || $token === '') {
+            $resetError = 'invalid_or_expired_token';
+        } else {
+            try {
+                $this->authService->assertCanResetPassword($selector, $token);
+            } catch (DomainException $e) {
+                $resetError = $e->getMessage();
+            }
+        }
+
+        $this->render('password_reset', [
+            'selector' => $selector,
+            'token' => $token,
+            'resetError' => $resetError,
+        ]);
     }
 
     public function forgot(): void
     {
         Csrf::verify();
-        header("Content-Type: application/json");
 
-        $email = trim($_POST['email'] ?? '');
+        $email = trim((string)($_POST['email'] ?? ''));
         if ($email === '') {
-            http_response_code(422);
-            echo json_encode(['error' => 'email_required']);
-            return;
-        }
-
-        $user = $this->userService->findByEmail($email);
-
-        if (!$user) {
-            echo json_encode(['status' => 'ok']);
-            return;
+            $this->json(['error' => 'email_required'], 422);
         }
 
         try {
-            $token = $this->resetService->createToken($user->id);
+            $this->authService->requestPasswordReset($email);
+        } catch (DomainException $e) {
+            error_log('[PasswordResetController] forgot_failed: ' . $e->getMessage());
         } catch (Throwable $e) {
-            error_log("Password reset error: ".$e->getMessage());
-            http_response_code(500);
-            echo json_encode(['error' => 'server_error']);
-            return;
+            error_log('[PasswordResetController] forgot_failed: ' . get_class($e));
         }
 
-        $resetUrl = "http://localhost:8081/password/reset?token=" . urlencode($token);
-
-        file_put_contents('/app/mail.log',
-            "RESET for $email:\n$resetUrl\n\n",
-            FILE_APPEND
-        );
-
-        echo json_encode(['status' => 'ok']);
+        $this->json(['status' => 'ok']);
     }
 
 
@@ -74,38 +70,27 @@ class PasswordResetController extends BaseController
     {
         Csrf::verify();
 
-        header("Content-Type: application/json");
+        $selector = (string)($_POST['selector'] ?? '');
+        $token = (string)($_POST['token'] ?? '');
+        $password = (string)($_POST['password'] ?? '');
+        $passwordConfirm = (string)($_POST['password_confirm'] ?? '');
 
-        $token = $_POST['token'] ?? '';
-        $pass1 = $_POST['password'] ?? '';
-        $pass2 = $_POST['password_confirm'] ?? '';
-
-        if ($pass1 !== $pass2) {
-            http_response_code(422);
-            echo json_encode(['error' => 'password_mismatch']);
-            return;
-        }
-
-        $userId = $this->resetService->validateToken($token);
-
-        if (!$userId) {
-            http_response_code(422);
-            echo json_encode(['error' => 'invalid_or_expired_token']);
-            return;
-        }
-
-        // Update password
         try {
-            $this->userService->changePassword($userId, $pass1);
+            $this->authService->resetPassword($selector, $token, $password, $passwordConfirm);
+            $this->json(['status' => 'ok']);
         } catch (DomainException $e) {
-            http_response_code(422);
-            echo json_encode(['error' => $e->getMessage()]);
-            return;
+            $code = $e->getMessage();
+            $status = match ($code) {
+                'too_many_requests' => 429,
+                'internal_error' => 500,
+                default => 422,
+            };
+
+            $this->json(['error' => $code], $status);
+        } catch (Throwable $e) {
+            error_log('[PasswordResetController] reset_failed: ' . get_class($e));
+            $this->json(['error' => 'internal_error'], 500);
         }
-
-        $this->resetService->deleteToken($token);
-
-        echo json_encode(['status' => 'ok']);
     }
 
 }

@@ -18,3 +18,4 @@ product_manager.txt
 public/uploads/
 var/log/
 *.log
+/vendor/

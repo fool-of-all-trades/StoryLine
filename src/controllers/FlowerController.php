@@ -21,10 +21,10 @@ class FlowerController extends BaseController
     public function toggle(array $params): void {
         Csrf::verify();
 
-        // for now only logged-in users can flower
-        $userId = $_SESSION['user']['id'] ?? null;
+        $currentUser = current_user();
+        $userId = isset($currentUser['id']) ? (int)$currentUser['id'] : null;
         if (!$userId) {
-            $this->json(['error'=>'unauthorized'], 401);
+            $this->json(['error'=>'authentication_required'], 401);
         }
 
         $publicStoryId = (string)($params['public_id'] ?? '');
@@ -53,6 +53,9 @@ class FlowerController extends BaseController
         try {
             $flowerCountForStory = $this->flowerService->countForStory($publicStoryId);
             $this->json(['count'=>$flowerCountForStory], 200);
+        } catch (DomainException $e) {
+            $code = $e->getMessage()==='story_not_found' ? 404 : 400;
+            $this->json(['error'=>$e->getMessage()], $code);
         } catch (Throwable $e) {
             $this->json(['error'=>'internal_error'], 500);
         }

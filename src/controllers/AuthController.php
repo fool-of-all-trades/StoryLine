@@ -3,18 +3,17 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Services\UserService;
+use App\Services\AuthService;
 use DomainException;
 use Throwable;
 use App\Security\Csrf;
-use App\Helpers\Logger;
 
 class AuthController extends BaseController
 {
-    private UserService $userService;
+    private AuthService $authService;
 
     public function __construct() {
-        $this->userService = new UserService();
+        $this->authService = new AuthService();
     }
 
     private function isSafeRedirect(string $url): bool {
@@ -59,45 +58,13 @@ class AuthController extends BaseController
     {
         self::requirePostWithCsrf();
 
-        $logger = new Logger(getenv('APP_LOG_PATH') ?: __DIR__ . '/../../var/log/app.log');
-
-        // ---- Throttle (rate limiting) ----
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $key = 'login_attempts_' . $ip; // per-IP
-
-        if (!isset($_SESSION[$key])) {
-            $_SESSION[$key] = ['cnt' => 0, 'until' => 0];
-        }
-
-        $now = time();
-
-        // Hash the IP with a salt to avoid leaking real IPs in the logger
-        $salt = getenv('APP_IP_SALT') ?: 'default_salt_value_that_if_everything_works_out_wont_be_used';
-        $ipHash = $ip ? hash('sha256', $ip . '|' . $salt) : null;
-
         $identifier = trim((string)($_POST['identifier'] ?? ($_POST['username'] ?? '')));
         $password = (string)($_POST['password'] ?? '');
-
-        // If they try while the time hasn't passed yet -> 429
-        if ($now < $_SESSION[$key]['until']) {
-            $retryAfter = $_SESSION[$key]['until'] - $now;
-
-            $logger->warning('login_rate_limited', [
-                'identifier' => $identifier ?? null, // (see note below)
-                'ip_hash' => $ipHash,
-                'retry_after' => $retryAfter,
-                'ua' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-            ]);
-
-            header('Retry-After: ' . $retryAfter);
-            $this->json(['error' => 'too_many_attempts', 'retry_after' => $retryAfter], 429);
-        }
+        $remember = in_array((string)($_POST['remember'] ?? ''), ['1', 'true', 'on', 'yes'], true);
 
         try {
-            $payload = $this->userService->login($identifier, $password);
+            $payload = $this->authService->login($identifier, $password, $remember);
 
-            // SUCCESS: reset throttle + rotate session & CSRF
-            $_SESSION[$key] = ['cnt' => 0, 'until' => 0];
             session_regenerate_id(true);
             Csrf::regenerate();
 
@@ -110,31 +77,23 @@ class AuthController extends BaseController
             header('Location: ' . $target);
             exit;
         } catch (DomainException $e) {
-            // FAIL -> increase throttle counter
-            $_SESSION[$key]['cnt']++;
+            $code = $e->getMessage();
 
-            $MAX_ATTEMPTS = 5;
-            $BASE_LOCK = 60; // seconds
-
-            // backoff: every MAX_ATTEMPTS doubles the lock time
-            $multiplier = 1 << (int)floor(($_SESSION[$key]['cnt'] - 1) / $MAX_ATTEMPTS);
-            $lockSeconds = $BASE_LOCK * $multiplier;
-
-            if ($_SESSION[$key]['cnt'] >= $MAX_ATTEMPTS) {
-                $_SESSION[$key]['cnt'] = 0;
-                $_SESSION[$key]['until'] = $now + $lockSeconds;
+            if ($code === 'too_many_attempts') {
+                $this->json(['error' => 'too_many_attempts'], 429);
             }
 
-            $logger->warning('login_failed', [
-                'identifier' => $identifier,
-                'ip_hash' => $ipHash,
-                'cnt' => $_SESSION[$key]['cnt'],
-                'ua' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-            ]);
+            if ($code === 'internal_error') {
+                $this->json(['error' => 'internal_error'], 500);
+            }
 
-            // not saying if that user exists! why would I help attackers?
+            if ($code === 'email_not_verified') {
+                $this->json(['error' => 'email_not_verified'], 403);
+            }
+
             $this->json(['error' => 'invalid_credentials'], 401);
         } catch (Throwable $e) {
+            error_log('[AuthController] login_failed: ' . get_class($e));
             $this->json(['error' => 'internal_error'], 500);
         }
     }
@@ -142,6 +101,8 @@ class AuthController extends BaseController
     public function logout(): void
     {
         self::requirePostWithCsrf();
+
+        $this->authService->logout();
 
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
@@ -173,21 +134,73 @@ class AuthController extends BaseController
         $passwordConfirm = $_POST['password_confirm'] ?? '';
 
         try {
-            $user = $this->userService->register($username, $email, $password, $passwordConfirm);
+            $this->authService->register($username, $email, $password, $passwordConfirm);
             $this->json([
                 'status' => 'success',
-                'message' => 'Registration successful',
+                'message' => 'Account created. Please check your email to verify your account.',
             ], 200);
         } catch (DomainException $e) {
+            if ($e->getMessage() === 'too_many_attempts') {
+                $this->json([
+                    'status' => 'error',
+                    'code'   => 'too_many_attempts',
+                ], 429);
+            }
+
             $this->json([
                 'status' => 'error',
                 'code'   => $e->getMessage()
-            ], 400);
+            ], $e->getMessage() === 'internal_error' ? 500 : 400);
         } catch (Throwable $e) {
             $this->json([
                 'status' => 'error',
                 'code'   => 'internal_error',
             ], 500);
+        }
+    }
+
+    public function verifyEmail(): void
+    {
+        $selector = (string)($_GET['selector'] ?? '');
+        $token = (string)($_GET['token'] ?? '');
+
+        try {
+            $payload = $this->authService->confirmEmail($selector, $token);
+            session_regenerate_id(true);
+            Csrf::regenerate();
+
+            if ($payload) {
+                $_SESSION['user'] = $payload;
+            }
+
+            $this->render('email_verification', [
+                'status' => 'success',
+                'message' => 'Your email has been verified. You can now publish stories.',
+            ]);
+        } catch (DomainException $e) {
+            $safeCode = match ($e->getMessage()) {
+                'invalid_or_expired_token',
+                'too_many_requests',
+                'second_factor_required' => $e->getMessage(),
+                default => 'internal_error',
+            };
+            http_response_code(match ($safeCode) {
+                'too_many_requests' => 429,
+                'internal_error' => 500,
+                default => 400,
+            });
+
+            $this->render('email_verification', [
+                'status' => 'error',
+                'code' => $safeCode,
+            ]);
+        } catch (Throwable $e) {
+            error_log('[AuthController] verify_email_failed: ' . get_class($e));
+            http_response_code(500);
+            $this->render('email_verification', [
+                'status' => 'error',
+                'code' => 'internal_error',
+            ]);
         }
     }
 }

@@ -9,8 +9,7 @@ final class Flower
     public function __construct(
         public int $id,
         public int $storyId,
-        public ?int $userId, // null = anonymous writer
-        public ?string $deviceToken, // anon identification
+        public ?int $userId,
         public DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {}
 
@@ -19,7 +18,6 @@ final class Flower
             id: (int)$row['id'],
             storyId: (int)$row['story_id'],
             userId: isset($row['user_id']) ? (int)$row['user_id'] : null,
-            deviceToken: $row['device_token'] ?? null,
             createdAt: new DateTimeImmutable((string)$row['created_at'])
         );
     }
@@ -29,7 +27,6 @@ final class Flower
             'id' => $this->id,
             'story_id' => $this->storyId,
             'user_id' => $this->userId,
-            'device_token' => $this->deviceToken,
             'created_at' => $this->createdAt->format('c'),
         ];
     }
